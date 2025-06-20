@@ -1,5 +1,7 @@
 # HAI_project
 
+conference: ICML, ICLR, Neurips, AAAI, CVPR
+
 goal: develop and deploy a AI-powered system that 
 can accurtately idnetify and guard against 
 malicious language used by GENZ on
