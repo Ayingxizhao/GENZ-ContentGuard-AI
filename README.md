@@ -5,6 +5,8 @@ conference: ICML, ICLR, Neurips, AAAI, CVPR
 some good papers to read:
 https://arxiv.org/pdf/2311.03449
 
+hate speech in multi-modal [https://proceedings.neurips.cc/paper_files/paper/2024/file/586640cda3db2dc77349013dcefee456-Paper-Datasets_and_Benchmarks_Track.pdf]
+
 goal: develop and deploy a AI-powered system that 
 can accurtately idnetify and guard against 
 malicious language used by GENZ on
