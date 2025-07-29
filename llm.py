@@ -67,7 +67,7 @@ def process_reddit_data(input_file, output_file):
     return filtered_df
 
 if __name__ == "__main__":
-    input_file = 'reddit_posts.csv'
-    output_file = 'filtered_reddit_posts.csv'
+    input_file = 'genz_reddit_posts.csv'
+    output_file = 'filtered_genz_reddit_posts.csv'
     
     filtered_data = process_reddit_data(input_file, output_file)
