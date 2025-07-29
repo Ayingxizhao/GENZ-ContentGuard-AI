@@ -5,22 +5,18 @@ import time
 from datetime import datetime
 
 # Configure OpenAI API
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = OpenAI(api_key="OPENAI_API_KEY")
 
 def analyze_post_content(title, content):
     """
-    Analyze post content using OpenAI API to determine relevance
+    Analyze post content using OpenAI API to determine maliciousness.
     """
-    system_prompt = """You are a financial and technology content analyzer. 
-    Evaluate the provided Reddit post for relevant information about stock market 
-    analysis, technology industry developments, or substantive market insights for
-    those companies in S&P500. Respond with either 'RELEVANT' or 'NOT RELEVANT'.
-    If relevant than classify the sentiment of that post as 'Bullish', 
-    'Bearish" or 'Neutral'"""
+    system_prompt = """You are an internet moderator who wants to prevent malicious content from being on the internet. 
+    Evaluate the provided Reddit post for relevant information about it's maliciousness/harmfulness. If the post seems to contain malicious language or content, respond with 'MALICIOUS'. Otherwise, respond with 'SAFE'.""" # change first part
     
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o-mini", # no o3 or 4.1
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Title: {title}\nContent: {content}"}
@@ -48,7 +44,7 @@ def process_reddit_data(input_file, output_file):
             
         analysis = analyze_post_content(row['title'], row['content'])
         
-        if analysis and 'RELEVANT' in analysis.upper():
+        if analysis and 'MALICIOUS' in analysis.upper():
             filtered_posts.append({
                 'date': row['date'],
                 'title': row['title'],
@@ -67,7 +63,7 @@ def process_reddit_data(input_file, output_file):
     return filtered_df
 
 if __name__ == "__main__":
-    input_file = 'genz_reddit_posts.csv'
-    output_file = 'filtered_genz_reddit_posts.csv'
+    input_file = 'skip30reddit.csv'
+    output_file = 'skip30filter.csv'
     
     filtered_data = process_reddit_data(input_file, output_file)
