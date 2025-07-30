@@ -22,3 +22,15 @@ propose pipeline:
 4. base llm selction: chatgpt, llama, etc.
 5. fine-tuning: Pytorch 
 classification and prediction: 
+
+Curren step:
+- have the data 
+- letting LLM to determine the malicous 
+    - we need human-in-the-loop system # 20 (10/malicious, 10/nonmalicious), 20 
+    - Gen Z slang changes rapidly. An LLM, even a large one, might not be up-to-date with the very latest terms or how existing terms are being used in new, malicious ways. Its knowledge is based on its last training data.
+- we need examples and non-examples of whats maclious
+    - define categories: hate-speech, harassment, threats of violence, misinformation.
+    - we need context nuances. 
+        1. data annotation
+        2. Data processing
+            a. cleaning + normalization + tokenization
