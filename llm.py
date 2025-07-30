@@ -34,6 +34,15 @@ def process_reddit_data(input_file, output_file):
     Process Reddit data from CSV and filter using OpenAI
     """
     df = pd.read_csv(input_file)
+    
+    # Remove NA values
+    df = df.dropna()
+    print(f"After removing NA values: {len(df)} posts")
+    
+    # Apply content length filter (remove posts with content length < 10)
+    df = df[df['content'].apply(lambda x: len(str(x)) >= 10)]
+    print(f"After applying content length filter: {len(df)} posts")
+    
     filtered_posts = []
     
     print(f"Processing {len(df)} posts...")
