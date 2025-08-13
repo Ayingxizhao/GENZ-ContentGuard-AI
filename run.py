@@ -48,7 +48,7 @@ def start_application():
         from app import app
         print("✓ Application loaded successfully")
         print("\n🚀 ContentGuard AI is starting...")
-        print("📱 Open your browser to: http://localhost:5000")
+        print("📱 Open your browser to: http://localhost:5001")
         print("⏹️  Press Ctrl+C to stop the application")
         print("=" * 40)
         
