@@ -5,7 +5,11 @@ import time
 from datetime import datetime
 
 # Configure OpenAI API
-client = OpenAI(api_key="OPENAI_API_KEY")
+from config import Config
+
+def get_openai_client():
+    """Get OpenAI client with proper configuration"""
+    return OpenAI(api_key=Config.OPENAI_API_KEY)
 
 def analyze_post_content(title, content):
     """
@@ -15,6 +19,7 @@ def analyze_post_content(title, content):
     Evaluate the provided Reddit post for relevant information about it's maliciousness/harmfulness. If the post seems to contain malicious language or content, respond with 'MALICIOUS'. Otherwise, respond with 'SAFE'.""" # change first part
     
     try:
+        client = get_openai_client()
         response = client.chat.completions.create(
             model="gpt-4o-mini", # no o3 or 4.1
             messages=[

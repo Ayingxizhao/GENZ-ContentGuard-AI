@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malicious Content Detector</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>ContentGuard AI</h1>
+            </div>
+            <p class="subtitle">AI-powered malicious content detection for Gen Z language</p>
+        </header>
+
+        <main class="main-content">
+            <div class="input-section">
+                <h2>Analyze Your Content</h2>
+                <p>Enter text to detect malicious language, hate speech, harassment, or threats</p>
+                
+                <form id="analysisForm" class="analysis-form">
+                    <div class="form-group">
+                        <label for="title">Title (Optional)</label>
+                        <input type="text" id="title" name="title" placeholder="Enter post title...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="content">Content *</label>
+                        <textarea id="content" name="content" rows="6" placeholder="Enter the content you want to analyze..." required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="analyze-btn">
+                        <i class="fas fa-search"></i>
+                        Analyze Content
+                    </button>
+                </form>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2>Analysis Results</h2>
+                <div class="result-card" id="resultCard">
+                    <div class="result-header">
+                        <div class="status-indicator" id="statusIndicator">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <div class="result-info">
+                            <h3 id="resultTitle">Analyzing...</h3>
+                            <p id="resultSubtitle">Processing your content</p>
+                        </div>
+                    </div>
+                    
+                    <div class="result-details">
+                        <div class="detail-item">
+                            <span class="label">Analysis:</span>
+                            <span class="value" id="analysisText">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Confidence:</span>
+                            <span class="value" id="confidenceText">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Timestamp:</span>
+                            <span class="value" id="timestampText">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading-section" id="loadingSection" style="display: none;">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <p>Analyzing content with AI...</p>
+            </div>
+
+            <div class="error-section" id="errorSection" style="display: none;">
+                <div class="error-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error</h3>
+                    <p id="errorMessage">Something went wrong</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 ContentGuard AI. Powered by advanced language models.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

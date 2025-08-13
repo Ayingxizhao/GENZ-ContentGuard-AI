@@ -1,4 +1,4 @@
-# HAI_project
+# HAI_project - ContentGuard AI
 
 # conference: ICML, ICLR, Neurips, AAAI, CVPR
 
@@ -33,3 +33,29 @@ propose pipeline:
 4. base llm selction: chatgpt, llama, etc.
 5. fine-tuning: Pytorch 
 classification and prediction: 
+
+## 🚀 Web Application
+
+We've developed a **ContentGuard AI** web application that provides real-time malicious content detection through a modern web interface.
+
+### Features
+- **Real-time Analysis**: Instant AI-powered content analysis
+- **Modern UI**: Clean, responsive web interface
+- **Gen Z Language Support**: Optimized for internet slang and modern language patterns
+- **API Integration**: Uses OpenAI's GPT models for accurate detection
+
+### Quick Start
+1. Install dependencies: `pip install -r requirements.txt`
+2. Create `.env` file with your OpenAI API key
+3. Run the application: `python run.py`
+4. Open browser to: `http://localhost:5000`
+
+### Files
+- `app.py` - Main Flask application
+- `templates/index.html` - Web interface
+- `static/css/style.css` - Styling
+- `static/js/script.js` - Interactive functionality
+- `config.py` - Configuration management
+- `run.py` - Application launcher
+
+For detailed setup instructions, see [SETUP.md](SETUP.md).
