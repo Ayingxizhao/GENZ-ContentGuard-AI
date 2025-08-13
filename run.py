@@ -53,7 +53,7 @@ def start_application():
         print("=" * 40)
         
         # Start the app
-        app.run(debug=Config.DEBUG, host='0.0.0.0', port=5000)
+        app.run(debug=Config.DEBUG, host='0.0.0.0', port=5001)
         
     except ValueError as e:
         print(f"✗ Configuration error: {e}")

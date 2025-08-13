@@ -86,7 +86,7 @@ def main():
     print("✓ All tests passed! Your application is ready to run.")
     print("\nTo start the application:")
     print("  python app.py")
-    print("\nThen open your browser to: http://localhost:5000")
+    print("\nThen open your browser to: http://localhost:5001")
 
 if __name__ == "__main__":
     main()

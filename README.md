@@ -48,7 +48,7 @@ We've developed a **ContentGuard AI** web application that provides real-time ma
 1. Install dependencies: `pip install -r requirements.txt`
 2. Create `.env` file with your OpenAI API key
 3. Run the application: `python run.py`
-4. Open browser to: `http://localhost:5000`
+4. Open browser to: `http://localhost:5001`
 
 ### Files
 - `app.py` - Main Flask application
