@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from llm import analyze_post_content
+from local_model import analyze_with_local_model, local_detector
 import time
 from config import Config
 
@@ -17,28 +18,56 @@ def analyze():
         data = request.get_json()
         title = data.get('title', '')
         content = data.get('content', '')
+        use_openai = data.get('use_openai', False)  # Optional flag to force OpenAI
         
         if not title and not content:
             return jsonify({'error': 'Please provide either a title or content to analyze'}), 400
         
-        # Use the existing analyze_post_content function
-        analysis = analyze_post_content(title, content)
+        # Try local model first (faster and cheaper)
+        if not use_openai and local_detector.model_loaded:
+            result = analyze_with_local_model(title, content)
+            
+            if 'error' not in result:
+                return jsonify({
+                    'analysis': result['analysis'],
+                    'is_malicious': result['is_malicious'],
+                    'confidence': result['confidence'],
+                    'model_type': result['model_type'],
+                    'probabilities': result['probabilities'],
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+                })
         
-        if analysis is None:
-            return jsonify({'error': 'Analysis failed. Please try again.'}), 500
+        # Fallback to OpenAI if local model fails or is requested
+        if use_openai or not local_detector.model_loaded:
+            analysis = analyze_post_content(title, content)
+            
+            if analysis is None:
+                return jsonify({'error': 'Analysis failed. Please try again.'}), 500
+            
+            # Determine if content is malicious
+            is_malicious = 'MALICIOUS' in analysis.upper()
+            
+            return jsonify({
+                'analysis': analysis,
+                'is_malicious': is_malicious,
+                'confidence': 'High' if 'MALICIOUS' in analysis.upper() or 'SAFE' in analysis.upper() else 'Medium',
+                'model_type': 'openai_gpt4',
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+            })
         
-        # Determine if content is malicious
-        is_malicious = 'MALICIOUS' in analysis.upper()
-        
-        return jsonify({
-            'analysis': analysis,
-            'is_malicious': is_malicious,
-            'confidence': 'High' if 'MALICIOUS' in analysis.upper() or 'SAFE' in analysis.upper() else 'Medium',
-            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
-        })
+        # If we get here, local model failed
+        return jsonify({'error': 'Local model analysis failed'}), 500
         
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+
+@app.route('/model-info')
+def model_info():
+    """Get information about available models"""
+    return jsonify({
+        'local_model': local_detector.get_model_info(),
+        'openai_available': bool(Config.OPENAI_API_KEY)
+    })
 
 @app.route('/health')
 def health():

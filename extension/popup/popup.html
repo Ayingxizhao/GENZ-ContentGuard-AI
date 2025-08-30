@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenZ Content Detector</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ GenZ Detector</h1>
+            <div class="status-indicator" id="statusIndicator">
+                <span class="status-dot" id="statusDot"></span>
+                <span class="status-text" id="statusText">Ready</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h3>Analyze Text</h3>
+                <textarea id="textInput" placeholder="Paste or type text to analyze for malicious content..."></textarea>
+                <div class="button-group">
+                    <button id="analyzeBtn" class="primary-btn">Analyze</button>
+                    <button id="clearBtn" class="secondary-btn">Clear</button>
+                </div>
+            </div>
+
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h3>Analysis Result</h3>
+                <div class="result-card" id="resultCard">
+                    <div class="result-header">
+                        <span class="result-label" id="resultLabel">SAFE</span>
+                        <span class="confidence" id="confidence">95%</span>
+                    </div>
+                    <div class="result-details" id="resultDetails">
+                        <p>This content appears to be safe.</p>
+                    </div>
+                    <div class="model-info" id="modelInfo">
+                        <small>Analyzed with: Local ML Model</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Settings</h3>
+                <div class="setting-item">
+                    <label for="sensitivitySlider">Sensitivity:</label>
+                    <input type="range" id="sensitivitySlider" min="0" max="100" value="50">
+                    <span id="sensitivityValue">50%</span>
+                </div>
+                <div class="setting-item">
+                    <label for="autoScanToggle">Auto-scan:</label>
+                    <input type="checkbox" id="autoScanToggle">
+                </div>
+                <div class="setting-item">
+                    <label for="useOpenAIToggle">Use OpenAI (slower):</label>
+                    <input type="checkbox" id="useOpenAIToggle">
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button id="optionsBtn" class="link-btn">Options</button>
+            <button id="helpBtn" class="link-btn">Help</button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

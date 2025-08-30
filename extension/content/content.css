@@ -1,0 +1,211 @@
+/* Content script styles for GenZ Content Detector */
+
+.genz-detector-malicious {
+    border: 2px solid #ef4444 !important;
+    background-color: #fef2f2 !important;
+    padding: 8px !important;
+    border-radius: 4px !important;
+    position: relative !important;
+    transition: all 0.2s ease !important;
+}
+
+.genz-detector-malicious:hover {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3) !important;
+}
+
+.genz-detector-warning-icon {
+    position: absolute !important;
+    top: -10px !important;
+    right: -10px !important;
+    background: #ef4444 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    z-index: 1000 !important;
+    transition: all 0.2s ease !important;
+}
+
+.genz-detector-warning-icon:hover {
+    transform: scale(1.1) !important;
+    background: #dc2626 !important;
+}
+
+.genz-detector-popup {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    background: white !important;
+    border: 2px solid #ef4444 !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
+    max-width: 400px !important;
+    z-index: 10000 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    animation: genz-popup-fade-in 0.3s ease !important;
+}
+
+@keyframes genz-popup-fade-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.genz-detector-popup h3 {
+    color: #ef4444 !important;
+    margin: 0 0 10px 0 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+}
+
+.genz-detector-popup p {
+    margin: 8px 0 !important;
+    line-height: 1.5 !important;
+    color: #374151 !important;
+}
+
+.genz-detector-popup strong {
+    color: #111827 !important;
+}
+
+.genz-detector-popup-buttons {
+    margin-top: 15px !important;
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.genz-detector-btn {
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+.genz-detector-btn-primary {
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+.genz-detector-btn-primary:hover {
+    background: #dc2626 !important;
+    transform: translateY(-1px) !important;
+}
+
+.genz-detector-btn-secondary {
+    background: #6b7280 !important;
+    color: white !important;
+}
+
+.genz-detector-btn-secondary:hover {
+    background: #4b5563 !important;
+    transform: translateY(-1px) !important;
+}
+
+.genz-detector-notification {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    background: #10b981 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: 4px !important;
+    z-index: 10001 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    animation: genz-notification-slide-in 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+@keyframes genz-notification-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.genz-detector-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 9999 !important;
+    animation: genz-overlay-fade-in 0.2s ease !important;
+}
+
+@keyframes genz-overlay-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Loading indicator */
+.genz-detector-loading {
+    position: relative !important;
+    opacity: 0.7 !important;
+    pointer-events: none !important;
+}
+
+.genz-detector-loading::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin: -10px 0 0 -10px !important;
+    border: 2px solid #f3f4f6 !important;
+    border-top: 2px solid #667eea !important;
+    border-radius: 50% !important;
+    animation: genz-spin 1s linear infinite !important;
+    z-index: 1001 !important;
+}
+
+@keyframes genz-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .genz-detector-popup {
+        max-width: 90% !important;
+        margin: 20px !important;
+        transform: none !important;
+        top: 20px !important;
+        left: 20px !important;
+        right: 20px !important;
+    }
+    
+    .genz-detector-popup-buttons {
+        flex-direction: column !important;
+    }
+    
+    .genz-detector-notification {
+        right: 10px !important;
+        left: 10px !important;
+        text-align: center !important;
+    }
+}
