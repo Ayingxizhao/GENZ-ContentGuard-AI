@@ -26,8 +26,6 @@ ContentGuard AI is a web application that uses AI to detect malicious content, h
    FLASK_DEBUG=True
    ```
    
-   **Tip:** You can copy from `env.example` and rename it to `.env`
-   
    **Important**: Replace `your_actual_openai_api_key_here` with your real OpenAI API key.
 
 4. **Get an OpenAI API key**
@@ -45,7 +43,7 @@ ContentGuard AI is a web application that uses AI to detect malicious content, h
    ```
 
 2. **Open your web browser**
-   Navigate to: `http://localhost:5001`
+   Navigate to: `http://localhost:5000`
 
 3. **Use the application**
    - Enter text in the content field
