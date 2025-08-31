@@ -56,6 +56,12 @@ class GenZDetectorPopup {
             console.log('Scan button clicked!');
             this.scanCurrentPage();
         });
+
+        // Debug button
+        document.getElementById('debugBtn').addEventListener('click', () => {
+            console.log('Debug button clicked!');
+            this.debugPage();
+        });
     }
 
     async analyzeText() {
@@ -268,86 +274,168 @@ class GenZDetectorPopup {
                 return;
             }
 
-            console.log('Injecting content script into tab:', tab.id);
+            console.log('Current tab URL:', tab.url);
             
-            // First, try to inject the content script if it's not already there
+            // Show loading state
+            this.setLoading(true);
+            this.hideError();
+            
+            // First, test if content script is loaded
             try {
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    func: () => {
-                        // Check if content script is already loaded
-                        if (window.genzContentScriptLoaded) {
-                            return { alreadyLoaded: true };
-                        }
-                        
-                        // Mark as loaded
-                        window.genzContentScriptLoaded = true;
-                        
-                        console.log('🎯 GenZ Content Script Injected!');
-                        
-                        // Create a visible indicator
-                        const indicator = document.createElement('div');
-                        indicator.style.cssText = `
-                            position: fixed;
-                            top: 20px;
-                            right: 20px;
-                            background: #3b82f6;
-                            color: white;
-                            padding: 10px;
-                            border-radius: 5px;
-                            font-family: Arial, sans-serif;
-                            font-size: 14px;
-                            z-index: 10000;
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                        `;
-                        indicator.textContent = '🛡️ GenZ Extension Active';
-                        document.body.appendChild(indicator);
-                        
-                        // Set up message listener
-                        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-                            console.log('📨 Received message:', request);
-                            
-                            if (request.action === 'manualScan') {
-                                console.log('🔍 Manual scan requested');
-                                const elements = document.querySelectorAll('p, div, span, h1, h2, h3, h4, h5, h6');
-                                console.log(`📊 Found ${elements.length} text elements`);
-                                sendResponse({ scanned: elements.length });
-                            }
-                            
-                            return true;
-                        });
-                        
-                        console.log('✅ Content script setup complete');
-                        return { success: true };
-                    }
-                });
-            } catch (injectionError) {
-                console.log('Content script injection failed:', injectionError);
+                console.log('Testing content script connection...');
+                const pingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+                console.log('Ping response:', pingResponse);
+            } catch (pingError) {
+                console.error('Ping failed:', pingError);
+                
+                // Try to inject the content script manually
+                try {
+                    console.log('Attempting to inject content script manually...');
+                    await chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        files: ['content/content.js']
+                    });
+                    console.log('Content script injected manually');
+                    
+                    // Wait a moment for the script to initialize
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Test again
+                    const retryPing = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+                    console.log('Retry ping response:', retryPing);
+                } catch (injectionError) {
+                    console.error('Manual injection failed:', injectionError);
+                    this.showError('Content script not loaded. Please refresh the page and try again.');
+                    this.setLoading(false);
+                    return;
+                }
             }
-
-            // Now try to send the message
-            console.log('Sending manualScan message to tab:', tab.id);
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScan' });
             
-            console.log('Received response:', response);
-            if (response && response.scanned) {
-                let message = `Scanned ${response.scanned} elements on the page`;
-                if (response.analyzed) {
-                    message += `, analyzed ${response.analyzed} text elements`;
-                }
-                if (response.malicious > 0) {
-                    message += `, found ${response.malicious} potentially malicious elements`;
-                    this.showMaliciousResults(response.results);
+            // Now try the actual scan
+            try {
+                console.log('Sending manualScan message to tab:', tab.id);
+                const response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScan' });
+                
+                console.log('Received response:', response);
+                console.log('Response type:', typeof response);
+                console.log('Response keys:', response ? Object.keys(response) : 'null');
+                
+                if (response && response.scanned) {
+                    console.log('✅ Scan completed successfully');
+                    let message = `Scanned ${response.scanned} social media posts/comments`;
+                    if (response.analyzed) {
+                        message += `, analyzed ${response.analyzed} items`;
+                    }
+                    if (response.malicious > 0) {
+                        console.log('🚨 Malicious content found:', response.malicious, 'items');
+                        message += `, found ${response.malicious} potentially malicious posts/comments`;
+                        this.showMaliciousResults(response.results);
+                    } else {
+                        console.log('✅ No malicious content detected');
+                        message += ', no malicious content detected';
+                    }
+                    this.showSuccess(message);
+                } else if (response && response.error) {
+                    console.log('❌ Scan error:', response.error);
+                    this.showError(`Scan failed: ${response.error}`);
+                } else if (response && response.message) {
+                    console.log('❌ Scan message:', response.message);
+                    this.showError(response.message);
                 } else {
-                    message += ', no malicious content detected';
+                    console.log('❌ No valid response received');
+                    this.showError('Failed to scan social media content. Make sure the content script is loaded.');
                 }
-                this.showSuccess(message);
-            } else {
-                this.showError('Failed to scan page. Make sure you\'re on a supported website.');
+            } catch (error) {
+                console.error('Message sending failed:', error);
+                this.showError('Failed to communicate with the page. Make sure you\'re on a supported website.');
             }
         } catch (error) {
             console.error('Scan error:', error);
             this.showError('Failed to scan page. Make sure you\'re on a supported website.');
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    showMaliciousResults(results) {
+        if (!results || results.length === 0) return;
+        
+        const resultSection = document.getElementById('resultSection');
+        const resultCard = document.getElementById('resultCard');
+        const resultLabel = document.getElementById('resultLabel');
+        const confidence = document.getElementById('confidence');
+        const resultDetails = document.getElementById('resultDetails');
+        const modelInfo = document.getElementById('modelInfo');
+
+        // Show result section
+        resultSection.style.display = 'block';
+
+        // Update result card styling for malicious content
+        resultCard.className = 'result-card malicious';
+
+        // Update content
+        resultLabel.textContent = 'MALICIOUS CONTENT FOUND';
+        resultLabel.className = 'result-label malicious';
+        
+        confidence.textContent = `${results.length} items`;
+        
+        // Create detailed results
+        let detailsHtml = '<p>⚠️ The following potentially malicious content was found:</p><ul>';
+        results.forEach((item, index) => {
+            detailsHtml += `<li><strong>${item.element}:</strong> "${item.text}" (${item.confidence})</li>`;
+        });
+        detailsHtml += '</ul><p><strong>Recommendation:</strong> Review the highlighted content on the page.</p>';
+        
+        resultDetails.innerHTML = detailsHtml;
+        modelInfo.innerHTML = '<small>Page scan completed with Local ML Model</small>';
+    }
+
+    async debugPage() {
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab) {
+                this.showError('No active tab found');
+                return;
+            }
+
+            console.log('Debugging page:', tab.url);
+            
+            try {
+                const response = await chrome.tabs.sendMessage(tab.id, { action: 'debug' });
+                
+                if (response && response.debug) {
+                    const debug = response.debug;
+                    console.log('Debug info:', debug);
+                    
+                    let debugMessage = `Page Debug Info:\n\n`;
+                    debugMessage += `URL: ${debug.url}\n`;
+                    debugMessage += `Hostname: ${debug.hostname}\n`;
+                    debugMessage += `Total Elements: ${debug.totalElements}\n`;
+                    debugMessage += `Text Elements: ${debug.textElements}\n`;
+                    debugMessage += `Articles: ${debug.articles}\n`;
+                    debugMessage += `Data Test IDs: ${debug.dataTestIds}\n\n`;
+                    
+                    if (debug.sampleTexts.length > 0) {
+                        debugMessage += `Sample Texts:\n`;
+                        debug.sampleTexts.forEach((item, index) => {
+                            debugMessage += `${index + 1}. "${item.text}" (${item.tag})\n`;
+                        });
+                    } else {
+                        debugMessage += `No sample texts found\n`;
+                    }
+                    
+                    alert(debugMessage);
+                } else {
+                    this.showError('Debug failed - no response');
+                }
+            } catch (error) {
+                console.error('Debug error:', error);
+                this.showError('Debug failed: ' + error.message);
+            }
+        } catch (error) {
+            console.error('Debug error:', error);
+            this.showError('Debug failed: ' + error.message);
         }
     }
 
@@ -359,7 +447,7 @@ GenZ Content Detector Help:
 2. Click "Analyze" or press Ctrl+Enter
 3. View the analysis result
 4. Adjust sensitivity in settings
-5. Enable auto-scan for automatic detection
+5. Use "Scan Social Media" to analyze social media content
 
 The extension uses machine learning to detect:
 - Hate speech and discrimination
@@ -367,6 +455,12 @@ The extension uses machine learning to detect:
 - Online harassment
 - Violent threats
 - GenZ-specific malicious language
+
+Social Media Scanner:
+- Works on most social media platforms (Reddit, Twitter, Facebook, Instagram, TikTok, YouTube, LinkedIn, Discord)
+- Scans posts and comments specifically
+- Highlights malicious content with red borders
+- Shows results in the popup
 
 For best results, use the local model (faster) or OpenAI (more accurate).
         `;

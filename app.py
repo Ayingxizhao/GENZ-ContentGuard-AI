@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import time
 from local_model import analyze_with_local_model, local_detector
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/')
 def index():
@@ -23,14 +25,20 @@ def analyze():
             result = analyze_with_local_model(title, content)
             
             if 'error' not in result:
-                return jsonify({
+                response_data = {
                     'analysis': result['analysis'],
                     'is_malicious': result['is_malicious'],
                     'confidence': result['confidence'],
                     'model_type': result['model_type'],
                     'probabilities': result['probabilities'],
                     'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
-                })
+                }
+                
+                # Add detailed analysis if available
+                if 'detailed_analysis' in result:
+                    response_data['detailed_analysis'] = result['detailed_analysis']
+                
+                return jsonify(response_data)
         
         # If local model is not loaded
         return jsonify({'error': 'Local model not loaded. Please run data_processor.py first.'}), 500
@@ -51,4 +59,4 @@ def health():
     return jsonify({'status': 'healthy'})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=False, host='0.0.0.0', port=5001)
