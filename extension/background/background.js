@@ -28,8 +28,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     
     if (request.action === 'openOptions') {
-        chrome.runtime.openOptionsPage();
-        sendResponse({ success: true });
+        // Options page not available yet
+        sendResponse({ success: false, message: 'Options page not available' });
     }
     
     return true;

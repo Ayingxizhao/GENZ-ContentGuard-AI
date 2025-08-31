@@ -37,7 +37,7 @@ class GenZDetectorPopup {
 
         // Footer buttons
         document.getElementById('optionsBtn').addEventListener('click', () => {
-            chrome.runtime.openOptionsPage();
+            alert('Options page not available yet. All settings can be configured in this popup.');
         });
 
         document.getElementById('helpBtn').addEventListener('click', () => {
@@ -49,6 +49,12 @@ class GenZDetectorPopup {
             if (e.key === 'Enter' && e.ctrlKey) {
                 this.analyzeText();
             }
+        });
+
+        // Scan current page button
+        document.getElementById('scanPageBtn').addEventListener('click', () => {
+            console.log('Scan button clicked!');
+            this.scanCurrentPage();
         });
     }
 
@@ -232,6 +238,106 @@ class GenZDetectorPopup {
         const errorDiv = document.querySelector('.error');
         if (errorDiv) {
             errorDiv.style.display = 'none';
+        }
+    }
+
+    showSuccess(message) {
+        let successDiv = document.querySelector('.success');
+        if (!successDiv) {
+            successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.style.cssText = 'color: #10b981; margin-top: 10px; font-size: 14px;';
+            document.querySelector('.input-section').appendChild(successDiv);
+        }
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            successDiv.style.display = 'none';
+        }, 3000);
+    }
+
+    async scanCurrentPage() {
+        try {
+            console.log('Starting page scan...');
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab) {
+                console.log('No active tab found');
+                this.showError('No active tab found');
+                return;
+            }
+
+            console.log('Injecting content script into tab:', tab.id);
+            
+            // First, try to inject the content script if it's not already there
+            try {
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    func: () => {
+                        // Check if content script is already loaded
+                        if (window.genzContentScriptLoaded) {
+                            return { alreadyLoaded: true };
+                        }
+                        
+                        // Mark as loaded
+                        window.genzContentScriptLoaded = true;
+                        
+                        console.log('🎯 GenZ Content Script Injected!');
+                        
+                        // Create a visible indicator
+                        const indicator = document.createElement('div');
+                        indicator.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: #3b82f6;
+                            color: white;
+                            padding: 10px;
+                            border-radius: 5px;
+                            font-family: Arial, sans-serif;
+                            font-size: 14px;
+                            z-index: 10000;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                        `;
+                        indicator.textContent = '🛡️ GenZ Extension Active';
+                        document.body.appendChild(indicator);
+                        
+                        // Set up message listener
+                        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+                            console.log('📨 Received message:', request);
+                            
+                            if (request.action === 'manualScan') {
+                                console.log('🔍 Manual scan requested');
+                                const elements = document.querySelectorAll('p, div, span, h1, h2, h3, h4, h5, h6');
+                                console.log(`📊 Found ${elements.length} text elements`);
+                                sendResponse({ scanned: elements.length });
+                            }
+                            
+                            return true;
+                        });
+                        
+                        console.log('✅ Content script setup complete');
+                        return { success: true };
+                    }
+                });
+            } catch (injectionError) {
+                console.log('Content script injection failed:', injectionError);
+            }
+
+            // Now try to send the message
+            console.log('Sending manualScan message to tab:', tab.id);
+            const response = await chrome.tabs.sendMessage(tab.id, { action: 'manualScan' });
+            
+            console.log('Received response:', response);
+            if (response && response.scanned) {
+                this.showSuccess(`Scanned ${response.scanned} elements on the page`);
+            } else {
+                this.showError('Failed to scan page. Make sure you\'re on a supported website.');
+            }
+        } catch (error) {
+            console.error('Scan error:', error);
+            this.showError('Failed to scan page. Make sure you\'re on a supported website.');
         }
     }
 
