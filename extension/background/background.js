@@ -34,22 +34,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
     return true;
 });
-
-// Handle context menu (optional)
-chrome.runtime.onInstalled.addListener(() => {
-    chrome.contextMenus.create({
-        id: 'analyzeSelection',
-        title: 'Analyze with GenZ Detector',
-        contexts: ['selection']
-    });
-});
-
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === 'analyzeSelection') {
-        // Send selected text to content script for analysis
-        chrome.tabs.sendMessage(tab.id, {
-            action: 'analyzeText',
-            text: info.selectionText
-        });
-    }
-});
