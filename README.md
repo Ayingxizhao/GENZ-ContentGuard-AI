@@ -1,4 +1,4 @@
-# 🛡️ ContentGuard AI
+# 🛡️ GENZ ContentGuard AI
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
@@ -8,7 +8,7 @@
 
 > **AI-powered malicious content detection system optimized for Gen Z language patterns**
 
-ContentGuard AI is an advanced machine learning system designed to detect and analyze malicious content, hate speech, harassment, and harmful language patterns commonly used in modern online communication, with special focus on Gen Z language and internet slang.
+GENZ ContentGuard AI is an advanced machine learning system designed to detect and analyze malicious content, hate speech, harassment, and harmful language patterns commonly used in modern online communication, with special focus on Gen Z language and internet slang.
 
 ## 🌟 Features
 
