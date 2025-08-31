@@ -331,7 +331,17 @@ class GenZDetectorPopup {
             
             console.log('Received response:', response);
             if (response && response.scanned) {
-                this.showSuccess(`Scanned ${response.scanned} elements on the page`);
+                let message = `Scanned ${response.scanned} elements on the page`;
+                if (response.analyzed) {
+                    message += `, analyzed ${response.analyzed} text elements`;
+                }
+                if (response.malicious > 0) {
+                    message += `, found ${response.malicious} potentially malicious elements`;
+                    this.showMaliciousResults(response.results);
+                } else {
+                    message += ', no malicious content detected';
+                }
+                this.showSuccess(message);
             } else {
                 this.showError('Failed to scan page. Make sure you\'re on a supported website.');
             }

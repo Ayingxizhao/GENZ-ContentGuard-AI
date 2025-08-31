@@ -1,0 +1,10 @@
+{
+  "extensionPath": "/Users/yingxizhao/Desktop/Research/genzLang/extension",
+  "apiUrl": "http://localhost:5001",
+  "devMode": true,
+  "autoReload": true,
+  "watchFiles": ["*.js", "*.html", "*.css", "*.json"],
+  "excludeFiles": ["node_modules", ".git", "*.min.js"],
+  "reloadDelay": 1000,
+  "extensionId": "leidiikbjkdeahigeioijohcklggmmpm"
+}
