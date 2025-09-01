@@ -35,10 +35,13 @@ class GenZDataProcessor:
     def load_and_clean_data(self):
         """Load and clean the Reddit data"""
         print("Loading Reddit data...")
-        
+        url1 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts1.csv"
+        url2 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts2.csv"
+        url3 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts3.csv"
         # Load both CSV files
-        df1 = pd.read_csv('genz_reddit_posts1.csv')
-        df2 = pd.read_csv('genz_reddit_posts2.csv')
+        df1 = pd.read_csv(url1)
+        df2 = pd.read_csv(url2)
+        df3 = pd.read_csv(url3)
         
         # Combine datasets
         df = pd.concat([df1, df2], ignore_index=True)
