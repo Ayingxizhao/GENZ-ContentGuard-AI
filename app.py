@@ -1,7 +1,7 @@
 import time
-
-from flask import Flask, jsonify, render_template, request, Response, Tuple
 from typing import Union
+
+from flask import Flask, Response, Tuple, jsonify, render_template, request
 from flask_cors import CORS
 
 from local_model import analyze_with_local_model, local_detector
