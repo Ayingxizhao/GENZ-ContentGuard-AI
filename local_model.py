@@ -41,6 +41,15 @@ class LocalGenZDetector:
 
         return text
 
+    def _get_risk_level(self, malicious_score: int) -> str:
+        """Determine risk level based on malicious score"""
+        if malicious_score >= 5:
+            return "HIGH"
+        elif malicious_score >= 3:
+            return "MEDIUM"
+        else:
+            return "LOW"
+
     def analyze_keywords(self, text: str) -> Dict[str, Any]:
         """Analyze text for specific malicious and safe keywords"""
         text_lower = text.lower()
@@ -472,13 +481,7 @@ class LocalGenZDetector:
                 "detailed_analysis": {
                     "keyword_analysis": keyword_analysis,
                     "explanation": explanation,
-                    "risk_level": (
-                        "HIGH"
-                        if keyword_analysis["malicious_score"] >= 5
-                        else "MEDIUM"
-                        if keyword_analysis["malicious_score"] >= 3
-                        else "LOW"
-                    ),
+                    "risk_level": self._get_risk_level(keyword_analysis["malicious_score"]),
                     "elements_scanned": keyword_analysis["total_keywords_found"],
                 },
             }
