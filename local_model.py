@@ -472,11 +472,13 @@ class LocalGenZDetector:
                 "detailed_analysis": {
                     "keyword_analysis": keyword_analysis,
                     "explanation": explanation,
-                    "risk_level": "HIGH"
-                    if keyword_analysis["malicious_score"] >= 5
-                    else "MEDIUM"
-                    if keyword_analysis["malicious_score"] >= 3
-                    else "LOW",
+                    "risk_level": (
+                        "HIGH"
+                        if keyword_analysis["malicious_score"] >= 5
+                        else "MEDIUM"
+                        if keyword_analysis["malicious_score"] >= 3
+                        else "LOW"
+                    ),
                     "elements_scanned": keyword_analysis["total_keywords_found"],
                 },
             }
