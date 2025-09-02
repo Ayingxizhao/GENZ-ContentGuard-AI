@@ -1,6 +1,7 @@
 import json
 import pickle
 import re
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
@@ -11,11 +12,11 @@ from sklearn.naive_bayes import MultinomialNB
 
 
 class GenZDataProcessor:
-    def __init__(self):
+    def __init__(self) -> None:
         self.vectorizer = TfidfVectorizer(max_features=5000, stop_words="english")
         self.model = MultinomialNB()
 
-    def clean_text(self, text):
+    def clean_text(self, text: str) -> str:
         """Clean text data"""
         if pd.isna(text):
             return ""
@@ -34,7 +35,7 @@ class GenZDataProcessor:
 
         return text
 
-    def load_and_clean_data(self):
+    def load_and_clean_data(self) -> pd.DataFrame:
         """Load and clean the Reddit data"""
         print("Loading Reddit data...")
         url1 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts1.csv"
@@ -62,7 +63,7 @@ class GenZDataProcessor:
         print(f"Posts after cleaning: {len(df)}")
         return df
 
-    def create_training_data(self, df):
+    def create_training_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Create training data with improved malicious keyword detection"""
 
         # Enhanced malicious keywords/phrases (GenZ specific + modern online harassment)
@@ -361,7 +362,7 @@ class GenZDataProcessor:
         ]
 
         # Improved classification logic
-        def classify_text(text):
+        def classify_text(text: str) -> str:
             text_lower = text.lower()
 
             # Check for malicious keywords (stronger weight)
@@ -419,7 +420,7 @@ class GenZDataProcessor:
 
         return balanced_df
 
-    def train_model(self, df):
+    def train_model(self, df: pd.DataFrame) -> float:
         """Train the ML model"""
         print("Training model...")
 
@@ -445,9 +446,9 @@ class GenZDataProcessor:
         print("\nClassification Report:")
         print(classification_report(y_test, y_pred))
 
-        return accuracy
+        return float(accuracy)
 
-    def save_model(self, filename="genz_detector_model.pkl"):
+    def save_model(self, filename: str = "genz_detector_model.pkl") -> None:
         """Save the trained model"""
         model_data = {"vectorizer": self.vectorizer, "model": self.model}
 
@@ -456,7 +457,7 @@ class GenZDataProcessor:
 
         print(f"Model saved as {filename}")
 
-    def predict_text(self, text):
+    def predict_text(self, text: str) -> Dict[str, Any]:
         """Predict if text is malicious"""
         # Clean text
         clean_text = self.clean_text(text)
@@ -475,7 +476,7 @@ class GenZDataProcessor:
         }
 
 
-def main():
+def main() -> None:
     """Main processing pipeline"""
     processor = GenZDataProcessor()
 

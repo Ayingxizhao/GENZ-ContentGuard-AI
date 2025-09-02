@@ -23,7 +23,7 @@ target_subreddits = [
 ]
 
 
-def clean_text(text):
+def clean_text(text: str) -> str:
     """Clean and standardize text content"""
     if not text:
         return ""
@@ -34,7 +34,7 @@ def clean_text(text):
     return text.strip()
 
 
-def scrape_reddit_posts(post_limit_per_subreddit):
+def scrape_reddit_posts(post_limit_per_subreddit: int) -> pd.DataFrame:
     posts_data = []
 
     for subreddit_name in target_subreddits:

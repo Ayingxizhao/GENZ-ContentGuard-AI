@@ -9,7 +9,7 @@ import sys
 import time
 
 
-def check_dependencies():
+def check_dependencies() -> bool:
     """Check if required packages are installed"""
     try:
         import flask
@@ -25,7 +25,7 @@ def check_dependencies():
         return False
 
 
-def check_env_file():
+def check_env_file() -> bool:
     """Check if .env file exists"""
     if os.path.exists(".env"):
         print("✓ Environment file (.env) found")
@@ -37,7 +37,7 @@ def check_env_file():
         return False
 
 
-def start_application():
+def start_application() -> bool:
     """Start the Flask application"""
     print("\nStarting ContentGuard AI...")
     print("=" * 40)
@@ -60,6 +60,7 @@ def start_application():
 
         # Start the app
         app.run(debug=Config.DEBUG, host="0.0.0.0", port=5001)
+        return True  # This line will never be reached, but satisfies mypy
 
     except ValueError as e:
         print(f"✗ Configuration error: {e}")
@@ -70,7 +71,7 @@ def start_application():
         return False
 
 
-def main():
+def main() -> None:
     """Main launcher function"""
     print("ContentGuard AI - Malicious Content Detection")
     print("=" * 50)

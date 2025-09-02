@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 
 class LocalGenZDetector:
-    def __init__(self, model_path="genz_detector_model.pkl"):
+    def __init__(self, model_path: str = "genz_detector_model.pkl") -> None:
         """Initialize the local model detector"""
         try:
             with open(model_path, "rb") as f:

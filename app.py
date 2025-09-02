@@ -1,6 +1,7 @@
 import time
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, Response, Tuple
+from typing import Union
 from flask_cors import CORS
 
 from local_model import analyze_with_local_model, local_detector
@@ -10,12 +11,12 @@ CORS(app)  # Enable CORS for all routes
 
 
 @app.route("/")
-def index():
+def index() -> str:
     return render_template("index.html")
 
 
 @app.route("/analyze", methods=["POST"])
-def analyze():
+def analyze() -> Union[Response, Tuple[Response, int]]:
     try:
         data = request.get_json()
         title = data.get("title", "")
@@ -52,13 +53,13 @@ def analyze():
 
 
 @app.route("/model-info")
-def model_info():
+def model_info() -> Union[Response, Tuple[Response, int]]:
     """Get information about available models"""
     return jsonify({"local_model": local_detector.get_model_info(), "openai_available": False})
 
 
 @app.route("/health")
-def health():
+def health() -> Union[Response, Tuple[Response, int]]:
     return jsonify({"status": "healthy"})
 
 

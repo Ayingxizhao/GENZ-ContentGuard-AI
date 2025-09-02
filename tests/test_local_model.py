@@ -9,7 +9,7 @@ from local_model import LocalGenZDetector, analyze_with_local_model
 class TestLocalGenZDetector:
     """Test cases for the LocalGenZDetector class"""
 
-    def test_init_model_loaded(self):
+    def test_init_model_loaded(self) -> None:
         """Test initialization with a loaded model"""
         mock_model_data = {"vectorizer": MagicMock(), "model": MagicMock()}
 
@@ -18,13 +18,13 @@ class TestLocalGenZDetector:
             detector = LocalGenZDetector()
             assert detector.model_loaded is True
 
-    def test_init_model_not_found(self):
+    def test_init_model_not_found(self) -> None:
         """Test initialization when model file is not found"""
         with patch("builtins.open", side_effect=FileNotFoundError):
             detector = LocalGenZDetector()
             assert detector.model_loaded is False
 
-    def test_clean_text(self):
+    def test_clean_text(self) -> None:
         """Test text cleaning functionality"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
 
@@ -43,7 +43,7 @@ class TestLocalGenZDetector:
         cleaned = detector.clean_text(text_with_spaces)
         assert cleaned == "Multiple spaces here"
 
-    def test_analyze_keywords_malicious(self):
+    def test_analyze_keywords_malicious(self) -> None:
         """Test keyword analysis for malicious content"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
 
@@ -54,7 +54,7 @@ class TestLocalGenZDetector:
         assert "suicide_self_harm" in result["malicious_keywords"]
         assert "kill yourself" in result["malicious_keywords"]["suicide_self_harm"]
 
-    def test_analyze_keywords_safe(self):
+    def test_analyze_keywords_safe(self) -> None:
         """Test keyword analysis for safe content"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
 
@@ -65,7 +65,7 @@ class TestLocalGenZDetector:
         assert "positive_support" in result["safe_keywords"]
         assert "help" in result["safe_keywords"]["positive_support"]
 
-    def test_predict_model_not_loaded(self):
+    def test_predict_model_not_loaded(self) -> None:
         """Test prediction when model is not loaded"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
         detector.model_loaded = False
@@ -75,7 +75,7 @@ class TestLocalGenZDetector:
         assert "error" in result
         assert result["prediction"] == "unknown"
 
-    def test_predict_no_text(self):
+    def test_predict_no_text(self) -> None:
         """Test prediction with no text provided"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
         detector.model_loaded = True
@@ -85,7 +85,7 @@ class TestLocalGenZDetector:
         assert "error" in result
         assert "No text provided" in result["error"]
 
-    def test_predict_success(self):
+    def test_predict_success(self) -> None:
         """Test successful prediction"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
         detector.model_loaded = True
@@ -104,7 +104,7 @@ class TestLocalGenZDetector:
         assert "confidence" in result
         assert "detailed_analysis" in result
 
-    def test_get_model_info_loaded(self):
+    def test_get_model_info_loaded(self) -> None:
         """Test getting model info when model is loaded"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
         detector.model_loaded = True
@@ -117,7 +117,7 @@ class TestLocalGenZDetector:
         assert info["model_type"] == "MultinomialNB"
         assert info["features"] == 1000
 
-    def test_get_model_info_not_loaded(self):
+    def test_get_model_info_not_loaded(self) -> None:
         """Test getting model info when model is not loaded"""
         detector = LocalGenZDetector.__new__(LocalGenZDetector)
         detector.model_loaded = False
@@ -130,7 +130,7 @@ class TestLocalGenZDetector:
 class TestAnalyzeWithLocalModel:
     """Test cases for the analyze_with_local_model function"""
 
-    def test_analyze_with_local_model(self):
+    def test_analyze_with_local_model(self) -> None:
         """Test the convenience function"""
         with patch("local_model.local_detector") as mock_detector:
             mock_detector.predict.return_value = {"analysis": "SAFE", "is_malicious": False, "confidence": "90%"}

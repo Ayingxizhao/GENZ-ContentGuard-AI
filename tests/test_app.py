@@ -1,11 +1,12 @@
 import json
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 
 @pytest.fixture
-def client():
+def client() -> Any:
     """Create a test client for the Flask application"""
     with patch("local_model.local_detector") as mock_detector:
         mock_detector.model_loaded = True
@@ -33,20 +34,20 @@ def client():
 class TestApp:
     """Test cases for the Flask application"""
 
-    def test_index_route(self, client):
+    def test_index_route(self, client: Any) -> None:
         """Test the index route returns the main page"""
         response = client.get("/")
         assert response.status_code == 200
         assert b"<!DOCTYPE html>" in response.data
 
-    def test_health_route(self, client):
+    def test_health_route(self, client: Any) -> None:
         """Test the health check endpoint"""
         response = client.get("/health")
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["status"] == "healthy"
 
-    def test_model_info_route(self, client):
+    def test_model_info_route(self, client: Any) -> None:
         """Test the model info endpoint"""
         with patch("app.local_detector") as mock_detector:
             mock_detector.get_model_info.return_value = {
@@ -62,7 +63,7 @@ class TestApp:
             assert "local_model" in data
             assert data["local_model"]["status"] == "loaded"
 
-    def test_analyze_route_success(self, client):
+    def test_analyze_route_success(self, client: Any) -> None:
         """Test successful text analysis"""
         with patch("app.local_detector") as mock_detector:
             mock_detector.model_loaded = True
@@ -85,7 +86,7 @@ class TestApp:
             assert "timestamp" in data
             assert data["is_malicious"] is False
 
-    def test_analyze_route_no_content(self, client):
+    def test_analyze_route_no_content(self, client: Any) -> None:
         """Test analysis with no content provided"""
         response = client.post("/analyze", json={}, content_type="application/json")
 
@@ -93,7 +94,7 @@ class TestApp:
         data = json.loads(response.data)
         assert "error" in data
 
-    def test_analyze_route_model_not_loaded(self, client):
+    def test_analyze_route_model_not_loaded(self, client: Any) -> None:
         """Test analysis when model is not loaded"""
         with patch("app.local_detector") as mock:
             mock.model_loaded = False
@@ -105,7 +106,7 @@ class TestApp:
             assert "error" in data
             assert "not loaded" in data["error"]
 
-    def test_analyze_route_malicious_content(self, client):
+    def test_analyze_route_malicious_content(self, client: Any) -> None:
         """Test analysis of malicious content"""
         with patch("local_model.local_detector") as mock_detector:
             mock_detector.model_loaded = True
@@ -131,7 +132,7 @@ class TestApp:
             assert data["is_malicious"] is True
             assert data["analysis"] == "MALICIOUS"
 
-    def test_analyze_route_invalid_json(self, client):
+    def test_analyze_route_invalid_json(self, client: Any) -> None:
         """Test analysis with invalid JSON"""
         response = client.post("/analyze", data="invalid json", content_type="application/json")
 
