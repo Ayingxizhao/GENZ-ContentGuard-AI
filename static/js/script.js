@@ -4,16 +4,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingSection = document.getElementById('loadingSection');
     const errorSection = document.getElementById('errorSection');
     const analyzeBtn = document.querySelector('.analyze-btn');
+    const exampleBtn = document.getElementById('exampleBtn');
+    const contentTextarea = document.getElementById('content');
+    const titleInput = document.getElementById('title');
+    const charCounter = document.getElementById('content-counter');
+    const charCount = charCounter.querySelector('.char-count');
+    const progressBar = charCounter.querySelector('.progress-bar');
+    const charLimit = charCounter.querySelector('.char-limit');
+
+    // Character counter functionality
+    function updateCharCounter() {
+        const count = contentTextarea.value.length;
+        const maxChars = 5000;
+        const percentage = (count / maxChars) * 100;
+        
+        charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+        progressBar.style.width = `${percentage}%`;
+        
+        // Update counter styling based on usage
+        charCounter.className = 'char-counter';
+        if (percentage >= 90) {
+            charCounter.classList.add('danger');
+        } else if (percentage >= 70) {
+            charCounter.classList.add('warning');
+        }
+        
+        // Update aria-live for screen readers
+        charCounter.setAttribute('aria-label', `${count} of ${maxChars} characters used`);
+    }
+
+    // Initialize character counter
+    updateCharCounter();
 
     // Form submission handler
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const title = document.getElementById('title').value.trim();
-        const content = document.getElementById('content').value.trim();
+        const title = titleInput.value.trim();
+        const content = contentTextarea.value.trim();
         
         if (!content) {
             showError('Please enter some content to analyze.');
+            return;
+        }
+        
+        if (content.length > 5000) {
+            showError('Content exceeds the maximum length of 5000 characters.');
             return;
         }
         
@@ -52,9 +88,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading
         loadingSection.style.display = 'block';
         
-        // Disable button
+        // Disable button and update text
         analyzeBtn.disabled = true;
-        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Analyzing...</span>';
+        
+        // Announce to screen readers
+        announceToScreenReader('Analysis in progress. Please wait.');
     }
 
     function showResults(data) {
@@ -74,16 +113,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set status indicator
         statusIndicator.className = 'status-indicator';
+        let statusMessage = '';
+        
         if (data.is_malicious) {
             statusIndicator.classList.add('malicious');
-            statusIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            statusIndicator.innerHTML = '<i class="fas fa-exclamation-triangle" aria-hidden="true"></i>';
             resultTitle.textContent = 'Malicious Content Detected';
             resultSubtitle.textContent = 'This content appears to contain harmful language';
+            statusMessage = 'Malicious content detected';
         } else {
             statusIndicator.classList.add('safe');
-            statusIndicator.innerHTML = '<i class="fas fa-check-circle"></i>';
+            statusIndicator.innerHTML = '<i class="fas fa-check-circle" aria-hidden="true"></i>';
             resultTitle.textContent = 'Content is Safe';
             resultSubtitle.textContent = 'No malicious content detected';
+            statusMessage = 'Content is safe';
         }
         
         // Update basic details
@@ -109,10 +152,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Re-enable button
         analyzeBtn.disabled = false;
-        analyzeBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Content';
+        analyzeBtn.innerHTML = '<i class="fas fa-search" aria-hidden="true"></i><span>Analyze Content</span>';
         
         // Scroll to results
         resultsSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // Announce to screen readers
+        announceToScreenReader(`Analysis complete. ${statusMessage}. Confidence: ${data.confidence}`);
     }
 
     function showDetailedAnalysis(detailedAnalysis) {
@@ -135,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             const noRiskItem = document.createElement('div');
             noRiskItem.className = 'category-item positive';
+            noRiskItem.setAttribute('role', 'listitem');
             noRiskItem.innerHTML = '<div class="category-name">No risk categories detected</div>';
             riskCategoriesList.appendChild(noRiskItem);
         }
@@ -149,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             const noPositiveItem = document.createElement('div');
             noPositiveItem.className = 'category-item';
+            noPositiveItem.setAttribute('role', 'listitem');
             noPositiveItem.innerHTML = '<div class="category-name">No positive elements detected</div>';
             positiveElementsList.appendChild(noPositiveItem);
         }
@@ -163,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createCategoryItem(category, keywords, type) {
         const categoryItem = document.createElement('div');
         categoryItem.className = `category-item ${type}`;
+        categoryItem.setAttribute('role', 'listitem');
         
         const categoryName = category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         const keywordsText = keywords.slice(0, 3).join(', ');
@@ -199,36 +248,43 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Re-enable button
         analyzeBtn.disabled = false;
-        analyzeBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Content';
+        analyzeBtn.innerHTML = '<i class="fas fa-search" aria-hidden="true"></i><span>Analyze Content</span>';
         
         // Scroll to error
         errorSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // Announce to screen readers
+        announceToScreenReader(`Error: ${message}`);
     }
 
-    // Add some interactive features
-    const contentTextarea = document.getElementById('content');
-    const titleInput = document.getElementById('title');
-    
+    // Screen reader announcement function
+    function announceToScreenReader(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'sr-only';
+        announcement.textContent = message;
+        
+        document.body.appendChild(announcement);
+        
+        // Remove after announcement
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    }
+
     // Auto-resize textarea
     contentTextarea.addEventListener('input', function() {
         this.style.height = 'auto';
-        this.style.height = Math.max(120, this.scrollHeight) + 'px';
+        this.style.height = Math.max(140, this.scrollHeight) + 'px';
+        updateCharCounter();
     });
-    
+
     // Character counter for content
     contentTextarea.addEventListener('input', function() {
-        const charCount = this.value.length;
-        const maxChars = 5000; // Reasonable limit
-        
-        if (charCount > maxChars * 0.9) {
-            this.style.borderColor = '#f56565';
-        } else if (charCount > maxChars * 0.7) {
-            this.style.borderColor = '#ed8936';
-        } else {
-            this.style.borderColor = '#e2e8f0';
-        }
+        updateCharCounter();
     });
-    
+
     // Clear form when starting new analysis
     form.addEventListener('submit', function() {
         // Store values for potential retry
@@ -237,64 +293,150 @@ document.addEventListener('DOMContentLoaded', function() {
             content: contentTextarea.value
         };
     });
-    
+
+    // Example button functionality
+    exampleBtn.addEventListener('click', function() {
+        titleInput.value = 'Example Post';
+        contentTextarea.value = 'This is an example of content that would be analyzed for malicious language. The AI will evaluate this text and provide a determination.';
+        contentTextarea.style.height = 'auto';
+        contentTextarea.style.height = Math.max(140, contentTextarea.scrollHeight) + 'px';
+        updateCharCounter();
+        
+        // Focus on content textarea
+        contentTextarea.focus();
+        
+        // Announce to screen readers
+        announceToScreenReader('Example content loaded');
+    });
+
     // Add keyboard shortcuts
     document.addEventListener('keydown', function(e) {
         // Ctrl/Cmd + Enter to submit
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
-            form.dispatchEvent(new Event('submit'));
+            if (!analyzeBtn.disabled) {
+                form.dispatchEvent(new Event('submit'));
+            }
         }
         
         // Escape to clear form
         if (e.key === 'Escape') {
             titleInput.value = '';
             contentTextarea.value = '';
-            contentTextarea.style.height = '120px';
-            contentTextarea.style.borderColor = '#e2e8f0';
+            contentTextarea.style.height = '140px';
+            updateCharCounter();
             
             // Hide all sections
             resultsSection.style.display = 'none';
             loadingSection.style.display = 'none';
             errorSection.style.display = 'none';
+            
+            // Focus on content textarea
+            contentTextarea.focus();
         }
     });
+
+    // Add retry functionality
+    function addRetryButton() {
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'example-btn';
+        retryBtn.innerHTML = '<i class="fas fa-redo" aria-hidden="true"></i><span>Retry Analysis</span>';
+        retryBtn.setAttribute('aria-label', 'Retry the last analysis');
+        
+        retryBtn.addEventListener('click', function() {
+            if (window.lastAnalysis) {
+                titleInput.value = window.lastAnalysis.title;
+                contentTextarea.value = window.lastAnalysis.content;
+                contentTextarea.style.height = 'auto';
+                contentTextarea.style.height = Math.max(140, contentTextarea.scrollHeight) + 'px';
+                updateCharCounter();
+                
+                // Submit form
+                form.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        return retryBtn;
+    }
+
+    // Add retry button to error section
+    const errorCard = document.querySelector('.error-card');
+    const retryBtn = addRetryButton();
+    errorCard.appendChild(retryBtn);
+
+    // Initialize focus management
+    contentTextarea.focus();
     
-    // Add helpful tooltips/info
-    const contentLabel = document.querySelector('label[for="content"]');
-    contentLabel.innerHTML += ' <span style="color: #718096; font-size: 0.8rem;">(Press Ctrl+Enter to analyze)</span>';
-    
-    // Add example button
-    const exampleBtn = document.createElement('button');
-    exampleBtn.type = 'button';
-    exampleBtn.className = 'example-btn';
-    exampleBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Try Example';
-    exampleBtn.style.cssText = `
-        background: #edf2f7;
-        color: #4a5568;
-        border: 1px solid #e2e8f0;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        margin-top: 10px;
-        transition: all 0.3s ease;
-    `;
-    
-    exampleBtn.addEventListener('mouseenter', function() {
-        this.style.background = '#e2e8f0';
+    // Add form validation feedback
+    form.addEventListener('invalid', function(e) {
+        e.preventDefault();
+        const invalidElement = e.target;
+        invalidElement.focus();
+        
+        if (invalidElement === contentTextarea) {
+            showError('Please enter content to analyze.');
+        }
+    }, true);
+
+    // Add loading state for better UX
+    let loadingTimeout;
+    form.addEventListener('submit', function() {
+        // Set a minimum loading time for better UX
+        loadingTimeout = setTimeout(() => {
+            if (loadingSection.style.display === 'block') {
+                loadingSection.querySelector('p').textContent = 'This may take a few moments...';
+            }
+        }, 2000);
     });
-    
-    exampleBtn.addEventListener('mouseleave', function() {
-        this.style.background = '#edf2f7';
+
+    // Clear timeout when results are shown
+    const originalShowResults = showResults;
+    showResults = function(data) {
+        clearTimeout(loadingTimeout);
+        originalShowResults(data);
+    };
+
+    const originalShowError = showError;
+    showError = function(message) {
+        clearTimeout(loadingTimeout);
+        originalShowError(message);
+    };
+
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
     });
-    
-    exampleBtn.addEventListener('click', function() {
-        titleInput.value = 'Example Post';
-        contentTextarea.value = 'This is an example of content that would be analyzed for malicious language. The AI will evaluate this text and provide a determination.';
-        contentTextarea.style.height = 'auto';
-        contentTextarea.style.height = Math.max(120, contentTextarea.scrollHeight) + 'px';
+
+    // Add intersection observer for animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe elements for animation
+    document.querySelectorAll('.feature-card, .result-card, .breakdown-section').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+        observer.observe(el);
     });
-    
-    form.appendChild(exampleBtn);
 });
