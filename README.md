@@ -100,19 +100,6 @@ contentguard-ai/
 
 ## 🔧 Technical Details
 
-### **Machine Learning Pipeline**
-- **Model**: Multinomial Naive Bayes with TF-IDF vectorization
-- **Training Data**: Reddit posts with Gen Z language patterns
-- **Features**: 5000+ TF-IDF features from text analysis
-- **Accuracy**: High accuracy on malicious content detection
-
-### **Technology Stack**
-- **Backend**: Flask (Python)
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **ML Framework**: Scikit-learn
-- **Data Processing**: Pandas, NumPy
-- **Text Analysis**: TF-IDF, Regex patterns
-
 ### **API Endpoints**
 - `POST /analyze` - Analyze text content
 - `GET /model-info` - Get model information
@@ -158,7 +145,6 @@ curl -X POST http://localhost:5001/analyze \
 - **Educational Platforms**: Safe learning environments
 - **Gaming Communities**: Toxicity detection and prevention
 - **Customer Support**: Automated harmful content detection
-- **Research**: Language pattern analysis and studies
 
 ## 🤝 Contributing
 
@@ -181,20 +167,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Scikit-learn team for the excellent ML framework
 - Flask community for the web framework
 - All contributors and users of this project
-
-## 📞 Contact
-
-- **Project Link**: [https://github.com/yourusername/contentguard-ai](https://github.com/yourusername/contentguard-ai)
-- **Issues**: [https://github.com/yourusername/contentguard-ai/issues](https://github.com/yourusername/contentguard-ai/issues)
-
-## 📈 Roadmap
-
-- [ ] Multi-language support
-- [ ] Real-time streaming analysis
-- [ ] Mobile app development
-- [ ] Advanced context understanding
-- [ ] Integration with major platforms
-- [ ] Custom model training interface
 
 ---
 
