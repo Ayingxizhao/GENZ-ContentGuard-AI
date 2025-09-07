@@ -41,13 +41,15 @@ class GenZDataProcessor:
         url1 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts1.csv"
         url2 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts2.csv"
         url3 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts3.csv"
+        url4 = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit_posts/resolve/main/genz_reddit_posts4.csv"
         # Load both CSV files
         df1 = pd.read_csv(url1)
         df2 = pd.read_csv(url2)
         df3 = pd.read_csv(url3)
+        df4 = pd.read_csv(url4)
 
         # Combine datasets
-        df = pd.concat([df1, df2], ignore_index=True)
+        df = pd.concat([df1, df2, df3, df4], ignore_index=True)
         print(f"Total posts loaded: {len(df)}")
 
         # Clean title and content
