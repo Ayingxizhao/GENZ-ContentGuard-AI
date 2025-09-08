@@ -5,7 +5,7 @@ from typing import Tuple, Union
 from flask import Blueprint, Response, jsonify, render_template, request
 from local_model import analyze_with_local_model, local_detector
 
-main_bp = Blueprint('main', __name__)
+main_bp = Blueprint("main", __name__)
 
 
 @main_bp.route("/")

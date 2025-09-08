@@ -8,21 +8,21 @@ from app.models.bug_report import db, BugReport, BugStatus, BugPriority
 def init_database(app: Flask) -> None:
     """Initialize database with Flask app."""
     # Configure database URI
-    database_url = os.getenv('DATABASE_URL')
+    database_url = os.getenv("DATABASE_URL")
     if database_url:
         # Handle PostgreSQL URL format from Render
-        if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql://', 1)
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     else:
         # Fallback to local SQLite for development
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bug_reports.db'
-    
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///bug_reports.db"
+
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
     # Initialize database
     db.init_app(app)
-    
+
     with app.app_context():
         # Create tables
         db.create_all()
@@ -42,7 +42,7 @@ def create_sample_bug_report() -> BugReport:
         reporter_email="test@example.com",
         reporter_name="Test User",
         status=BugStatus.OPEN,
-        priority=BugPriority.MEDIUM
+        priority=BugPriority.MEDIUM,
     )
     return sample_report
 
@@ -65,25 +65,26 @@ def get_bug_reports_by_priority(priority: BugPriority) -> list:
 def get_bug_statistics() -> dict:
     """Get comprehensive bug report statistics."""
     total_reports = BugReport.query.count()
-    
+
     # Status counts
     status_counts = {}
     for status in BugStatus:
         status_counts[status.value] = BugReport.query.filter_by(status=status).count()
-    
+
     # Priority counts
     priority_counts = {}
     for priority in BugPriority:
         priority_counts[priority.value] = BugReport.query.filter_by(priority=priority).count()
-    
+
     # Recent reports (last 30 days)
     from datetime import datetime, timedelta
+
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     recent_reports = BugReport.query.filter(BugReport.created_at >= thirty_days_ago).count()
-    
+
     return {
-        'total_reports': total_reports,
-        'by_status': status_counts,
-        'by_priority': priority_counts,
-        'recent_reports': recent_reports
+        "total_reports": total_reports,
+        "by_status": status_counts,
+        "by_priority": priority_counts,
+        "recent_reports": recent_reports,
     }

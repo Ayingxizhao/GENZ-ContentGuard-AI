@@ -12,6 +12,7 @@ db = SQLAlchemy()
 
 class BugStatus(Enum):
     """Enum for bug report status."""
+
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
@@ -20,6 +21,7 @@ class BugStatus(Enum):
 
 class BugPriority(Enum):
     """Enum for bug priority levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -28,7 +30,8 @@ class BugPriority(Enum):
 
 class BugReport(db.Model):
     """Model for storing bug reports."""
-    __tablename__ = 'bug_reports'
+
+    __tablename__ = "bug_reports"
 
     id = Column(Integer, primary_key=True)
     title = Column(String(200), nullable=False, index=True)
@@ -52,33 +55,33 @@ class BugReport(db.Model):
 
     # Indexes for better query performance
     __table_args__ = (
-        Index('idx_bug_reports_status_priority', 'status', 'priority'),
-        Index('idx_bug_reports_created_at', 'created_at'),
-        Index('idx_bug_reports_reporter_email', 'reporter_email'),
+        Index("idx_bug_reports_status_priority", "status", "priority"),
+        Index("idx_bug_reports_created_at", "created_at"),
+        Index("idx_bug_reports_reporter_email", "reporter_email"),
     )
 
     def to_dict(self) -> dict:
         """Convert bug report to dictionary for JSON serialization."""
         return {
-            'id': self.id,
-            'title': self.title,
-            'description': self.description,
-            'steps_to_reproduce': self.steps_to_reproduce,
-            'expected_behavior': self.expected_behavior,
-            'actual_behavior': self.actual_behavior,
-            'browser_info': self.browser_info,
-            'operating_system': self.operating_system,
-            'user_agent': self.user_agent,
-            'url_where_bug_occurred': self.url_where_bug_occurred,
-            'screenshot_url': self.screenshot_url,
-            'reporter_email': self.reporter_email,
-            'reporter_name': self.reporter_name,
-            'status': self.status.value if self.status else None,
-            'priority': self.priority.value if self.priority else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'is_resolved': self.is_resolved,
-            'resolution_notes': self.resolution_notes
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "steps_to_reproduce": self.steps_to_reproduce,
+            "expected_behavior": self.expected_behavior,
+            "actual_behavior": self.actual_behavior,
+            "browser_info": self.browser_info,
+            "operating_system": self.operating_system,
+            "user_agent": self.user_agent,
+            "url_where_bug_occurred": self.url_where_bug_occurred,
+            "screenshot_url": self.screenshot_url,
+            "reporter_email": self.reporter_email,
+            "reporter_name": self.reporter_name,
+            "status": self.status.value if self.status else None,
+            "priority": self.priority.value if self.priority else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "is_resolved": self.is_resolved,
+            "resolution_notes": self.resolution_notes,
         }
 
     def update_status(self, new_status: BugStatus, resolution_notes: Optional[str] = None) -> None:
@@ -90,4 +93,4 @@ class BugReport(db.Model):
         self.updated_at = datetime.utcnow()
 
     def __repr__(self):
-        return f'<BugReport {self.id}: {self.title}>'
+        return f"<BugReport {self.id}: {self.title}>"
