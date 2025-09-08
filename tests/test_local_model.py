@@ -1,7 +1,4 @@
-import pickle
 from unittest.mock import MagicMock, mock_open, patch
-
-import pytest
 
 from local_model import LocalGenZDetector, analyze_with_local_model
 

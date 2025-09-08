@@ -1,9 +1,7 @@
-import json
 import pickle
 import re
 from typing import Any, Dict
 
-import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score, classification_report
@@ -405,7 +403,7 @@ class GenZDataProcessor:
         malicious_posts = df[df["label"] == "malicious"]
         safe_posts = df[df["label"] == "safe"]
 
-        print(f"Before balancing:")
+        print("Before balancing:")
         print(f"  Malicious: {len(malicious_posts)}")
         print(f"  Safe: {len(safe_posts)}")
 
@@ -416,7 +414,7 @@ class GenZDataProcessor:
         balanced_df = pd.concat([malicious_posts, safe_posts])
         balanced_df = balanced_df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-        print(f"\nAfter balancing:")
+        print("\nAfter balancing:")
         print(f"  Malicious: {len(balanced_df[balanced_df['label'] == 'malicious'])}")
         print(f"  Safe: {len(balanced_df[balanced_df['label'] == 'safe'])}")
 
@@ -489,7 +487,7 @@ def main() -> None:
     training_df = processor.create_training_data(df)
 
     # Train model
-    accuracy = processor.train_model(training_df)
+    processor.train_model(training_df)
 
     # Save model
     processor.save_model()

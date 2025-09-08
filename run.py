@@ -4,17 +4,15 @@ ContentGuard AI - Application Launcher
 """
 
 import os
-import subprocess
 import sys
-import time
 
 
 def check_dependencies() -> bool:
     """Check if required packages are installed"""
     try:
-        import flask
-        import openai
-        import pandas
+        import flask  # noqa: F401
+        import openai  # noqa: F401
+        import pandas  # noqa: F401
 
         print("✓ All required packages are installed")
         return True

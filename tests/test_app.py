@@ -146,10 +146,11 @@ class TestApp:
     def test_analyze_route_model_not_loaded(self, client: Any) -> None:
         """Test analysis when model is not loaded"""
         # We need to create a new client with model_loaded = False
-        from flask import Flask, jsonify, request
-        from flask_cors import CORS
         import time
         from unittest.mock import MagicMock
+
+        from flask import Flask, jsonify, request
+        from flask_cors import CORS
 
         app = Flask(__name__)
         app.config["TESTING"] = True
