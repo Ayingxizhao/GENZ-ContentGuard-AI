@@ -30,7 +30,7 @@ class BugPriority(Enum):
     CRITICAL = "critical"
 
 
-class BugReport(db.Model):
+class BugReport(db.Model):  # type: ignore
     """Model for storing bug reports."""
 
     __tablename__ = "bug_reports"
@@ -48,8 +48,8 @@ class BugReport(db.Model):
     screenshot_url = Column(String(500), nullable=True)
     reporter_email = Column(String(100), nullable=True, index=True)
     reporter_name = Column(String(100), nullable=True)
-    status = Column(SQLEnum(BugStatus), default=BugStatus.OPEN, nullable=False, index=True)
-    priority = Column(SQLEnum(BugPriority), default=BugPriority.MEDIUM, nullable=False, index=True)
+    status = Column(SQLEnum(BugStatus), default=BugStatus.OPEN, nullable=False, index=True)  # type: ignore
+    priority = Column(SQLEnum(BugPriority), default=BugPriority.MEDIUM, nullable=False, index=True)  # type: ignore
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     is_resolved = Column(Boolean, default=False, nullable=False, index=True)
@@ -88,11 +88,11 @@ class BugReport(db.Model):
 
     def update_status(self, new_status: BugStatus, resolution_notes: Optional[str] = None) -> None:
         """Update bug status and resolution notes."""
-        self.status = new_status
-        self.is_resolved = new_status in [BugStatus.RESOLVED, BugStatus.CLOSED]
+        self.status = new_status  # type: ignore
+        self.is_resolved = new_status in [BugStatus.RESOLVED, BugStatus.CLOSED]  # type: ignore
         if resolution_notes:
-            self.resolution_notes = resolution_notes
-        self.updated_at = datetime.utcnow()
+            self.resolution_notes = resolution_notes  # type: ignore
+        self.updated_at = datetime.utcnow()  # type: ignore
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<BugReport {self.id}: {self.title}>"

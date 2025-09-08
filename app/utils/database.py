@@ -51,17 +51,17 @@ def create_sample_bug_report() -> BugReport:
 
 def get_bug_reports_count() -> int:
     """Get total count of bug reports."""
-    return BugReport.query.count()
+    return int(BugReport.query.count())
 
 
-def get_bug_reports_by_status(status: BugStatus) -> list:
+def get_bug_reports_by_status(status: BugStatus) -> list[BugReport]:
     """Get bug reports filtered by status."""
-    return BugReport.query.filter_by(status=status).all()
+    return BugReport.query.filter_by(status=status).all()  # type: ignore
 
 
-def get_bug_reports_by_priority(priority: BugPriority) -> list:
+def get_bug_reports_by_priority(priority: BugPriority) -> list[BugReport]:
     """Get bug reports filtered by priority."""
-    return BugReport.query.filter_by(priority=priority).all()
+    return BugReport.query.filter_by(priority=priority).all()  # type: ignore
 
 
 def get_bug_statistics() -> dict:

@@ -9,7 +9,7 @@ from app.routes.bug_reports import bug_reports_bp
 from app.utils.database import init_database
 
 
-def create_app(config=None):
+def create_app(config=None) -> Flask:  # type: ignore
     """Create and configure Flask application."""
     app = Flask(__name__)
 

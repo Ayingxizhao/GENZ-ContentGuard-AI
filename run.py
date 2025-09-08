@@ -50,7 +50,9 @@ def start_application() -> bool:
         print("✓ Configuration validated")
 
         # Import and start app
-        from app import app
+        from app import create_app
+
+        app = create_app()
 
         print("✓ Application loaded successfully")
         print("\n🚀 ContentGuard AI is starting...")

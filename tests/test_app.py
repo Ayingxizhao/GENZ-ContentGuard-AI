@@ -24,8 +24,9 @@ def client() -> Any:
             "features": 1000,
         }
 
-        from app import app
+        from app import create_app
 
+        app = create_app()
         app.config["TESTING"] = True
         with app.test_client() as client:
             yield client
@@ -118,7 +119,9 @@ class TestApp:
                 "probabilities": {"safe": 0.077, "malicious": 0.923},
             }
 
-            from app import app
+            from app import create_app
+
+            app = create_app()
 
             app.config["TESTING"] = True
             test_client = app.test_client()
