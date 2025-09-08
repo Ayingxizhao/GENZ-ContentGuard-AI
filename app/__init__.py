@@ -33,3 +33,7 @@ def create_app(config=None) -> Flask:
     app.register_blueprint(main_bp)
 
     return app
+
+
+# Create Flask application instance for WSGI
+app = create_app()
