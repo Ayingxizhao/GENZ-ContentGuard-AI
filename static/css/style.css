@@ -1284,3 +1284,219 @@ body {
     background: var(--gray-100);
   }
 }
+
+/* Bug Report Section Styles */
+.bug-report-section {
+  padding: var(--space-8) var(--space-6);
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+}
+
+.bug-report-form {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: var(--space-8);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.bug-report-form .form-group {
+  margin-bottom: var(--space-6);
+}
+
+.bug-report-form label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bug-report-form input,
+.bug-report-form textarea,
+.bug-report-form select {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: var(--gray-50);
+}
+
+.bug-report-form input:focus,
+.bug-report-form textarea:focus,
+.bug-report-form select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  background: white;
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.bug-report-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.bug-report-form select {
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+  margin-top: var(--space-8);
+}
+
+.submit-btn,
+.clear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.submit-btn {
+  background: var(--primary-500);
+  color: white;
+}
+
+.submit-btn:hover {
+  background: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+.clear-btn {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.clear-btn:hover {
+  background: var(--gray-300);
+  transform: translateY(-1px);
+}
+
+.clear-btn:active {
+  transform: translateY(0);
+}
+
+/* Bug Report Messages */
+.bug-report-messages {
+  margin-top: var(--space-6);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.message-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+}
+
+.message-card.success {
+  background: var(--success-50);
+  color: var(--success-700);
+  border: 1px solid var(--success-200);
+}
+
+.message-card.error {
+  background: var(--danger-50);
+  color: var(--danger-700);
+  border: 1px solid var(--danger-200);
+}
+
+.message-card.info {
+  background: var(--primary-50);
+  color: var(--primary-700);
+  border: 1px solid var(--primary-200);
+}
+
+.message-card i {
+  font-size: 1.25rem;
+}
+
+/* Responsive Design for Bug Report */
+@media (max-width: 768px) {
+  .bug-report-section {
+    padding: var(--space-6) var(--space-4);
+  }
+  
+  .bug-report-form {
+    padding: var(--space-6);
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .submit-btn,
+  .clear-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dark mode support for bug report */
+@media (prefers-color-scheme: dark) {
+  .bug-report-section {
+    background: var(--gray-100);
+  }
+  
+  .bug-report-form {
+    background: var(--gray-200);
+  }
+  
+  .bug-report-form input,
+  .bug-report-form textarea,
+  .bug-report-form select {
+    background: var(--gray-300);
+    color: var(--gray-800);
+    border-color: var(--gray-400);
+  }
+  
+  .bug-report-form input:focus,
+  .bug-report-form textarea:focus,
+  .bug-report-form select:focus {
+    background: var(--gray-200);
+  }
+  
+  .bug-report-form label {
+    color: var(--gray-600);
+  }
+}
