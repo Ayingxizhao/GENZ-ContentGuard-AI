@@ -48,8 +48,8 @@ class BugReport(db.Model):  # type: ignore
     screenshot_url = Column(String(500), nullable=True)
     reporter_email = Column(String(100), nullable=True, index=True)
     reporter_name = Column(String(100), nullable=True)
-    status = Column(SQLEnum(BugStatus), default=BugStatus.OPEN, nullable=False, index=True)  # type: ignore
-    priority = Column(SQLEnum(BugPriority), default=BugPriority.MEDIUM, nullable=False, index=True)  # type: ignore
+    status = Column(SQLEnum(BugStatus), default=BugStatus.OPEN, nullable=False, index=True)  # type: ignore[var-annotated]
+    priority = Column(SQLEnum(BugPriority), default=BugPriority.MEDIUM, nullable=False, index=True)  # type: ignore[var-annotated]
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     is_resolved = Column(Boolean, default=False, nullable=False, index=True)
@@ -88,11 +88,11 @@ class BugReport(db.Model):  # type: ignore
 
     def update_status(self, new_status: BugStatus, resolution_notes: Optional[str] = None) -> None:
         """Update bug status and resolution notes."""
-        self.status = new_status  # type: ignore
-        self.is_resolved = new_status in [BugStatus.RESOLVED, BugStatus.CLOSED]  # type: ignore
+        self.status = new_status  # type: ignore[assignment]
+        self.is_resolved = new_status in [BugStatus.RESOLVED, BugStatus.CLOSED]  # type: ignore[assignment]
         if resolution_notes:
-            self.resolution_notes = resolution_notes  # type: ignore
-        self.updated_at = datetime.utcnow()  # type: ignore
+            self.resolution_notes = resolution_notes  # type: ignore[assignment]
+        self.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
     def __repr__(self) -> str:
         return f"<BugReport {self.id}: {self.title}>"
