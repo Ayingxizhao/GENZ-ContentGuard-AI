@@ -11,7 +11,7 @@ from app.utils.database import init_database
 
 def create_app(config=None) -> Flask:
     """Create and configure Flask application."""
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
     # Load configuration
     if config is None:
@@ -20,8 +20,7 @@ def create_app(config=None) -> Flask:
 
     # Initialize extensions
     CORS(app)  # Enable CORS for all routes
-    db.init_app(app)
-
+    
     # Initialize database
     init_database(app)
 
