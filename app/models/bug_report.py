@@ -5,7 +5,9 @@ from enum import Enum
 from typing import Optional
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum as SQLEnum, Boolean, Index
+from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Index, Integer, String, Text
 
 db = SQLAlchemy()
 

@@ -1,8 +1,10 @@
 """Database utility functions."""
 
 import os
+
 from flask import Flask
-from app.models.bug_report import db, BugReport, BugStatus, BugPriority
+
+from app.models.bug_report import BugPriority, BugReport, BugStatus, db
 
 
 def init_database(app: Flask) -> None:

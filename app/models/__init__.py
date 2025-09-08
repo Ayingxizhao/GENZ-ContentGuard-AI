@@ -1,5 +1,5 @@
 """Database models package."""
 
-from .bug_report import BugReport, BugStatus, BugPriority
+from .bug_report import BugPriority, BugReport, BugStatus
 
 __all__ = ["BugReport", "BugStatus", "BugPriority"]

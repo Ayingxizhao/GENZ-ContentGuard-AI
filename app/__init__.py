@@ -2,10 +2,11 @@
 
 from flask import Flask
 from flask_cors import CORS
+
 from app.config import get_config
 from app.models.bug_report import db
-from app.utils.database import init_database
 from app.routes.bug_reports import bug_reports_bp
+from app.utils.database import init_database
 
 
 def create_app(config=None):

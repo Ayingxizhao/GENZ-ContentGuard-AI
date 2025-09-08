@@ -1,8 +1,10 @@
 """Bug reports API routes."""
 
 from typing import Tuple, Union
+
 from flask import Blueprint, Response, jsonify, request
-from app.models.bug_report import db, BugReport, BugStatus, BugPriority
+
+from app.models.bug_report import BugPriority, BugReport, BugStatus, db
 from app.utils.database import get_bug_statistics
 
 bug_reports_bp = Blueprint("bug_reports", __name__, url_prefix="/api/bug-reports")
