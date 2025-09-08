@@ -1,8 +1,75 @@
 import json
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+
+
+def _create_analyze_response(mock_detector, title, content):
+    """Create analyze response."""
+    import time
+
+    if mock_detector.model_loaded:
+        result = mock_detector.predict(title, content)
+        if "error" not in result:
+            response_data = {
+                "analysis": result["analysis"],
+                "is_malicious": result["is_malicious"],
+                "confidence": result["confidence"],
+                "model_type": result["model_type"],
+                "probabilities": result["probabilities"],
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            if "detailed_analysis" in result:
+                response_data["detailed_analysis"] = result["detailed_analysis"]
+            return response_data
+    return {"error": "Local model not loaded. Please run data_processor.py first."}
+
+
+def _create_test_app(mock_detector):
+    """Create a minimal Flask app for testing."""
+    from flask import Flask, jsonify, request
+    from flask_cors import CORS
+
+    app = Flask(__name__)
+    app.config["TESTING"] = True
+    app.config["SECRET_KEY"] = "test-secret-key"
+    CORS(app)
+
+    @app.route("/")
+    def index() -> str:
+        """Main page route."""
+        return "<!DOCTYPE html><html><body><h1>GenZ Language Detector</h1></body></html>"
+
+    @app.route("/analyze", methods=["POST"])
+    def analyze():
+        """Analyze content for malicious language."""
+        try:
+            data = request.get_json()
+            title = data.get("title", "")
+            content = data.get("content", "")
+
+            if not title and not content:
+                return jsonify({"error": "Please provide either a title or content to analyze"}), 400
+
+            response_data = _create_analyze_response(mock_detector, title, content)
+            if "error" in response_data:
+                return jsonify(response_data), 500
+            return jsonify(response_data)
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+    @app.route("/model-info")
+    def model_info():
+        """Get information about available models."""
+        return jsonify({"local_model": mock_detector.get_model_info(), "openai_available": False})
+
+    @app.route("/health")
+    def health():
+        """Health check endpoint."""
+        return jsonify({"status": "healthy"})
+
+    return app
 
 
 @pytest.fixture
@@ -24,73 +91,7 @@ def client() -> Any:
             "features": 1000,
         }
 
-        # Create a minimal Flask app with routes defined directly
-        from flask import Flask, jsonify, render_template, request
-        from flask_cors import CORS
-        import time
-        from typing import Tuple, Union
-        from flask import Response
-
-        app = Flask(__name__)
-        app.config["TESTING"] = True
-        app.config["SECRET_KEY"] = "test-secret-key"
-        
-        # Enable CORS
-        CORS(app)
-        
-        # Define routes directly to avoid importing from app module
-        @app.route("/")
-        def index() -> str:
-            """Main page route."""
-            return "<!DOCTYPE html><html><body><h1>GenZ Language Detector</h1></body></html>"
-
-        @app.route("/analyze", methods=["POST"])
-        def analyze() -> Union[Response, Tuple[Response, int]]:
-            """Analyze content for malicious language."""
-            try:
-                data = request.get_json()
-                title = data.get("title", "")
-                content = data.get("content", "")
-
-                if not title and not content:
-                    return jsonify({"error": "Please provide either a title or content to analyze"}), 400
-
-                # Use local model for analysis
-                if mock_detector.model_loaded:
-                    result = mock_detector.predict(title, content)
-
-                    if "error" not in result:
-                        response_data = {
-                            "analysis": result["analysis"],
-                            "is_malicious": result["is_malicious"],
-                            "confidence": result["confidence"],
-                            "model_type": result["model_type"],
-                            "probabilities": result["probabilities"],
-                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        }
-
-                        # Add detailed analysis if available
-                        if "detailed_analysis" in result:
-                            response_data["detailed_analysis"] = result["detailed_analysis"]
-
-                        return jsonify(response_data)
-
-                # If local model is not loaded
-                return jsonify({"error": "Local model not loaded. Please run data_processor.py first."}), 500
-
-            except Exception as e:
-                return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
-        @app.route("/model-info")
-        def model_info() -> Union[Response, Tuple[Response, int]]:
-            """Get information about available models."""
-            return jsonify({"local_model": mock_detector.get_model_info(), "openai_available": False})
-
-        @app.route("/health")
-        def health() -> Union[Response, Tuple[Response, int]]:
-            """Health check endpoint."""
-            return jsonify({"status": "healthy"})
-        
+        app = _create_test_app(mock_detector)
         with app.test_client() as client:
             yield client
 
@@ -148,20 +149,18 @@ class TestApp:
         from flask import Flask, jsonify, request
         from flask_cors import CORS
         import time
-        from typing import Tuple, Union
-        from flask import Response
         from unittest.mock import MagicMock
 
         app = Flask(__name__)
         app.config["TESTING"] = True
         app.config["SECRET_KEY"] = "test-secret-key"
-        
+
         CORS(app)
-        
+
         # Mock with model not loaded
         mock_detector = MagicMock()
         mock_detector.model_loaded = False
-        
+
         @app.route("/analyze", methods=["POST"])
         def analyze():
             try:
@@ -206,7 +205,7 @@ class TestApp:
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["is_malicious"] is False  # The fixture returns False for is_malicious
-        assert data["analysis"] == "SAFE"     # The fixture returns "SAFE" for analysis
+        assert data["analysis"] == "SAFE"  # The fixture returns "SAFE" for analysis
 
     def test_analyze_route_invalid_json(self, client: Any) -> None:
         """Test analysis with invalid JSON"""
