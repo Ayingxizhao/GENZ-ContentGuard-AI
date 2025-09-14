@@ -5,8 +5,8 @@ from typing import Tuple, Union
 
 from flask import Blueprint, Response, jsonify, render_template, request
 
+from advanced_model import advanced_detector, analyze_with_advanced_model
 from local_model import analyze_with_local_model, local_detector
-from advanced_model import analyze_with_advanced_model, advanced_detector
 
 main_bp = Blueprint("main", __name__)
 
@@ -54,6 +54,8 @@ def analyze() -> Union[Response, Tuple[Response, int]]:
                 response_data["detailed_analysis"] = result["detailed_analysis"]
 
             return jsonify(response_data)
+        else:
+            return jsonify(result), 500
 
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
@@ -62,11 +64,13 @@ def analyze() -> Union[Response, Tuple[Response, int]]:
 @main_bp.route("/model-info")
 def model_info() -> Union[Response, Tuple[Response, int]]:
     """Get information about available models."""
-    return jsonify({
-        "local_model": local_detector.get_model_info(),
-        "advanced_model": advanced_detector.get_model_info(),
-        "openai_available": False
-    })
+    return jsonify(
+        {
+            "local_model": local_detector.get_model_info(),
+            "advanced_model": advanced_detector.get_model_info(),
+            "openai_available": False,
+        }
+    )
 
 
 @main_bp.route("/health")
