@@ -57,9 +57,9 @@ class AdvancedGenZDetector:
 
         # Initialize transformer model
         self.transformer_model_name = "distilbert-base-uncased"
-        self.tokenizer = None
-        self.transformer_model = None
-        self.transformer_pipeline = None
+        self.tokenizer: Optional[Any] = None
+        self.transformer_model: Optional[Any] = None
+        self.transformer_pipeline: Optional[Any] = None
 
         self.model_loaded = False
         self._load_models()
@@ -339,7 +339,7 @@ class AdvancedGenZDetector:
                     "transformer_result": transformer_result,
                     "ensemble_result": ensemble_result,
                     "linguistic_features": self.extract_linguistic_features(combined_text),
-                    "risk_level": self._get_risk_level(final_confidence, is_malicious),
+                    "risk_level": self._get_risk_level(float(final_confidence), is_malicious),
                     "model_confidence": final_confidence,
                 },
             }
@@ -425,8 +425,8 @@ class AdvancedModelTrainer:
         X_train_text, X_test_text, y_train, y_test = train_test_split(X_text, y, test_size=0.2, random_state=42, stratify=y)
 
         # Extract linguistic features
-        X_train_features = []
-        X_test_features = []
+        X_train_features: List[List[float]] = []
+        X_test_features: List[List[float]] = []
 
         for text in X_train_text:
             features = self.detector.extract_linguistic_features(text)
@@ -436,13 +436,13 @@ class AdvancedModelTrainer:
             features = self.detector.extract_linguistic_features(text)
             X_test_features.append(list(features.values()))
 
-        X_train_features = np.array(X_train_features)  # type: ignore
-        X_test_features = np.array(X_test_features)  # type: ignore
+        X_train_features_array = np.array(X_train_features)
+        X_test_features_array = np.array(X_test_features)
 
         # Scale features
         scaler = StandardScaler()
-        X_train_features_scaled = scaler.fit_transform(X_train_features)
-        X_test_features_scaled = scaler.transform(X_test_features)
+        X_train_features_scaled = scaler.fit_transform(X_train_features_array)
+        X_test_features_scaled = scaler.transform(X_test_features_array)
 
         # TF-IDF vectorization
         tfidf_vectorizer = TfidfVectorizer(max_features=5000, stop_words="english")

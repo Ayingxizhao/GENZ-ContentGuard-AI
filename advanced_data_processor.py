@@ -684,12 +684,12 @@ class AdvancedGenZDataProcessor:
             y_proba = best_model.predict_proba(X_test_vector)[:, 1]
         else:
             # Feature-based model
-            X_test_features = []
+            X_test_features_list: List[List[float]] = []
             for text in X_test_text:
                 features = self.trainer.detector.extract_linguistic_features(text)
-                X_test_features.append(list(features.values()))
+                X_test_features_list.append(list(features.values()))
 
-            X_test_features = np.array(X_test_features)  # type: ignore
+            X_test_features = np.array(X_test_features_list)
             if best_model_name in ensemble_results["scalers"]:
                 X_test_features = ensemble_results["scalers"][best_model_name].transform(X_test_features)
 
