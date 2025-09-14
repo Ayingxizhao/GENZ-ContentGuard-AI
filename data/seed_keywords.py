@@ -1,0 +1,416 @@
+"""
+Seed Keywords for Malicious Content Categorization
+
+This module contains comprehensive keyword lists for semi-supervised topic modeling
+to categorize malicious Gen Z social media content using BERTopic clustering.
+
+Categories:
+- Hate/Discrimination: Slurs, identity attacks, prejudice terms
+- Harassment/Bullying: Personal attacks, threats, intimidation
+- Sexual Content: Inappropriate sexual language, explicit terms
+- General Toxicity: Aggressive language, insults, mean behavior
+
+Each category includes:
+- Current Gen Z slang and terminology
+- Variations and intentional misspellings
+- Coded language and euphemisms
+- Modern online harassment patterns
+"""
+
+seed_categories = {
+    "Hate/Discrimination": [
+        # Identity-based slurs and attacks
+        "karen", "karens", "karen-ing", "karened", "karensplaining",
+        "boomer", "boomers", "ok boomer", "boomerang", "boomer energy",
+        "incel", "incels", "inceldom", "incelosphere", "incel ideology",
+        "simp", "simps", "simping", "simp behavior", "simp energy",
+        "soy boy", "soyboys", "soy", "soy energy", "soyjak",
+        "cuck", "cucks", "cucked", "cuckold", "cuck energy",
+        "beta", "beta male", "beta energy", "betacuck", "beta orbit",
+        "chad", "chads", "chad energy", "gigachad", "chad move",
+        "stacy", "stacies", "stacy energy", "basic stacy",
+        "becky", "beckies", "basic becky", "becky energy",
+        
+        # Political/ideological terms used derogatorily
+        "libtard", "libtards", "lib", "liberal tears", "libcuck",
+        "feminazi", "feminazis", "femi-nazi", "femnazi",
+        "sjw", "social justice warrior", "sjw tears", "sjw snowflake",
+        "woke", "wokeism", "woke culture", "woke mob", "woke scolding",
+        "triggered", "trigger warning", "safe space", "microaggression",
+        "cancel culture", "cancelled", "cancel", "cancelling",
+        "virtue signaling", "virtue signal", "virtue signaller",
+        
+        # Pilled terminology (red pill, blue pill, black pill)
+        "red pill", "redpilled", "red pill truth", "red pill moment",
+        "blue pill", "bluepilled", "blue pill normie", "blue pill matrix",
+        "black pill", "blackpilled", "black pill truth", "black pill doom",
+        
+        # Gender-based discrimination
+        "femoid", "foid", "femcel", "roastie", "landwhale", "hamplanet",
+        "neckbeard", "neckbeards", "fedora", "m'lady", "nice guy",
+        "thot", "thots", "thot patrol", "thot audit", "thot behavior",
+        "e-girl", "egirl", "e-girls", "egirls", "e-boy", "eboy",
+        "pick me girl", "pick me", "not like other girls", "nlog",
+        
+        # Race/ethnicity coded language
+        "mayo", "mayos", "mayonnaise", "cracker", "crackers",
+        "coon", "coons", "uncle tom", "house n*", "field n*",
+        "spic", "spics", "wetback", "beaner", "greaser",
+        "chink", "chinks", "gook", "nip", "jap", "slant eye",
+        "towelhead", "raghead", "sand n*", "camel jockey",
+        "taco", "tacos", "bean", "beans", "burrito", "burritos",
+        
+        # Disability discrimination
+        "retard", "retarded", "retards", "tard", "tards", "r-word",
+        "autist", "autistic", "sperg", "aspergers", "downie",
+        "cripple", "crippled", "gimp", "wheelie", "spaz",
+        
+        # Religious discrimination
+        "christfag", "jew", "kike", "heeb", "yid", "jewish space laser",
+        "muzzie", "muzlim", "terrorist", "allahu akbar", "bomb",
+        "cultist", "sheeple", "brainwashed", "indoctrinated",
+        
+        # Coded language and euphemisms
+        "google", "skittles", "13/50", "14/88", "1488", "88",
+        "based", "based and redpilled", "unbased", "cringe normie",
+        "normie", "normies", "normalfag", "basic", "basic bitch",
+        "npc", "npcs", "npc energy", "programmed", "sheep",
+        "mid", "mid energy", "mid tier", "mid af", "mid behavior",
+        "cheugy", "cheug", "cheugy energy", "basic white girl",
+        "no cap", "cap", "no cap fr", "fr fr", "on god",
+        "periodt", "and i oop", "sksksk", "oof", "yikes",
+        "sir this is wendys", "ma'am this is wendys", "read the room"
+    ],
+    
+    "Harassment/Bullying": [
+        # Direct threats and intimidation
+        "kys", "kill yourself", "end yourself", "unalive", "unalive yourself",
+        "rope", "roping", "rope fuel", "suicide fuel", "sui fuel",
+        "hang yourself", "jump off bridge", "jump", "yeet yourself",
+        "die", "death threats", "threat", "threaten", "threatening",
+        "harass", "harassment", "harassing", "stalker", "stalking",
+        "dox", "doxx", "doxxing", "doxed", "personal info", "address",
+        "swat", "swatting", "swatted", "fake emergency", "prank call",
+        
+        # Personal attacks on appearance
+        "ugly", "ugly ass", "ugly bitch", "butterface", "butter face",
+        "fat", "fatass", "fat bitch", "obese", "pig", "whale",
+        "skinny", "anorexic", "skeleton", "bony", "stick figure",
+        "short", "midget", "dwarf", "vertically challenged",
+        "tall", "giant", "lanky", "string bean", "beanpole",
+        "bald", "baldie", "chrome dome", "cue ball", "egg head",
+        "acne", "pizza face", "crater face", "moon face",
+        "teeth", "buck teeth", "beaver teeth", "horse teeth",
+        "nose", "big nose", "beak", "schnoz", "honker",
+        
+        # Intelligence and capability attacks
+        "stupid", "dumb", "dumbass", "dumb bitch", "idiot", "moron",
+        "retard", "retarded", "brain dead", "no brain", "empty head",
+        "illiterate", "can't read", "education", "dropout", "failure",
+        "loser", "losing", "lose", "lost", "pathetic", "sad",
+        "useless", "worthless", "waste of space", "human trash",
+        "embarrassment", "embarrassing", "cringe", "cringe lord",
+        
+        # Social status and popularity attacks
+        "virgin", "virginity", "never been kissed", "incel", "loner",
+        "no friends", "friendless", "antisocial", "weirdo", "freak",
+        "creep", "creepy", "stalker", "obsessed", "psycho",
+        "desperate", "thirsty", "thirst trap", "attention seeker",
+        "nobody", "no one cares", "irrelevant", "forgotten",
+        "washed up", "has been", "past your prime", "over the hill",
+        
+        # Cyberbullying tactics
+        "ratio", "ratioed", "get ratioed", "ratio + L + bozo",
+        "cope", "coping", "cope harder", "seethe", "seething",
+        "mald", "malding", "cry more", "crying", "tears",
+        "mad", "mad online", "triggered", "butthurt", "salty",
+        "laughing stock", "joke", "joking", "meme", "memes",
+        "clown", "clowning", "clown world", "circus", "circus act",
+        
+        # Group harassment
+        "gang up", "mob", "mobbed", "pile on", "pile up",
+        "brigade", "brigading", "raid", "raiding", "mass report",
+        "cancel", "cancelled", "cancelling", "cancel culture",
+        "expose", "exposing", "call out", "calling out",
+        "drama", "dramatic", "starting drama", "stirring pot",
+        
+        # Manipulation and gaslighting
+        "gaslight", "gaslighting", "gaslighter", "manipulate",
+        "manipulation", "manipulative", "control", "controlling",
+        "toxic", "toxicity", "toxic behavior", "toxic person",
+        "narcissist", "narcissistic", "ego", "egotistical",
+        "delusional", "delusion", "reality check", "wake up",
+        
+        # Modern Gen Z harassment terms
+        "touch grass", "go outside", "sunlight", "vitamin d",
+        "terminally online", "chronically online", "online 24/7",
+        "no life", "get a life", "sad life", "pathetic life",
+        "main character syndrome", "pick me", "attention whore",
+        "drama queen", "overreacting", "sensitive", "snowflake",
+        "special snowflake", "unique snowflake", "participation trophy"
+    ],
+    
+    "Sexual Content": [
+        # Explicit sexual terms
+        "fuck", "fucking", "fucked", "fucker", "fuckboy", "fuckgirl",
+        "shit", "shitting", "shitty", "shithead", "shit show",
+        "bitch", "bitches", "bitching", "bitchy", "son of a bitch",
+        "ass", "asshole", "asshat", "smartass", "dumbass", "badass",
+        "dick", "dicks", "dickhead", "dick move", "dick energy",
+        "pussy", "pussies", "pussy whipped", "pussy energy",
+        "cock", "cocks", "cocky", "cock block", "cock sucker",
+        "tits", "boobs", "boobies", "titties", "titty", "breast",
+        "nipple", "nipples", "areola", "cleavage", "sideboob",
+        "ass", "butt", "buttocks", "booty", "badonkadonk", "dumper",
+        "thighs", "thick thighs", "thigh gap", "legs", "ankles",
+        
+        # Sexual acts and positions
+        "sex", "sexual", "sexually", "intercourse", "copulate",
+        "masturbate", "masturbation", "jerk off", "jacking off",
+        "blow job", "blowjob", "bj", "oral", "oral sex",
+        "hand job", "handjob", "hj", "hand stuff", "manual",
+        "anal", "anal sex", "butt stuff", "backdoor", "rear entry",
+        "threesome", "threeway", "gangbang", "orgy", "group sex",
+        "bdsm", "bondage", "dom", "sub", "dominant", "submissive",
+        "fetish", "fetishes", "kink", "kinky", "kinks",
+        "porn", "pornography", "pornhub", "onlyfans", "cam girl",
+        "strip", "stripping", "stripper", "lap dance", "pole dance",
+        
+        # Sexual slang and euphemisms
+        "bang", "banging", "hit it", "smash", "smashing", "tap",
+        "tap that", "clap", "clap cheeks", "clapping", "slap",
+        "pound", "pounding", "hammer", "drill", "drilling",
+        "rail", "railing", "railroad", "choo choo", "train",
+        "pipe", "piping", "lay pipe", "pipe down", "plumbing",
+        "bone", "boning", "screw", "screwing", "nail", "nailing",
+        "ride", "riding", "mount", "mounting", "climb", "climbing",
+        "dive", "diving", "eat", "eating", "lick", "licking",
+        "suck", "sucking", "blow", "blowing", "stroke", "stroking",
+        "rub", "rubbing", "touch", "touching", "feel", "feeling",
+        
+        # Gen Z sexual slang
+        "rizz", "rizzing", "rizzler", "charisma", "game",
+        "pulling", "pull game", "pull up", "slide in", "slide",
+        "dm", "dming", "slide in dms", "dm slide", "sliding",
+        "link", "linking", "link up", "meet up", "hook up",
+        "smash", "smashing", "hit", "hitting", "tap", "tapping",
+        "clap", "clapping", "cheeks", "buns", "dump truck",
+        "thick", "thickness", "curves", "curvy", "hourglass",
+        "body", "bodies", "physique", "figure", "silhouette",
+        "hot", "sexy", "attractive", "fine", "gorgeous",
+        "beautiful", "stunning", "breathtaking", "jaw dropping",
+        
+        # Inappropriate sexual comments
+        "milf", "milfs", "dilf", "dilfs", "gilf", "gilfs",
+        "cougar", "cougars", "sugar daddy", "sugar mommy",
+        "gold digger", "gold digging", "materialistic", "mercenary",
+        "slut", "sluts", "slutty", "slut shaming", "whore",
+        "whores", "whoring", "prostitute", "escort", "hooker",
+        "easy", "loose", "promiscuous", "cheap", "trashy",
+        "skank", "skanks", "skanky", "ho", "hos", "hoe",
+        "tramp", "tramps", "hussy", "hussies", "floozy",
+        "nympho", "nymphomaniac", "sex addict", "insatiable",
+        "horny", "horniness", "aroused", "arousing", "turned on",
+        
+        # Sexual harassment terms
+        "catcall", "catcalling", "wolf whistle", "whistling",
+        "stare", "staring", "leer", "leering", "ogling",
+        "grope", "groping", "grab", "grabbing", "touch",
+        "touching", "fondle", "fondling", "molest", "molesting",
+        "harass", "harassing", "harassment", "unwanted attention",
+        "creep", "creepy", "pervert", "perverted", "deviant",
+        "predator", "predatory", "groom", "grooming", "groomer",
+        "inappropriate", "inappropriate behavior", "crossing line",
+        "boundaries", "respect", "consent", "non-consensual"
+    ],
+    
+    "General Toxicity": [
+        # Aggressive and confrontational language
+        "fight", "fighting", "fighter", "battle", "battling",
+        "war", "warring", "warrior", "combat", "combative",
+        "attack", "attacking", "attacker", "assault", "assaulting",
+        "aggressive", "aggression", "hostile", "hostility",
+        "violent", "violence", "brutal", "brutality", "savage",
+        "fierce", "fierceness", "intense", "intensity", "extreme",
+        
+        # Insults and put-downs
+        "stupid", "dumb", "idiot", "moron", "fool", "foolish",
+        "pathetic", "sad", "lame", "weak", "soft", "pussy",
+        "loser", "failure", "waste", "garbage", "trash",
+        "disgusting", "gross", "nasty", "vile", "repulsive",
+        "annoying", "irritating", "bothersome", "pesky", "pest",
+        "hate", "hating", "hatred", "despise", "loathe",
+        "disgust", "disgusting", "revolting", "sickening",
+        
+        # Mean-spirited behavior
+        "bully", "bullying", "bully behavior", "intimidate",
+        "intimidation", "threaten", "threatening", "menace",
+        "menacing", "scare", "scaring", "frighten", "terrify",
+        "mock", "mocking", "ridicule", "ridiculing", "taunt",
+        "taunting", "tease", "teasing", "make fun", "laugh at",
+        "embarrass", "embarrassing", "humiliate", "humiliation",
+        "shame", "shaming", "shameful", "disgrace", "disgraceful",
+        
+        # Gen Z toxicity slang
+        "cringe", "cringey", "cringe lord", "cringe fest", "cringe compilation",
+        "cope", "coping", "cope harder", "cope and seethe", "malding",
+        "seethe", "seething", "mald", "malding", "cry", "crying",
+        "mad", "mad online", "triggered", "butthurt", "salty",
+        "ratio", "ratioed", "get ratioed", "L", "L + ratio",
+        "bozo", "clown", "joker", "goofy", "silly", "dumb",
+        "yikes", "oof", "yikes on bikes", "big oof", "mega oof",
+        "sir this is wendys", "ma'am this is wendys", "read the room",
+        
+        # Negative personality traits
+        "toxic", "toxicity", "poisonous", "venomous", "bitter",
+        "cynical", "pessimistic", "negative", "downer", "buzzkill",
+        "selfish", "self-centered", "narcissistic", "egotistical",
+        "arrogant", "conceited", "cocky", "smug", "snooty",
+        "rude", "rudeness", "impolite", "disrespectful", "insolent",
+        "mean", "cruel", "heartless", "cold", "harsh", "brutal",
+        "jealous", "jealousy", "envious", "bitter", "resentful",
+        
+        # Social exclusion and rejection
+        "ignore", "ignoring", "avoid", "avoiding", "shun", "shunning",
+        "exclude", "excluding", "reject", "rejecting", "dismiss",
+        "dismissing", "ostracize", "ostracizing", "isolate", "isolating",
+        "cancel", "cancelled", "boycott", "boycotting", "blacklist",
+        "blacklisted", "ban", "banned", "block", "blocked",
+        "unfollow", "unfollowing", "unfriend", "unfriending",
+        "ghost", "ghosting", "ghosted", "disappear", "vanished",
+        
+        # Drama and conflict
+        "drama", "dramatic", "drama queen", "starting drama",
+        "stirring pot", "pot stirring", "trouble maker", "instigator",
+        "provoke", "provoking", "provocative", "incite", "inciting",
+        "escalate", "escalating", "escalation", "intensify",
+        "intensifying", "amplify", "amplifying", "exaggerate",
+        "exaggerating", "blow up", "blowing up", "overreact",
+        "overreacting", "sensitive", "oversensitive", "thin skinned",
+        
+        # Online toxicity patterns
+        "troll", "trolling", "troll behavior", "internet troll",
+        "hate speech", "hateful", "spread hate", "promote hate",
+        "toxic positivity", "fake positivity", "performative",
+        "virtue signaling", "signal virtue", "moral grandstanding",
+        "holier than thou", "sanctimonious", "self-righteous",
+        "hypocrite", "hypocritical", "hypocrisy", "double standard",
+        "contradict", "contradicting", "contradictory", "inconsistent",
+        "backtrack", "backtracking", "flip flop", "wishy washy"
+    ]
+}
+
+# Additional metadata for each category
+category_metadata = {
+    "Hate/Discrimination": {
+        "description": "Terms targeting individuals based on identity characteristics including race, ethnicity, gender, sexual orientation, religion, disability, and other protected attributes",
+        "patterns": [
+            "Intentional misspellings (k*ren, b**mer)",
+            "Coded references (Google, Skittles)",
+            "Euphemisms (NPC, normie)",
+            "Numerical codes (13/50, 14/88)",
+            "Modern Gen Z terminology (mid, cheugy)"
+        ]
+    },
+    
+    "Harassment/Bullying": {
+        "description": "Personal attacks, threats, intimidation tactics, and behaviors designed to harm, frighten, or control others",
+        "patterns": [
+            "Abbreviation threats (kys, kys)",
+            "Modern harassment (ratio, cope, seethe)",
+            "Appearance-based attacks",
+            "Social exclusion tactics",
+            "Gaslighting and manipulation"
+        ]
+    },
+    
+    "Sexual Content": {
+        "description": "Explicit sexual language, inappropriate sexual comments, sexual harassment, and sexually suggestive content",
+        "patterns": [
+            "Modern slang (rizz, pulling, sliding)",
+            "Euphemisms and coded language",
+            "Abbreviated terms (bj, hj)",
+            "Gen Z specific terminology",
+            "Inappropriate sexual advances"
+        ]
+    },
+    
+    "General Toxicity": {
+        "description": "Aggressive language, insults, mean-spirited behavior, and general negative interactions that create hostile environments",
+        "patterns": [
+            "Modern toxicity slang (cringe, cope, ratio)",
+            "Internet-specific behaviors (trolling, ghosting)",
+            "Social media patterns (drama, cancel culture)",
+            "Exclusion tactics",
+            "Confrontational language"
+        ]
+    }
+}
+
+def get_keywords_by_category(category: str) -> list:
+    """
+    Retrieve keywords for a specific category.
+    
+    Args:
+        category: The category name (must match keys in seed_categories)
+        
+    Returns:
+        List of keywords for the specified category
+        
+    Raises:
+        KeyError: If category doesn't exist
+    """
+    if category not in seed_categories:
+        raise KeyError(f"Category '{category}' not found. Available categories: {list(seed_categories.keys())}")
+    
+    return seed_categories[category]
+
+def get_all_keywords() -> dict:
+    """
+    Retrieve all keywords organized by category.
+    
+    Returns:
+        Dictionary with category names as keys and keyword lists as values
+    """
+    return seed_categories.copy()
+
+def get_category_metadata(category: str) -> dict:
+    """
+    Retrieve metadata for a specific category.
+    
+    Args:
+        category: The category name
+        
+    Returns:
+        Dictionary containing category metadata
+        
+    Raises:
+        KeyError: If category doesn't exist
+    """
+    if category not in category_metadata:
+        raise KeyError(f"Category '{category}' not found. Available categories: {list(category_metadata.keys())}")
+    
+    return category_metadata[category]
+
+def get_keyword_count_by_category() -> dict:
+    """
+    Get the count of keywords in each category.
+    
+    Returns:
+        Dictionary with category names as keys and keyword counts as values
+    """
+    return {category: len(keywords) for category, keywords in seed_categories.items()}
+
+if __name__ == "__main__":
+    # Print summary information
+    print("Seed Keywords for Malicious Content Categorization")
+    print("=" * 60)
+    
+    counts = get_keyword_count_by_category()
+    for category, count in counts.items():
+        print(f"{category}: {count} keywords")
+    
+    print(f"\nTotal keywords across all categories: {sum(counts.values())}")
+    print("\nCategories available:")
+    for category in seed_categories.keys():
+        print(f"  - {category}")
