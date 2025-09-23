@@ -18,3 +18,10 @@ tokenizers>=0.13.0
 datasets>=2.12.0
 accelerate>=0.20.0
 evaluate>=0.4.0
+
+# BERTopic and topic modeling
+bertopic>=0.15.0
+umap-learn>=0.5.0
+hdbscan>=0.8.0
+sentence-transformers>=2.2.0
+keybert>=0.8.0
