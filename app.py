@@ -261,45 +261,33 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Call HF Space (lazy init client) with a small retry to handle cold starts/transient errors.
-        result = None
-        client_err = None
-        try:
-            client = get_hf_client()
-            last_err = None
-            for attempt in range(3):
-                try:
-                    result = client.predict(text=combined)
-                    break
-                except Exception as e:
-                    last_err = e
-                    logging.warning("HF Space predict failed (attempt %s/3): %s", attempt + 1, str(e))
-                    if attempt < 2:
-                        time.sleep(0.8 * (2 ** attempt))  # brief backoff (0.8s, 1.6s)
-            else:
-                client_err = last_err
-        except Exception as e:
-            client_err = e
-
-        # If client path failed, try REST fallback once
-        if result is None:
-            try:
-                logging.info("Falling back to REST /api/predict for Space call")
-                result = _predict_via_rest(combined)
-            except Exception as rest_err:
-                # prefer REST error if client already failed
-                raise rest_err if client_err is None else client_err
-
-        normalized = _normalize_result(result)
+        # Direct HTTP call to your Space
+        base_url = "https://ayingxizhao-contentguard-model.hf.space"
+        
+        # Try the /api/predict endpoint (Gradio's HTTP API)
+        response = httpx.post(
+            f"{base_url}/api/predict",
+            json={"data": [combined]},
+            headers={"Content-Type": "application/json"},
+            timeout=30.0
+        )
+        response.raise_for_status()
+        result = response.json()
+        
+        # Extract the data from Gradio's response format
+        if isinstance(result, dict) and 'data' in result:
+            space_output = result['data'][0] if result['data'] else {}
+        else:
+            space_output = result
+            
+        normalized = _normalize_result(space_output)
         return jsonify(normalized)
     
     except Exception as e:
-        # Log full traceback for debugging on Railway logs
-        logging.error("/analyze failed: %s\n%s", str(e), traceback.format_exc())
-        # Surface as bad gateway to indicate upstream issue but keep app healthy
+        logging.error("/analyze failed: %s", str(e))
         return jsonify({
             "error": str(e),
-            "hint": "Check HF_SPACE_ID, HF token if private, or Space availability."
+            "hint": "Check Space availability"
         }), 502
 
 @app.route('/health', methods=['GET'])
