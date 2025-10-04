@@ -262,49 +262,54 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Direct HTTP call using Gradio 4.x HTTP API: POST /call/{endpoint} then GET /call/{endpoint}/{event_id}
+        # Gradio 3.x SSE v3 protocol: POST /queue/join -> stream /queue/data
         base_url = "https://ayingxizhao-contentguard-model.hf.space"
         headers = {"Content-Type": "application/json"}
         if HF_TOKEN:
             headers["Authorization"] = f"Bearer {HF_TOKEN}"
         
-        # Step 1: POST to /call/predict to start the job
-        call_response = httpx.post(
-            f"{base_url}/call/predict",
-            json={"data": [combined]},
+        # Step 1: POST to /queue/join to enqueue the request
+        join_response = httpx.post(
+            f"{base_url}/queue/join",
+            json={
+                "data": [combined],
+                "fn_index": 2,  # from /config: dependency id 2 is "predict"
+                "session_hash": "random_session_" + str(time.time())
+            },
             headers=headers,
             timeout=10.0
         )
-        call_response.raise_for_status()
-        call_data = call_response.json()
-        event_id = call_data.get("event_id")
+        join_response.raise_for_status()
+        join_data = join_response.json()
+        event_id = join_data.get("event_id")
         if not event_id:
-            raise ValueError("No event_id returned from Space /call/predict")
+            raise ValueError("No event_id returned from /queue/join")
         
-        # Step 2: Poll /call/predict/{event_id} for result (SSE stream)
-        # We'll read the SSE stream until we get the "complete" event with data
+        # Step 2: Stream /queue/data?session_hash=... to get result
+        session_hash = join_data.get("session_hash") or ("random_session_" + str(time.time()))
         result = None
-        with httpx.stream("GET", f"{base_url}/call/predict/{event_id}", headers=headers, timeout=30.0) as stream_resp:
+        with httpx.stream("GET", f"{base_url}/queue/data?session_hash={session_hash}", headers=headers, timeout=30.0) as stream_resp:
             stream_resp.raise_for_status()
             for line in stream_resp.iter_lines():
                 line = line.strip()
                 if not line or line.startswith(":"):
                     continue
                 if line.startswith("data: "):
-                    payload = line[6:]  # strip "data: "
+                    payload = line[6:]
                     try:
                         event = json.loads(payload)
                         if isinstance(event, dict):
-                            # Gradio sends events like {"msg": "process_completed", "output": {"data": [...]}}
-                            if event.get("msg") in ("process_completed", "complete"):
+                            # Gradio SSE v3 sends: {"msg": "process_completed", "output": {"data": [...]}, "success": true}
+                            if event.get("msg") == "process_completed" and event.get("success"):
                                 output = event.get("output") or {}
-                                result = output.get("data", [None])[0] if "data" in output else output
+                                data_list = output.get("data", [])
+                                result = data_list[0] if data_list else {}
                                 break
                     except Exception:
                         continue
         
         if result is None:
-            raise RuntimeError("No result from Space stream")
+            raise RuntimeError("No result from Space SSE stream")
 
         normalized = _normalize_result(result)
         return jsonify(normalized)
