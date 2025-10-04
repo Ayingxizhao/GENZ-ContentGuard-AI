@@ -261,12 +261,11 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Direct HTTP call to your Space
         base_url = "https://ayingxizhao-contentguard-model.hf.space"
         
-        # Try the /api/predict endpoint (Gradio's HTTP API)
+        # Gradio 4.x uses /run/{endpoint_name} for HTTP API
         response = httpx.post(
-            f"{base_url}/api/predict",
+            f"{base_url}/run/predict",
             json={"data": [combined]},
             headers={"Content-Type": "application/json"},
             timeout=30.0
@@ -274,7 +273,7 @@ def analyze():
         response.raise_for_status()
         result = response.json()
         
-        # Extract the data from Gradio's response format
+        # Gradio returns: {"data": [result]}
         if isinstance(result, dict) and 'data' in result:
             space_output = result['data'][0] if result['data'] else {}
         else:
