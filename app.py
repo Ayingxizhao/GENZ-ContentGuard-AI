@@ -269,7 +269,7 @@ def analyze():
             last_err = None
             for attempt in range(3):
                 try:
-                    result = client.predict(text=combined, api_name=HF_API_NAME)
+                    result = client.predict(text=combined)
                     break
                 except Exception as e:
                     last_err = e
