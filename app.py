@@ -7,6 +7,7 @@ import logging
 import traceback
 import re
 import httpx
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -261,30 +262,58 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Use official gradio_client per HF docs
-        client = get_hf_client()
-        last_err = None
+        # Direct HTTP call using Gradio 4.x HTTP API: POST /call/{endpoint} then GET /call/{endpoint}/{event_id}
+        base_url = "https://ayingxizhao-contentguard-model.hf.space"
+        headers = {"Content-Type": "application/json"}
+        if HF_TOKEN:
+            headers["Authorization"] = f"Bearer {HF_TOKEN}"
+        
+        # Step 1: POST to /call/predict to start the job
+        call_response = httpx.post(
+            f"{base_url}/call/predict",
+            json={"data": [combined]},
+            headers=headers,
+            timeout=10.0
+        )
+        call_response.raise_for_status()
+        call_data = call_response.json()
+        event_id = call_data.get("event_id")
+        if not event_id:
+            raise ValueError("No event_id returned from Space /call/predict")
+        
+        # Step 2: Poll /call/predict/{event_id} for result (SSE stream)
+        # We'll read the SSE stream until we get the "complete" event with data
         result = None
-        for attempt in range(3):
-            try:
-                result = client.predict(text=combined, api_name="/predict")
-                break
-            except Exception as e:
-                last_err = e
-                logging.warning("HF Space predict failed (attempt %s/3): %s", attempt + 1, str(e))
-                if attempt < 2:
-                    time.sleep(0.8 * (2 ** attempt))
+        with httpx.stream("GET", f"{base_url}/call/predict/{event_id}", headers=headers, timeout=30.0) as stream_resp:
+            stream_resp.raise_for_status()
+            for line in stream_resp.iter_lines():
+                line = line.strip()
+                if not line or line.startswith(":"):
+                    continue
+                if line.startswith("data: "):
+                    payload = line[6:]  # strip "data: "
+                    try:
+                        event = json.loads(payload)
+                        if isinstance(event, dict):
+                            # Gradio sends events like {"msg": "process_completed", "output": {"data": [...]}}
+                            if event.get("msg") in ("process_completed", "complete"):
+                                output = event.get("output") or {}
+                                result = output.get("data", [None])[0] if "data" in output else output
+                                break
+                    except Exception:
+                        continue
+        
         if result is None:
-            raise last_err if last_err else RuntimeError("Unknown Space error")
+            raise RuntimeError("No result from Space stream")
 
         normalized = _normalize_result(result)
         return jsonify(normalized)
     
     except Exception as e:
-        logging.error("/analyze failed: %s", str(e))
+        logging.error("/analyze failed: %s\n%s", str(e), traceback.format_exc())
         return jsonify({
             "error": str(e),
-            "hint": "Check Space availability"
+            "hint": "Check Space availability or HF_TOKEN if private"
         }), 502
 
 @app.route('/health', methods=['GET'])
