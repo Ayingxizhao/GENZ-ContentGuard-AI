@@ -6,9 +6,15 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Gradio client (configurable via env)
+# Initialize Gradio client (configurable via env) lazily to avoid blocking startup
 HF_SPACE_ID = os.getenv("HF_SPACE_ID", "Ayingxizhao/contentguard-model")
-hf_client = Client(HF_SPACE_ID)
+_hf_client = None
+
+def get_hf_client():
+    global _hf_client
+    if _hf_client is None:
+        _hf_client = Client(HF_SPACE_ID)
+    return _hf_client
 
 def _normalize_result(space_result):
     """Normalize HF Space output to the UI schema.
@@ -163,13 +169,15 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Call HF Space
-        result = hf_client.predict(text=combined, api_name="/predict")
+        # Call HF Space (lazy init client). If Space is slow/unavailable, raise and return 502.
+        client = get_hf_client()
+        result = client.predict(text=combined, api_name="/predict")
         normalized = _normalize_result(result)
         return jsonify(normalized)
     
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Surface as bad gateway to indicate upstream issue but keep app healthy
+        return jsonify({"error": str(e)}), 502
 
 @app.route('/health', methods=['GET'])
 def health():
