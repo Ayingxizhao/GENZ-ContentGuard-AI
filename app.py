@@ -103,7 +103,7 @@ def _predict_via_rest(text: str):
         else:
             # Use named endpoint path
             api = api_cfg.lstrip('/') if api_cfg else 'predict'
-            url = f"{base}/api/predict/{api}"
+            url = f"{base}/api/predict"
             r = client.post(url, json=payload, headers=headers)
             r.raise_for_status()
             return r.json()
