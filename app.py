@@ -262,54 +262,16 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Gradio 3.x SSE v3 protocol: POST /queue/join -> stream /queue/data
-        base_url = "https://ayingxizhao-contentguard-model.hf.space"
-        headers = {"Content-Type": "application/json"}
-        if HF_TOKEN:
-            headers["Authorization"] = f"Bearer {HF_TOKEN}"
-        
-        # Step 1: POST to /queue/join to enqueue the request
-        join_response = httpx.post(
-            f"{base_url}/queue/join",
-            json={
-                "data": [combined],
-                "fn_index": 2,  # from /config: dependency id 2 is "predict"
-                "session_hash": "random_session_" + str(time.time())
-            },
-            headers=headers,
-            timeout=10.0
-        )
-        join_response.raise_for_status()
-        join_data = join_response.json()
-        event_id = join_data.get("event_id")
-        if not event_id:
-            raise ValueError("No event_id returned from /queue/join")
-        
-        # Step 2: Stream /queue/data?session_hash=... to get result
-        session_hash = join_data.get("session_hash") or ("random_session_" + str(time.time()))
-        result = None
-        with httpx.stream("GET", f"{base_url}/queue/data?session_hash={session_hash}", headers=headers, timeout=30.0) as stream_resp:
-            stream_resp.raise_for_status()
-            for line in stream_resp.iter_lines():
-                line = line.strip()
-                if not line or line.startswith(":"):
-                    continue
-                if line.startswith("data: "):
-                    payload = line[6:]
-                    try:
-                        event = json.loads(payload)
-                        if isinstance(event, dict):
-                            # Gradio SSE v3 sends: {"msg": "process_completed", "output": {"data": [...]}, "success": true}
-                            if event.get("msg") == "process_completed" and event.get("success"):
-                                output = event.get("output") or {}
-                                data_list = output.get("data", [])
-                                result = data_list[0] if data_list else {}
-                                break
-                    except Exception:
-                        continue
-        
-        if result is None:
-            raise RuntimeError("No result from Space SSE stream")
+        # Use gradio_client with proper error handling
+        # The client handles all protocol versions automatically
+        try:
+            client = get_hf_client()
+            # Call with text parameter as shown in HF API docs
+            result = client.predict(combined, api_name="/predict")
+        except Exception as client_err:
+            # If client fails, log and raise with context
+            logging.error("gradio_client.predict failed: %s", str(client_err))
+            raise RuntimeError(f"Space call failed: {str(client_err)}")
 
         normalized = _normalize_result(result)
         return jsonify(normalized)
@@ -318,7 +280,7 @@ def analyze():
         logging.error("/analyze failed: %s\n%s", str(e), traceback.format_exc())
         return jsonify({
             "error": str(e),
-            "hint": "Check Space availability or HF_TOKEN if private"
+            "hint": "Ensure Space is running and gradio_client is up to date"
         }), 502
 
 @app.route('/health', methods=['GET'])
