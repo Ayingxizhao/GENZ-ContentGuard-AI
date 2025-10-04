@@ -261,25 +261,23 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        base_url = "https://ayingxizhao-contentguard-model.hf.space"
-        
-        # Gradio 4.x uses /run/{endpoint_name} for HTTP API
-        response = httpx.post(
-            f"{base_url}/run/predict",
-            json={"data": [combined]},
-            headers={"Content-Type": "application/json"},
-            timeout=30.0
-        )
-        response.raise_for_status()
-        result = response.json()
-        
-        # Gradio returns: {"data": [result]}
-        if isinstance(result, dict) and 'data' in result:
-            space_output = result['data'][0] if result['data'] else {}
-        else:
-            space_output = result
-            
-        normalized = _normalize_result(space_output)
+        # Use official gradio_client per HF docs
+        client = get_hf_client()
+        last_err = None
+        result = None
+        for attempt in range(3):
+            try:
+                result = client.predict(text=combined, api_name="/predict")
+                break
+            except Exception as e:
+                last_err = e
+                logging.warning("HF Space predict failed (attempt %s/3): %s", attempt + 1, str(e))
+                if attempt < 2:
+                    time.sleep(0.8 * (2 ** attempt))
+        if result is None:
+            raise last_err if last_err else RuntimeError("Unknown Space error")
+
+        normalized = _normalize_result(result)
         return jsonify(normalized)
     
     except Exception as e:
