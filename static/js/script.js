@@ -417,11 +417,10 @@ document.addEventListener('DOMContentLoaded', function() {
         timestampText.textContent = data.timestamp;
         
         // Update detailed analysis info if available
-        if (data.detailed_analysis) {
-            riskLevelText.textContent = data.detailed_analysis.risk_level;
-            elementsScannedText.textContent = data.detailed_analysis.elements_scanned;
-            
-            // Show detailed analysis section
+        if (data.detailed_analysis && data.detailed_analysis.keyword_analysis) {
+            riskLevelText.textContent = data.detailed_analysis.risk_level || 'N/A';
+            elementsScannedText.textContent = data.detailed_analysis.elements_scanned || 'N/A';
+            // Show detailed analysis section only when keyword_analysis exists
             showDetailedAnalysis(data.detailed_analysis);
         } else {
             riskLevelText.textContent = 'N/A';
@@ -727,10 +726,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return retryBtn;
     }
 
-    // Add retry button to error section
+    // Add retry button to error section (guard if legacy .error-card is missing)
     const errorCard = document.querySelector('.error-card');
     const retryBtn = addRetryButton();
-    errorCard.appendChild(retryBtn);
+    if (errorCard) {
+        errorCard.appendChild(retryBtn);
+    } else {
+        // Fallback: append to errorSection if using <sl-alert>
+        if (errorSection) errorSection.appendChild(retryBtn);
+    }
 
     // Initialize focus management
     contentTextarea.focus();
