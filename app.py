@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+from flask_login import LoginManager, current_user
 from gradio_client import Client
+from dotenv import load_dotenv
 import os
 import time
 import logging
@@ -9,8 +11,40 @@ import re
 import httpx
 import json
 
+# Load environment variables
+load_dotenv()
+
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///users.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 CORS(app)
+
+# Initialize database and auth
+from models import db, User
+from auth import auth_bp, init_oauth
+
+db.init_app(app)
+init_oauth(app)
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = None  # No redirect, API returns 401
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+# Register auth blueprint
+app.register_blueprint(auth_bp)
+
+# Create tables
+with app.app_context():
+    db.create_all()
 
 # Basic logging
 logging.basicConfig(level=logging.INFO)
@@ -254,6 +288,17 @@ def _normalize_result(space_result):
 @app.route('/analyze', methods=['POST'])
 def analyze():
     try:
+        # Check if user is logged in and track usage
+        if current_user.is_authenticated:
+            # Check daily limit for logged-in users
+            if current_user.has_exceeded_daily_limit():
+                return jsonify({
+                    "error": "Daily API limit exceeded",
+                    "daily_limit": current_user.daily_limit,
+                    "api_calls_today": current_user.api_calls_today,
+                    "hint": "Please try again tomorrow or contact support for higher limits"
+                }), 429
+        
         data = request.get_json() or {}
         text = (data.get('content') or '').strip()
         title = (data.get('title') or '').strip()
@@ -274,6 +319,20 @@ def analyze():
             raise RuntimeError(f"Space call failed: {str(client_err)}")
 
         normalized = _normalize_result(result)
+        
+        # Track usage for logged-in users
+        if current_user.is_authenticated:
+            try:
+                current_user.increment_api_usage()
+                # Add usage info to response
+                normalized['usage'] = {
+                    'api_calls_today': current_user.api_calls_today,
+                    'daily_limit': current_user.daily_limit,
+                    'remaining_calls': current_user.get_remaining_calls()
+                }
+            except Exception as usage_err:
+                logging.error("Failed to track usage: %s", str(usage_err))
+        
         return jsonify(normalized)
     
     except Exception as e:

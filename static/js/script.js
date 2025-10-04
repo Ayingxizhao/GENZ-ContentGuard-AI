@@ -217,39 +217,98 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =============================
-    // Hero Live Demo Loop
+    // API Code Snippet Showcase
     // =============================
-    function setDemoValues(safePct, malPct, status) {
-        if (demoSafeBar) demoSafeBar.style.width = `${safePct}%`;
-        if (demoMalBar) demoMalBar.style.width = `${malPct}%`;
-        if (demoSafeVal) demoSafeVal.textContent = `${safePct.toFixed(0)}%`;
-        if (demoMalVal) demoMalVal.textContent = `${malPct.toFixed(0)}%`;
-        if (demoBadge) {
-            if (status === 'safe') {
-                demoBadge.textContent = 'Safe';
-                demoBadge.style.background = 'rgba(16,185,129,0.35)';
-            } else if (status === 'malicious') {
-                demoBadge.textContent = 'Malicious';
-                demoBadge.style.background = 'rgba(239,68,68,0.35)';
-            } else {
-                demoBadge.textContent = 'Analyzing…';
-                demoBadge.style.background = 'rgba(255,255,255,0.25)';
+    const codeTabs = document.querySelectorAll('.code-tab');
+    const codePanels = document.querySelectorAll('.code-panel');
+    const copyCodeBtn = document.getElementById('copyCodeBtn');
+
+    // Tab switching functionality
+    codeTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetLang = tab.dataset.lang;
+            
+            // Update tabs
+            codeTabs.forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            
+            // Update panels with smooth transition
+            codePanels.forEach(panel => {
+                const panelLang = panel.id.replace('code-', '');
+                if (panelLang === targetLang) {
+                    panel.classList.add('active');
+                    panel.removeAttribute('hidden');
+                    // Re-highlight code with Prism if available
+                    if (window.Prism) {
+                        const codeBlock = panel.querySelector('code');
+                        if (codeBlock) {
+                            window.Prism.highlightElement(codeBlock);
+                        }
+                    }
+                } else {
+                    panel.classList.remove('active');
+                    panel.setAttribute('hidden', '');
+                }
+            });
+            
+            // Announce to screen readers
+            announceToScreenReader(`Switched to ${targetLang} code example`);
+        });
+    });
+
+    // Copy to clipboard functionality
+    if (copyCodeBtn) {
+        copyCodeBtn.addEventListener('click', async () => {
+            const activePanel = document.querySelector('.code-panel.active');
+            if (!activePanel) return;
+            
+            const codeElement = activePanel.querySelector('code');
+            if (!codeElement) return;
+            
+            const codeText = codeElement.textContent;
+            
+            try {
+                // Use Clipboard API
+                await navigator.clipboard.writeText(codeText);
+                
+                // Visual feedback with animation
+                const originalHTML = copyCodeBtn.innerHTML;
+                copyCodeBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyCodeBtn.style.background = 'rgba(74, 222, 128, 0.3)';
+                copyCodeBtn.classList.add('copied');
+                
+                // Show toast notification
+                if (window.showToast) {
+                    window.showToast('success', 'Code copied to clipboard!');
+                }
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    copyCodeBtn.innerHTML = originalHTML;
+                    copyCodeBtn.style.background = '';
+                    copyCodeBtn.classList.remove('copied');
+                }, 2000);
+                
+                // Announce to screen readers
+                announceToScreenReader('Code copied to clipboard');
+            } catch (err) {
+                console.error('Failed to copy code:', err);
+                if (window.showToast) {
+                    window.showToast('danger', 'Failed to copy code');
+                }
             }
-        }
+        });
     }
-    if (demoSafeBar && demoMalBar && !reduceMotion) {
-        setDemoValues(50, 50, 'analyzing');
-        setInterval(() => {
-            // phase 1: analyzing shimmer
-            setDemoValues(50, 50, 'analyzing');
-            setTimeout(() => {
-                // phase 2: random result
-                const safe = Math.random() * 70 + 20; // 20-90
-                const mal = 100 - safe;
-                const status = safe >= 60 ? 'safe' : 'malicious';
-                setDemoValues(safe, mal, status);
-            }, 700);
-        }, 3500);
+
+    // Initialize Prism syntax highlighting on page load
+    if (window.Prism) {
+        window.addEventListener('load', () => {
+            window.Prism.highlightAll();
+        });
     }
 
     // =============================
@@ -919,4 +978,196 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listener for bug description character counter
     bugDescriptionTextarea.addEventListener('input', updateBugCharCounter);
+
+    // =============================
+    // Authentication State Management
+    // =============================
+    const loginBtn = document.getElementById('loginBtn');
+    const loginDialog = document.getElementById('loginDialog');
+    const userDropdown = document.getElementById('userDropdown');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const usageCount = document.getElementById('usageCount');
+    const usageLimit = document.getElementById('usageLimit');
+    const logoutMenuItem = document.getElementById('logoutMenuItem');
+
+    // Drawer elements
+    const drawerLoginBtn = document.getElementById('drawerLoginBtn');
+    const drawerAccount = document.getElementById('drawerAccount');
+    const drawerUserAvatar = document.getElementById('drawerUserAvatar');
+    const drawerUserName = document.getElementById('drawerUserName');
+    const drawerUsageCount = document.getElementById('drawerUsageCount');
+    const drawerUsageLimit = document.getElementById('drawerUsageLimit');
+    const drawerLogoutBtn = document.getElementById('drawerLogoutBtn');
+    const drawerThemeToggle = document.getElementById('drawerThemeToggle');
+
+    // Check authentication status on page load
+    async function checkAuthStatus() {
+        try {
+            const response = await fetch('/auth/user');
+            const data = await response.json();
+            
+            if (data.authenticated && data.user) {
+                // User is logged in
+                showUserProfile(data.user);
+                updateDrawerAuth(data.user);
+            } else {
+                // User is not logged in
+                showLoginButton();
+                updateDrawerAuth(null);
+            }
+        } catch (error) {
+            console.error('Failed to check auth status:', error);
+            showLoginButton();
+        }
+    }
+
+    function showLoginButton() {
+        if (loginBtn) {
+            loginBtn.style.display = 'inline-flex';
+        }
+        if (userDropdown) {
+            userDropdown.style.display = 'none';
+        }
+    }
+
+    function showUserProfile(user) {
+        if (loginBtn) {
+            loginBtn.style.display = 'none';
+        }
+        if (userDropdown) {
+            userDropdown.style.display = 'inline-block';
+        }
+        
+        // Update user info
+        if (userAvatar && user.avatar_url) {
+            userAvatar.src = user.avatar_url;
+            userAvatar.alt = user.name || user.email;
+        }
+        if (userName) {
+            userName.textContent = user.name || user.email.split('@')[0];
+        }
+        if (usageCount) {
+            usageCount.textContent = user.api_calls_today || 0;
+        }
+        if (usageLimit) {
+            usageLimit.textContent = user.daily_limit || 100;
+        }
+    }
+
+    function updateDrawerAuth(user) {
+        if (user && drawerAccount && drawerLoginBtn) {
+            drawerLoginBtn.style.display = 'none';
+            drawerAccount.style.display = 'block';
+            if (drawerUserAvatar && user.avatar_url) {
+                drawerUserAvatar.src = user.avatar_url;
+                drawerUserAvatar.alt = user.name || user.email;
+            }
+            if (drawerUserName) drawerUserName.textContent = user.name || (user.email ? user.email.split('@')[0] : 'User');
+            if (drawerUsageCount) drawerUsageCount.textContent = user.api_calls_today || 0;
+            if (drawerUsageLimit) drawerUsageLimit.textContent = user.daily_limit || 100;
+        } else {
+            if (drawerLoginBtn) drawerLoginBtn.style.display = 'flex';
+            if (drawerAccount) drawerAccount.style.display = 'none';
+        }
+    }
+
+    // Open login dialog
+    if (loginBtn && loginDialog) {
+        loginBtn.addEventListener('click', () => {
+            loginDialog.show();
+        });
+    }
+
+    // Drawer: open login dialog
+    if (drawerLoginBtn && loginDialog) {
+        drawerLoginBtn.addEventListener('click', () => {
+            loginDialog.show();
+            if (typeof mobileNav?.hide === 'function') mobileNav.hide();
+        });
+    }
+
+    // Logout handler
+    if (logoutMenuItem) {
+        logoutMenuItem.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/auth/logout');
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+                window.location.href = '/auth/logout';
+            }
+        });
+    }
+
+    // Drawer: logout
+    if (drawerLogoutBtn) {
+        drawerLogoutBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/auth/logout');
+                if (typeof mobileNav?.hide === 'function') mobileNav.hide();
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+                window.location.href = '/auth/logout';
+            }
+        });
+    }
+
+    // Drawer: theme toggle mirrors main toggle
+    if (drawerThemeToggle) {
+        drawerThemeToggle.addEventListener('click', () => {
+            const next = root.classList.contains('dark') ? 'light' : 'dark';
+            localStorage.setItem('theme', next);
+            applyTheme(next);
+            if (typeof mobileNav?.hide === 'function') mobileNav.hide();
+        });
+    }
+
+    // Check for auth errors in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error') === 'auth_failed') {
+        if (window.showToast) {
+            window.showToast('danger', 'Authentication failed. Please try again.');
+        }
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Initialize auth state
+    checkAuthStatus();
+
+    // Refresh usage stats after each analysis (if logged in)
+    if (typeof showResults === 'function') {
+        const authOriginalShowResults = showResults;
+        showResults = function(data) {
+            authOriginalShowResults(data);
+            
+            // Update usage stats if present in response
+            if (data.usage && usageCount && usageLimit) {
+                usageCount.textContent = data.usage.api_calls_today;
+                usageLimit.textContent = data.usage.daily_limit;
+                
+                // Show warning if approaching limit
+                const remaining = data.usage.remaining_calls;
+                if (remaining <= 10 && remaining > 0) {
+                    if (window.showToast) {
+                        window.showToast('warning', `Only ${remaining} API calls remaining today!`);
+                    }
+                } else if (remaining === 0) {
+                    if (window.showToast) {
+                        window.showToast('danger', 'Daily API limit reached. Please try again tomorrow.');
+                    }
+                }
+            }
+        };
+    }
 });

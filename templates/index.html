@@ -27,6 +27,13 @@
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light.css" />
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
+    <!-- Prism.js (Syntax Highlighting) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
 </head>
 <body>
     <!-- Skip to content link for accessibility -->
@@ -38,30 +45,100 @@
                 <div class="nav-container">
                     <div class="logo">
                         <i class="fas fa-shield-alt" aria-hidden="true"></i>
-                        <h1>ContentGuard AI</h1>
+                        <h1>ContentGuard</h1>
                     </div>
-                    <div class="nav-links">
+                    
+                    <!-- Desktop Nav Links (hidden on mobile) -->
+                    <div class="nav-links desktop-only">
                         <a href="#main-content" class="nav-link">Analyze</a>
-                        <a href="#bug-report" class="nav-link">Report Bug</a>
                         <a href="#about" class="nav-link" id="aboutLink">About</a>
-                        <a href="#contact" class="nav-link">Contact</a>
+                    </div>
+                    
+                    <!-- Right Side Actions -->
+                    <div class="nav-actions">
                         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
                             <i class="fas fa-moon" aria-hidden="true"></i>
                         </button>
+                        
+                        <!-- Auth: Login Button (shown when not logged in) -->
+                        <button class="auth-btn login-btn" id="loginBtn" style="display: none;" aria-label="Sign in">
+                            <i class="fas fa-user"></i>
+                            <span class="btn-text">Sign In</span>
+                        </button>
+                        
+                        <!-- Auth: User Profile Dropdown (shown when logged in) -->
+                        <sl-dropdown id="userDropdown" style="display: none;" placement="bottom-end">
+                            <button slot="trigger" class="auth-btn user-btn" aria-label="User menu">
+                                <img id="userAvatar" class="user-avatar" src="" alt="User avatar" />
+                                <span id="userName" class="btn-text">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <sl-menu>
+                                <sl-menu-item id="usageMenuItem">
+                                    <i class="fas fa-chart-line" slot="prefix"></i>
+                                    <div class="usage-info">
+                                        <div class="usage-label">API Usage Today</div>
+                                        <div class="usage-stats">
+                                            <span id="usageCount">0</span> / <span id="usageLimit">100</span>
+                                        </div>
+                                    </div>
+                                </sl-menu-item>
+                                <sl-divider></sl-divider>
+                                <sl-menu-item id="logoutMenuItem">
+                                    <i class="fas fa-sign-out-alt" slot="prefix"></i>
+                                    Logout
+                                </sl-menu-item>
+                            </sl-menu>
+                        </sl-dropdown>
+                        
+                        <!-- Mobile burger toggle -->
+                        <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-controls="mobileNav">
+                            <i class="fas fa-bars" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    <!-- Mobile burger toggle -->
-                    <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-controls="mobileNav">
-                        <i class="fas fa-bars" aria-hidden="true"></i>
-                    </button>
                 </div>
             </nav>
-            <!-- Mobile navigation drawer -->
+            <!-- Mobile / Drawer navigation -->
             <sl-drawer id="mobileNav" placement="start" label="Menu">
-                <nav class="drawer-links">
-                    <a href="#main-content" class="nav-link">Analyze</a>
-                    <a href="#bug-report" class="nav-link">Report Bug</a>
-                    <a href="#about" class="nav-link" id="aboutLinkDrawer">About</a>
-                    <a href="#contact" class="nav-link">Contact</a>
+                <nav class="drawer-links" aria-label="Main navigation">
+                    <div class="drawer-section-label">Navigation</div>
+                    <a href="#main-content" class="nav-link"><i class="fas fa-magic"></i><span>Analyze</span></a>
+                    <a href="#bug-report" class="nav-link"><i class="fas fa-bug"></i><span>Report Bug</span></a>
+                    <a href="#about" class="nav-link" id="aboutLinkDrawer"><i class="fas fa-info-circle"></i><span>About</span></a>
+                    <a href="#contact" class="nav-link"><i class="fas fa-envelope"></i><span>Contact</span></a>
+
+                    <sl-divider></sl-divider>
+
+                    <div class="drawer-section-label">Account</div>
+                    <!-- Shown when NOT logged in -->
+                    <button type="button" class="oauth-btn drawer-auth-btn" id="drawerLoginBtn">
+                        <i class="fas fa-user"></i>
+                        <span>Sign In</span>
+                    </button>
+                    <!-- Shown when logged in -->
+                    <div class="drawer-account" id="drawerAccount" style="display:none;">
+                        <div class="drawer-user">
+                            <img id="drawerUserAvatar" class="user-avatar" alt="User avatar" />
+                            <div class="drawer-user-meta">
+                                <div id="drawerUserName" class="drawer-user-name">User</div>
+                                <div class="drawer-usage"><span id="drawerUsageCount">0</span>/<span id="drawerUsageLimit">100</span> today</div>
+                            </div>
+                        </div>
+                        <button type="button" class="drawer-logout-btn" id="drawerLogoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+                    </div>
+
+                    <sl-divider></sl-divider>
+
+                    <div class="drawer-section-label">Utilities</div>
+                    <button type="button" class="drawer-util-btn" id="drawerThemeToggle"><i class="fas fa-adjust"></i><span>Toggle Theme</span></button>
+                    <a href="#examples" class="drawer-util-link"><i class="fas fa-code"></i><span>API Examples</span></a>
+                    <a href="#bug-report" class="drawer-util-link"><i class="fas fa-comment-dots"></i><span>Send Feedback</span></a>
+
+                    <sl-divider></sl-divider>
+
+                    <div class="drawer-section-label">Legal</div>
+                    <a href="#privacy" class="drawer-meta-link"><i class="fas fa-user-shield"></i><span>Privacy</span></a>
+                    <a href="#terms" class="drawer-meta-link"><i class="fas fa-file-contract"></i><span>Terms</span></a>
                 </nav>
             </sl-drawer>
             <div class="hero" data-aos="fade-up">
@@ -90,22 +167,137 @@
                         </div>
                     </div>
                     <div class="hero-right" data-aos="zoom-in">
-                        <!-- Glass App Preview Card -->
-                        <div class="glass-card hero-preview" id="examples" aria-label="Live analysis preview">
-                            <div class="demo-header">
-                                <span class="demo-badge" id="heroDemoBadge">Analyzing…</span>
+                        <!-- Interactive API Code Snippet -->
+                        <div class="glass-card api-showcase" id="examples" aria-label="API code examples">
+                            <!-- Animated API Flow Visualization -->
+                            <div class="api-flow-animation" id="apiFlowAnimation">
+                                <div class="flow-step" data-step="1">
+                                    <div class="flow-icon request">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </div>
+                                    <div class="flow-label">Request</div>
+                                </div>
+                                <div class="flow-arrow">
+                                    <div class="arrow-line"></div>
+                                    <div class="arrow-head"></div>
+                                    <div class="data-packet"></div>
+                                </div>
+                                <div class="flow-step" data-step="2">
+                                    <div class="flow-icon processing">
+                                        <i class="fas fa-brain"></i>
+                                    </div>
+                                    <div class="flow-label">AI Analysis</div>
+                                </div>
+                                <div class="flow-arrow">
+                                    <div class="arrow-line"></div>
+                                    <div class="arrow-head"></div>
+                                    <div class="data-packet"></div>
+                                </div>
+                                <div class="flow-step" data-step="3">
+                                    <div class="flow-icon response">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="flow-label">Response</div>
+                                </div>
                             </div>
-                            <div class="demo-bars">
-                                <div class="demo-row">
-                                    <span>Safe</span>
-                                    <div class="demo-bar"><div id="heroDemoSafe" class="demo-fill safe" style="width: 50%"></div></div>
-                                    <span id="heroDemoSafeVal" class="demo-val">50%</span>
+                            
+                            <div class="api-header">
+                                <span class="api-title">Try Our API</span>
+                                <button class="copy-btn" id="copyCodeBtn" aria-label="Copy code to clipboard">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Language Tabs -->
+                            <div class="code-tabs" role="tablist" aria-label="Programming language selector">
+                                <button class="code-tab active" data-lang="curl" role="tab" aria-selected="true" aria-controls="code-curl">
+                                    <i class="fas fa-terminal"></i>
+                                    <span>cURL</span>
+                                </button>
+                                <button class="code-tab" data-lang="python" role="tab" aria-selected="false" aria-controls="code-python">
+                                    <i class="fab fa-python"></i>
+                                    <span>Python</span>
+                                </button>
+                                <button class="code-tab" data-lang="javascript" role="tab" aria-selected="false" aria-controls="code-javascript">
+                                    <i class="fab fa-js"></i>
+                                    <span>JavaScript</span>
+                                </button>
+                                <button class="code-tab" data-lang="ruby" role="tab" aria-selected="false" aria-controls="code-ruby">
+                                    <i class="fas fa-gem"></i>
+                                    <span>Ruby</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Code Panels -->
+                            <div class="code-panels">
+                                <div class="code-panel active" id="code-curl" role="tabpanel" aria-labelledby="tab-curl">
+                                    <pre><code class="language-bash">curl -sS -X POST https://plankton-app-xj6ib.ondigitalocean.app/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "test",
+    "content": "you are stupid"
+  }' | jq</code></pre>
                                 </div>
-                                <div class="demo-row">
-                                    <span>Malicious</span>
-                                    <div class="demo-bar"><div id="heroDemoMal" class="demo-fill malicious" style="width: 50%"></div></div>
-                                    <span id="heroDemoMalVal" class="demo-val">50%</span>
+                                <div class="code-panel" id="code-python" role="tabpanel" aria-labelledby="tab-python" hidden>
+                                    <pre><code class="language-python">import requests
+
+resp = requests.post(
+    "https://plankton-app-xj6ib.ondigitalocean.app/analyze",
+    headers={
+        "Content-Type": "application/json"
+    },
+    json={
+        "title": "test",
+        "content": "you are stupid"
+    },
+    timeout=30
+)
+resp.raise_for_status()
+result = resp.json()
+print(result)</code></pre>
                                 </div>
+                                <div class="code-panel" id="code-javascript" role="tabpanel" aria-labelledby="tab-javascript" hidden>
+                                    <pre><code class="language-javascript">const resp = await fetch('https://plankton-app-xj6ib.ondigitalocean.app/analyze', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: 'test',
+    content: 'you are stupid'
+  })
+});
+if (!resp.ok) throw new Error('Request failed');
+const result = await resp.json();
+console.log(result);</code></pre>
+                                </div>
+                                <div class="code-panel" id="code-ruby" role="tabpanel" aria-labelledby="tab-ruby" hidden>
+                                    <pre><code class="language-ruby">require 'net/http'
+require 'json'
+
+uri = URI('https://plankton-app-xj6ib.ondigitalocean.app/analyze')
+req = Net::HTTP::Post.new(uri)
+req['Content-Type'] = 'application/json'
+req.body = { title: 'test', content: 'you are stupid' }.to_json
+
+resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+  http.request(req)
+end
+raise "Request failed: #{resp.code}" unless resp.is_a?(Net::HTTPSuccess)
+result = JSON.parse(resp.body)
+puts result</code></pre>
+                                </div>
+                            </div>
+                            
+                            <!-- Response Preview -->
+                            <div class="response-preview">
+                                <div class="response-header">
+                                    <span class="response-status">Response: <span class="status-code">200 OK</span></span>
+                                    <span class="response-time">~250ms</span>
+                                </div>
+                                <pre><code class="language-json">{
+  "is_malicious": false,
+  "confidence": "94.2%",
+  "analysis": "Content appears safe"
+}</code></pre>
                             </div>
                         </div>
                     </div>
@@ -531,6 +723,47 @@
     <sl-dialog label="About ContentGuard AI" id="aboutDialog">
         <p>ContentGuard AI helps detect malicious language, hate speech, harassment and threats in real time.</p>
         <sl-button slot="footer" variant="primary" onclick="this.closest('sl-dialog').hide()">Close</sl-button>
+    </sl-dialog>
+
+    <!-- Login Modal -->
+    <sl-dialog label="Sign In to ContentGuard AI" id="loginDialog" class="auth-dialog">
+        <div class="auth-dialog-content">
+            <p class="auth-subtitle">Choose your preferred sign-in method</p>
+            
+            <div class="oauth-buttons">
+                <!-- Google OAuth Button -->
+                <a href="/auth/login/google" class="oauth-btn google-btn">
+                    <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                </a>
+                
+                <!-- GitHub OAuth Button -->
+                <a href="/auth/login/github" class="oauth-btn github-btn">
+                    <i class="fab fa-github oauth-icon"></i>
+                    <span>Continue with GitHub</span>
+                </a>
+            </div>
+            
+            <div class="auth-benefits">
+                <h4>Benefits of signing in:</h4>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Track your API usage</li>
+                    <li><i class="fas fa-check-circle"></i> 100 free API calls per day</li>
+                    <li><i class="fas fa-check-circle"></i> Save analysis history</li>
+                    <li><i class="fas fa-check-circle"></i> Priority support</li>
+                </ul>
+            </div>
+            
+            <p class="auth-privacy">
+                <i class="fas fa-lock"></i>
+                We respect your privacy. We only access your basic profile information.
+            </p>
+        </div>
     </sl-dialog>
 
     <!-- Toast container (Shoelace alerts will be appended here) -->
