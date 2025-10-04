@@ -43,6 +43,7 @@ def start_application() -> bool:
     try:
         # Import and load config
         from app.config import get_config
+
         config = get_config()
         print("✓ Configuration loaded")
 

@@ -39,7 +39,7 @@ class LocalGenZDetector:
 
         try:
             inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512, padding=True)
-            
+
             with torch.no_grad():
                 outputs = self.model(**inputs)
                 logits = outputs.logits
@@ -54,9 +54,9 @@ class LocalGenZDetector:
                 "confidence": confidence,
                 "probabilities": {
                     "safe": f"{probabilities[0].item() * 100:.2f}%",
-                    "malicious": f"{probabilities[1].item() * 100:.2f}%"
+                    "malicious": f"{probabilities[1].item() * 100:.2f}%",
                 },
-                "model_type": "DistilBERT"
+                "model_type": "DistilBERT",
             }
         except Exception as e:
             logger.error(f"Prediction error: {e}")
@@ -67,7 +67,7 @@ class LocalGenZDetector:
         return {
             "loaded": self.model_loaded,
             "model_path": self.model_path,
-            "model_type": "DistilBERT" if self.model_loaded else "None"
+            "model_type": "DistilBERT" if self.model_loaded else "None",
         }
 
 
@@ -78,22 +78,22 @@ local_detector = LocalGenZDetector()
 def analyze_with_local_model(title: str, content: str) -> Dict[str, Any]:
     """Analyze content using the local model."""
     text = f"{title} {content}".strip()
-    
+
     if not text:
         return {"error": "No content to analyze"}
-    
+
     result = local_detector.predict(text)
-    
+
     if "error" in result:
         return result
-    
+
     # Format the response
     analysis = "Malicious content detected" if result["is_malicious"] else "Content appears safe"
-    
+
     return {
         "analysis": analysis,
         "is_malicious": result["is_malicious"],
         "confidence": result["confidence"],
         "model_type": result["model_type"],
-        "probabilities": result["probabilities"]
+        "probabilities": result["probabilities"],
     }

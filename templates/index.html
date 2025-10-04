@@ -17,6 +17,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <!-- Shoelace (Web Components) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/shoelace.js"></script>
+    <!-- AOS (Animate On Scroll) -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <!-- Tippy.js (Tooltips) -->
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light.css" />
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
 </head>
 <body>
     <!-- Skip to content link for accessibility -->
@@ -33,7 +43,7 @@
                     <div class="nav-links">
                         <a href="#main-content" class="nav-link">Analyze</a>
                         <a href="#bug-report" class="nav-link">Report Bug</a>
-                        <a href="#about" class="nav-link">About</a>
+                        <a href="#about" class="nav-link" id="aboutLink">About</a>
                         <a href="#contact" class="nav-link">Contact</a>
                         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
                             <i class="fas fa-moon" aria-hidden="true"></i>
@@ -41,7 +51,7 @@
                     </div>
                 </div>
             </nav>
-            <div class="hero">
+            <div class="hero" data-aos="fade-up">
                 <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
                 <div class="blob blob-1" aria-hidden="true"></div>
                 <div class="blob blob-2" aria-hidden="true"></div>
@@ -64,17 +74,9 @@
                                 <span class="stat-number">99.8%</span>
                                 <span class="stat-label">Accuracy</span>
                             </div>
-                            <div class="stat">
-                                <span class="stat-number">50K+</span>
-                                <span class="stat-label">Analyses</span>
-                            </div>
-                            <div class="stat">
-                                <span class="stat-number">24/7</span>
-                                <span class="stat-label">Available</span>
-                            </div>
                         </div>
                     </div>
-                    <div class="hero-right">
+                    <div class="hero-right" data-aos="zoom-in">
                         <!-- Glass App Preview Card -->
                         <div class="glass-card hero-preview" id="examples" aria-label="Live analysis preview">
                             <div class="demo-header">
@@ -98,7 +100,7 @@
             </div>
         </header>
 
-        <main class="main-content" id="main-content" role="main">
+        <main class="main-content" id="main-content" role="main" data-aos="fade-up">
             <section class="input-section" aria-labelledby="analyze-heading">
                 <div class="section-header">
                     <h2 id="analyze-heading">Analyze Your Content</h2>
@@ -160,7 +162,7 @@
                 </form>
             </section>
 
-            <section class="results-section" id="resultsSection" style="display: none;" aria-labelledby="results-heading" role="region" aria-live="polite">
+            <section class="results-section" id="resultsSection" style="display: none;" aria-labelledby="results-heading" role="region" aria-live="polite" data-aos="fade-up">
                 <h2 id="results-heading">Analysis Results</h2>
                 <!-- Skeleton Loading Card -->
                 <div class="result-card skeleton" id="skeletonCard" style="display: none;" aria-hidden="true">
@@ -180,7 +182,7 @@
                     </div>
                 </div>
 
-                <div class="result-card" id="resultCard">
+                <div class="result-card" id="resultCard" data-aos="fade-up">
                     <div class="result-header">
                         <div class="status-indicator" id="statusIndicator" role="img" aria-label="Analysis status">
                             <i class="fas fa-question-circle" aria-hidden="true"></i>
@@ -188,7 +190,7 @@
                         <div class="result-info">
                             <h3 id="resultTitle">Analyzing...</h3>
                             <p id="resultSubtitle">Processing your content</p>
-                            <span id="riskBadge" class="badge" aria-live="polite">Pending</span>
+                            <sl-badge id="riskBadge" variant="neutral" aria-live="polite" data-tippy-content="Current risk classification">Pending</sl-badge>
                         </div>
                     </div>
                     
@@ -219,46 +221,46 @@
                     <div class="probability-section" id="probabilitySection" aria-label="Classification Probabilities">
                         <div class="prob-row">
                             <span class="prob-label">Safe</span>
-                            <div class="prob-bar" aria-hidden="true"><div class="prob-fill safe" id="safeBar" style="width:0%"></div></div>
+                            <sl-progress-bar id="safeBar" value="0" style="--height: 10px"></sl-progress-bar>
                             <span class="prob-value" id="safeValue">0%</span>
                         </div>
                         <div class="prob-row">
                             <span class="prob-label">Malicious</span>
-                            <div class="prob-bar" aria-hidden="true"><div class="prob-fill malicious" id="maliciousBar" style="width:0%"></div></div>
+                            <sl-progress-bar id="maliciousBar" value="0" style="--height: 10px"></sl-progress-bar>
                             <span class="prob-value" id="maliciousValue">0%</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Detailed Analysis Section -->
-                <div class="detailed-analysis" id="detailedAnalysis" style="display: none;" aria-labelledby="detailed-heading">
-                    <button class="details-toggle" id="detailsToggle" aria-expanded="false" aria-controls="detailedAnalysis">
-                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                        <span>Show details</span>
-                    </button>
+                <!-- Detailed Analysis Toggle & Section -->
+                <button class="details-toggle" id="detailsToggle" aria-expanded="false" aria-controls="detailedAnalysis" data-tippy-content="Show detailed breakdown">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    <span>Show details</span>
+                </button>
+                <div class="detailed-analysis" id="detailedAnalysis" style="display: none;" aria-labelledby="detailed-heading" data-aos="fade-up">
                     <h3 id="detailed-heading">Detailed Analysis</h3>
-                    <div class="analysis-breakdown">
-                        <div class="breakdown-section" id="riskCategories">
-                            <h4><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Risk Categories</h4>
-                            <div class="category-list" id="riskCategoriesList" role="list">
-                                <!-- Risk categories will be populated here -->
-                            </div>
-                        </div>
-                        
-                        <div class="breakdown-section" id="positiveElements">
-                            <h4><i class="fas fa-check-circle" aria-hidden="true"></i> Positive Elements</h4>
-                            <div class="category-list" id="positiveElementsList" role="list">
-                                <!-- Positive elements will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="explanation-section">
-                        <h4><i class="fas fa-info-circle" aria-hidden="true"></i> Analysis Explanation</h4>
-                        <div class="explanation-text" id="explanationText">
-                            <!-- Detailed explanation will be populated here -->
-                        </div>
-                    </div>
+                    <sl-tab-group id="detailsTabs">
+                        <sl-tab slot="nav" panel="overview">Overview</sl-tab>
+                        <sl-tab slot="nav" panel="risk">Risk Categories</sl-tab>
+                        <sl-tab slot="nav" panel="positives">Positives</sl-tab>
+                        <sl-tab slot="nav" panel="explanation">Explanation</sl-tab>
+
+                        <sl-tab-panel name="overview">
+                            <p id="overviewText">Summary and key signals appear here after analysis.</p>
+                        </sl-tab-panel>
+
+                        <sl-tab-panel name="risk">
+                            <div class="category-list" id="riskCategoriesList" role="list"></div>
+                        </sl-tab-panel>
+
+                        <sl-tab-panel name="positives">
+                            <div class="category-list" id="positiveElementsList" role="list"></div>
+                        </sl-tab-panel>
+
+                        <sl-tab-panel name="explanation">
+                            <div class="explanation-text" id="explanationText"></div>
+                        </sl-tab-panel>
+                    </sl-tab-group>
                 </div>
             </section>
 
@@ -442,26 +444,26 @@
             </section>
         </main>
 
-        <section class="features-section" id="about">
+        <section class="features-section" id="about" data-aos="fade-up">
             <div class="container">
                 <h2>Why Choose ContentGuard AI?</h2>
                 <div class="features-grid">
-                    <div class="feature-card">
+                    <div class="feature-card" data-aos="zoom-in" data-aos-delay="50" data-tippy="Advanced AI" data-tippy-placement="top">
                         <i class="fas fa-brain" aria-hidden="true"></i>
                         <h3>Advanced AI</h3>
                         <p>Powered by state-of-the-art language models trained on Gen Z communication patterns</p>
                     </div>
-                    <div class="feature-card">
-                        <i class="fas fa-shield-alt" aria-hidden="true"></i>
-                        <h3>Real-time Protection</h3>
-                        <p>Instant analysis and detection of malicious content with high accuracy</p>
+                    <div class="feature-card" data-aos="zoom-in" data-aos-delay="100" data-tippy="Real-time Detection" data-tippy-placement="top">
+                        <i class="fas fa-bolt" aria-hidden="true"></i>
+                        <h3>Real-time Detection</h3>
+                        <p>Instant analysis with detailed breakdowns for transparency and trust</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card" data-aos="zoom-in" data-aos-delay="150" data-tippy="Mobile Optimized" data-tippy-placement="top">
                         <i class="fas fa-mobile-alt" aria-hidden="true"></i>
                         <h3>Mobile Optimized</h3>
                         <p>Responsive design that works seamlessly across all devices</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card" data-aos="zoom-in" data-aos-delay="200" data-tippy="Privacy First" data-tippy-placement="top">
                         <i class="fas fa-lock" aria-hidden="true"></i>
                         <h3>Privacy First</h3>
                         <p>Your content is processed securely and never stored permanently</p>
@@ -512,6 +514,15 @@
             border: 0;
         }
     </style>
+
+    <!-- Shoelace About Dialog -->
+    <sl-dialog label="About ContentGuard AI" id="aboutDialog">
+        <p>ContentGuard AI helps detect malicious language, hate speech, harassment and threats in real time.</p>
+        <sl-button slot="footer" variant="primary" onclick="this.closest('sl-dialog').hide()">Close</sl-button>
+    </sl-dialog>
+
+    <!-- Toast container (Shoelace alerts will be appended here) -->
+    <div id="toastContainer" style="position: fixed; top: 16px; right: 16px; z-index: 9999;"></div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

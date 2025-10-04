@@ -4,11 +4,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def test_single_prompt(api_key, content):
     """Test our prompt on a single piece of content"""
-    
+
     client = openai.OpenAI(api_key=api_key)
-    
+
     system_prompt = """You are a content moderator. Classify social media content as HARMFUL or OK.
 
 HARMFUL = Content that:
@@ -36,29 +37,30 @@ Confidence: [1-5]"""
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Text to classify: {content}"}
+                {"role": "user", "content": f"Text to classify: {content}"},
             ],
             max_tokens=50,
-            temperature=0.1
+            temperature=0.1,
         )
-        
+
         result = response.choices[0].message.content.strip()
         print(f"📝 Input: {content}")
         print(f"🤖 GPT Response: {result}")
         print("-" * 50)
-        
+
         return result
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         return None
+
 
 # Your real examples from the data
 test_examples = [
     "Because they are protesting the exorbitant price of mayonnaise.",
     "Racism is at the very heart of many political beliefs, like it or not.",
     "Theres no such thing as an adult job. A job is a job.",
-    "i'm already a resident there"
+    "i'm already a resident there",
 ]
 
 api_key = os.getenv("OPENAI_API_KEY")
@@ -71,7 +73,7 @@ print("=" * 60)
 for i, example in enumerate(test_examples, 1):
     print(f"\n🔍 TEST {i}/4")
     test_single_prompt(api_key, example)
-    
+
     if i < len(test_examples):
         input("Press Enter for next example...")
 

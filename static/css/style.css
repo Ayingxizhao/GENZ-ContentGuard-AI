@@ -912,6 +912,30 @@ html.dark .result-card .result-info p { color: var(--gray-600); }
   font-size: 1.5rem;
 }
 
+/* Details toggle button (bigger, modern) */
+.details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--gray-300);
+  background: var(--gray-100);
+  color: var(--gray-800);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  margin-top: var(--space-4);
+}
+.details-toggle i { transition: transform var(--transition-fast); }
+.details-toggle:hover { background: var(--gray-200); border-color: var(--gray-400); transform: translateY(-1px); }
+.details-toggle:active { transform: translateY(0); }
+.details-toggle[aria-expanded="true"] i { transform: rotate(180deg); }
+
+html.dark .details-toggle { background: var(--gray-200); border-color: var(--gray-400); color: var(--gray-800); }
+html.dark .details-toggle:hover { background: var(--gray-300); border-color: var(--gray-500); }
+
 .result-card {
   background: var(--gray-50);
   border-radius: var(--radius-2xl);

@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const maliciousValue = document.getElementById('maliciousValue');
     const detailsToggle = document.getElementById('detailsToggle');
     const detailedAnalysisSection = document.getElementById('detailedAnalysis');
+    // Third-party UI libs
+    const aboutLink = document.getElementById('aboutLink');
+    const aboutDialog = document.getElementById('aboutDialog');
     // Hero elements
     const heroCanvas = document.getElementById('heroCanvas');
     const demoSafeBar = document.getElementById('heroDemoSafe');
@@ -93,6 +96,47 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.addEventListener('click', (e) => createRipple(e, btn));
         }
     });
+
+    // Initialize AOS (scroll animations) if available (basic init; full init on window load below)
+    if (window.AOS) {
+        AOS.init({ duration: 600, once: true, easing: 'ease-out-cubic' });
+    }
+
+    // Initialize Tippy tooltips if available
+    if (window.tippy) {
+        tippy('[data-tippy-content], [data-tippy]', { theme: 'light', delay: [100, 50], maxWidth: 260 });
+    }
+
+    // About dialog open
+    if (aboutLink && aboutDialog && typeof aboutDialog.show === 'function') {
+        aboutLink.addEventListener('click', (e) => { e.preventDefault(); aboutDialog.show(); });
+    }
+
+    // Strengthen AOS init on full load to ensure layout settled (top-level, not inside other handlers)
+    window.addEventListener('load', () => {
+        if (window.AOS) {
+            AOS.init({
+                duration: 700,
+                offset: 120,
+                once: false,
+                easing: 'ease-out-cubic'
+            });
+            setTimeout(() => AOS.refreshHard && AOS.refreshHard(), 50);
+        }
+    });
+
+    // Details toggle behavior: click to show/hide the detailedAnalysis section
+    if (detailsToggle && detailedAnalysisSection) {
+        detailsToggle.addEventListener('click', () => {
+            const isOpen = detailsToggle.getAttribute('aria-expanded') === 'true';
+            const nextOpen = !isOpen;
+            detailsToggle.setAttribute('aria-expanded', String(nextOpen));
+            const label = detailsToggle.querySelector('span');
+            if (label) label.textContent = nextOpen ? 'Hide details' : 'Show details';
+            detailedAnalysisSection.style.display = nextOpen ? 'block' : 'none';
+            if (window.AOS && typeof AOS.refresh === 'function') AOS.refresh();
+        });
+    }
 
     // =============================
     // Hero Canvas Particles (lightweight)
@@ -186,6 +230,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 700);
         }, 3500);
     }
+
+    // =============================
+    // Toast helper using Shoelace alerts
+    // =============================
+    window.showToast = function(type = 'primary', message = '') {
+        const container = document.getElementById('toastContainer');
+        if (!container || typeof customElements.get('sl-alert') === 'undefined') return;
+        const alert = document.createElement('sl-alert');
+        alert.variant = type; // 'primary' | 'success' | 'warning' | 'danger' | 'neutral'
+        alert.closable = true;
+        alert.innerHTML = `<sl-icon slot="icon" name="info-circle"></sl-icon>${message}`;
+        container.appendChild(alert);
+        // Show with animation
+        requestAnimationFrame(() => alert.show());
+        // Auto-hide after 4s
+        setTimeout(() => { try { alert.hide(); } catch(e) {} }, 4000);
+    };
 
     // Character counter functionality
     function updateCharCounter() {
@@ -288,6 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
             resultCard.offsetHeight;
             resultCard.classList.add('reveal-in');
         }
+        // Refresh AOS after DOM changes
+        if (window.AOS && typeof AOS.refresh === 'function') {
+            AOS.refresh();
+        }
         
         // Update result elements
         const statusIndicator = document.getElementById('statusIndicator');
@@ -366,8 +431,20 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             const safePct = parsePercent(data.probabilities.safe);
             const malPct = parsePercent(data.probabilities.malicious);
-            if (safeBar) safeBar.style.width = `${safePct}%`;
-            if (maliciousBar) maliciousBar.style.width = `${malPct}%`;
+            if (safeBar) {
+                if (safeBar.tagName && safeBar.tagName.toLowerCase() === 'sl-progress-bar') {
+                    safeBar.value = safePct;
+                } else {
+                    safeBar.style.width = `${safePct}%`;
+                }
+            }
+            if (maliciousBar) {
+                if (maliciousBar.tagName && maliciousBar.tagName.toLowerCase() === 'sl-progress-bar') {
+                    maliciousBar.value = malPct;
+                } else {
+                    maliciousBar.style.width = `${malPct}%`;
+                }
+            }
             // Count-up labels
             if (safeValue) animateValue(safeValue, 0, safePct, 700, '%');
             if (maliciousValue) animateValue(maliciousValue, 0, malPct, 700, '%');
@@ -377,6 +454,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const confNum = parseFloat(String(data.confidence).replace('%',''));
         if (!isNaN(confNum) && confidenceText) {
             animateValue(confidenceText, 0, confNum, 800, '%');
+        }
+
+        // Update risk badge variant/text if Shoelace badge is used
+        if (riskBadge) {
+            const isMal = data.is_malicious;
+            try {
+                const isSl = riskBadge.tagName && riskBadge.tagName.toLowerCase() === 'sl-badge';
+                if (isMal === true) {
+                    riskBadge.textContent = 'Malicious';
+                    if (isSl) riskBadge.variant = 'danger';
+                } else if (isMal === false) {
+                    riskBadge.textContent = 'Safe';
+                    if (isSl) riskBadge.variant = 'success';
+                } else {
+                    riskBadge.textContent = 'Pending';
+                    if (isSl) riskBadge.variant = 'neutral';
+                }
+            } catch (e) { /* noop */ }
         }
     }
 
@@ -684,22 +779,7 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(el);
     });
 
-    // Details toggle behavior
-    if (detailsToggle) {
-        const analysisBreakdown = document.querySelector('#detailedAnalysis .analysis-breakdown');
-        const explanationSection = document.querySelector('#detailedAnalysis .explanation-section');
-        const toggleLabel = detailsToggle.querySelector('span');
-        detailsToggle.addEventListener('click', () => {
-            const expanded = detailsToggle.getAttribute('aria-expanded') === 'true';
-            detailsToggle.setAttribute('aria-expanded', String(!expanded));
-            if (analysisBreakdown) analysisBreakdown.style.display = expanded ? 'none' : 'grid';
-            if (explanationSection) explanationSection.style.display = expanded ? 'none' : 'block';
-            if (toggleLabel) toggleLabel.textContent = expanded ? 'Show details' : 'Hide details';
-        });
-        // Start collapsed by default
-        if (analysisBreakdown) analysisBreakdown.style.display = 'none';
-        if (explanationSection) explanationSection.style.display = 'none';
-    }
+    // (removed legacy inner-sections toggle; replaced by container-level toggle above)
 
     // Bug Report Form Functionality
     const bugReportForm = document.getElementById('bugReportForm');
@@ -750,23 +830,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             showBugMessage('Submitting bug report...', 'info');
-            
-            const response = await fetch('/api/bug-reports/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(bugData)
-            });
-            
-            const result = await response.json();
-            
             if (response.ok) {
                 showBugMessage('Bug report submitted successfully! Thank you for helping us improve.', 'success');
                 bugReportForm.reset();
                 updateBugCharCounter();
             } else {
-                showBugMessage(`Error: ${result.error || 'Failed to submit bug report'}`, 'error');
+                showBugMessage('Failed to submit bug report.', 'error');
             }
         } catch (error) {
             showBugMessage('Network error. Please check your connection and try again.', 'error');
