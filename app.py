@@ -5,6 +5,8 @@ import os
 import time
 import logging
 import traceback
+import re
+import httpx
 
 app = Flask(__name__)
 CORS(app)
@@ -30,6 +32,81 @@ def get_hf_client():
             kwargs["hf_token"] = HF_TOKEN
         _hf_client = Client(HF_SPACE_ID, **kwargs)
     return _hf_client
+
+def _space_base_url(space_id: str) -> str:
+    """Return https base URL for a Space from repo id or full URL."""
+    sid = (space_id or '').strip()
+    if not sid:
+        raise ValueError("HF_SPACE_ID is empty")
+    if sid.startswith('http://') or sid.startswith('https://'):
+        return sid.rstrip('/')
+    # repo id like org/name -> subdomain org-name.hf.space
+    sub = re.sub(r"[^a-zA-Z0-9-]", "-", sid)
+    return f"https://{sub}.hf.space"
+
+def _fetch_space_config():
+    base = _space_base_url(HF_SPACE_ID)
+    headers = {}
+    if HF_TOKEN:
+        headers["Authorization"] = f"Bearer {HF_TOKEN}"
+    with httpx.Client(timeout=10.0) as client:
+        r = client.get(f"{base}/config", headers=headers)
+        r.raise_for_status()
+        return r.json()
+
+def _predict_via_rest(text: str):
+    """Fallback: call Space REST endpoint directly: POST /api/predict/<api_name>."""
+    base = _space_base_url(HF_SPACE_ID)
+    api_cfg = (HF_API_NAME or '').strip()
+    # If provided as fn_index:N then call /api/predict with fn_index
+    fn_index = None
+    if api_cfg.lower().startswith('fn_index:'):
+        try:
+            fn_index = int(api_cfg.split(':', 1)[1])
+        except Exception:
+            fn_index = None
+
+    # If set to auto or invalid, try to discover from /config
+    if api_cfg in ('', 'auto') or (api_cfg and api_cfg[0] != '/' and fn_index is None):
+        try:
+            cfg = _fetch_space_config()
+            # Prefer named_endpoints if present
+            ne = (cfg or {}).get('named_endpoints') or {}
+            # Pick first named endpoint
+            if isinstance(ne, dict) and ne:
+                name, meta = next(iter(ne.items()))
+                if isinstance(meta, dict) and 'fn_index' in meta:
+                    fn_index = meta['fn_index']
+            # Fallback: first dependency fn_index
+            if fn_index is None:
+                deps = (cfg or {}).get('dependencies') or []
+                if isinstance(deps, list) and deps:
+                    meta = deps[0]
+                    if isinstance(meta, dict) and 'fn_index' in meta:
+                        fn_index = meta['fn_index']
+        except Exception as e:
+            logging.warning("Failed to auto-discover Space config: %s", str(e))
+
+    headers = {"Content-Type": "application/json"}
+    if HF_TOKEN:
+        headers["Authorization"] = f"Bearer {HF_TOKEN}"
+    payload = {"data": [text]}
+
+    with httpx.Client(timeout=15.0) as client:
+        if fn_index is not None:
+            # Use unified endpoint
+            url = f"{base}/api/predict"
+            payload["fn_index"] = fn_index
+            r = client.post(url, json=payload, headers=headers)
+            r.raise_for_status()
+            return r.json()
+        else:
+            # Use named endpoint path
+            api = api_cfg.lstrip('/') if api_cfg else 'predict'
+            url = f"{base}/api/predict/{api}"
+            r = client.post(url, json=payload, headers=headers)
+            r.raise_for_status()
+            return r.json()
 
 def _normalize_result(space_result):
     """Normalize HF Space output to the UI schema.
@@ -185,19 +262,34 @@ def analyze():
             return jsonify({"error": "No content provided"}), 400
         
         # Call HF Space (lazy init client) with a small retry to handle cold starts/transient errors.
-        client = get_hf_client()
-        last_err = None
-        for attempt in range(3):
+        result = None
+        client_err = None
+        try:
+            client = get_hf_client()
+            last_err = None
+            for attempt in range(3):
+                try:
+                    result = client.predict(text=combined, api_name=HF_API_NAME)
+                    break
+                except Exception as e:
+                    last_err = e
+                    logging.warning("HF Space predict failed (attempt %s/3): %s", attempt + 1, str(e))
+                    if attempt < 2:
+                        time.sleep(0.8 * (2 ** attempt))  # brief backoff (0.8s, 1.6s)
+            else:
+                client_err = last_err
+        except Exception as e:
+            client_err = e
+
+        # If client path failed, try REST fallback once
+        if result is None:
             try:
-                result = client.predict(text=combined, api_name=HF_API_NAME)
-                break
-            except Exception as e:
-                last_err = e
-                logging.warning("HF Space predict failed (attempt %s/3): %s", attempt + 1, str(e))
-                if attempt < 2:
-                    time.sleep(0.8 * (2 ** attempt))  # brief backoff (0.8s, 1.6s)
-        else:
-            raise last_err
+                logging.info("Falling back to REST /api/predict for Space call")
+                result = _predict_via_rest(combined)
+            except Exception as rest_err:
+                # prefer REST error if client already failed
+                raise rest_err if client_err is None else client_err
+
         normalized = _normalize_result(result)
         return jsonify(normalized)
     
