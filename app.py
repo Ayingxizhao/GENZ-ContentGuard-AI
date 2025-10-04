@@ -2,18 +2,33 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from gradio_client import Client
 import os
+import time
+import logging
+import traceback
 
 app = Flask(__name__)
 CORS(app)
 
+# Basic logging
+logging.basicConfig(level=logging.INFO)
+
 # Initialize Gradio client (configurable via env) lazily to avoid blocking startup
 HF_SPACE_ID = os.getenv("HF_SPACE_ID", "Ayingxizhao/contentguard-model")
+HF_API_NAME = os.getenv("HF_API_NAME", "/predict")
+# Normalize api name to start with '/'
+if HF_API_NAME and not HF_API_NAME.startswith('/'):
+    HF_API_NAME = '/' + HF_API_NAME
+HF_TOKEN = os.getenv("HF_TOKEN")  # if the Space is private
 _hf_client = None
 
 def get_hf_client():
     global _hf_client
     if _hf_client is None:
-        _hf_client = Client(HF_SPACE_ID)
+        # Pass token if provided (handles private Spaces)
+        kwargs = {}
+        if HF_TOKEN:
+            kwargs["hf_token"] = HF_TOKEN
+        _hf_client = Client(HF_SPACE_ID, **kwargs)
     return _hf_client
 
 def _normalize_result(space_result):
@@ -169,19 +184,50 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Call HF Space (lazy init client). If Space is slow/unavailable, raise and return 502.
+        # Call HF Space (lazy init client) with a small retry to handle cold starts/transient errors.
         client = get_hf_client()
-        result = client.predict(text=combined, api_name="/predict")
+        last_err = None
+        for attempt in range(3):
+            try:
+                result = client.predict(text=combined, api_name=HF_API_NAME)
+                break
+            except Exception as e:
+                last_err = e
+                logging.warning("HF Space predict failed (attempt %s/3): %s", attempt + 1, str(e))
+                if attempt < 2:
+                    time.sleep(0.8 * (2 ** attempt))  # brief backoff (0.8s, 1.6s)
+        else:
+            raise last_err
         normalized = _normalize_result(result)
         return jsonify(normalized)
     
     except Exception as e:
+        # Log full traceback for debugging on Railway logs
+        logging.error("/analyze failed: %s\n%s", str(e), traceback.format_exc())
         # Surface as bad gateway to indicate upstream issue but keep app healthy
-        return jsonify({"error": str(e)}), 502
+        return jsonify({
+            "error": str(e),
+            "hint": "Check HF_SPACE_ID, HF token if private, or Space availability."
+        }), 502
 
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "healthy"}), 200
+
+@app.route('/space_info', methods=['GET'])
+def space_info():
+    """Debug endpoint to inspect available HF Space APIs."""
+    try:
+        client = get_hf_client()
+        info = client.view_api()
+        return jsonify({
+            "space_id": HF_SPACE_ID,
+            "api_name_config": HF_API_NAME,
+            "endpoints": info
+        })
+    except Exception as e:
+        logging.error("/space_info failed: %s\n%s", str(e), traceback.format_exc())
+        return jsonify({"error": str(e)}), 502
 @app.route('/')
 def index():
     return render_template('index.html')
