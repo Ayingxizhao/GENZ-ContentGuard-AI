@@ -41,11 +41,10 @@ def start_application() -> bool:
     print("=" * 40)
 
     try:
-        # Import and validate config
-        from config import Config
-
-        Config.validate_config()
-        print("✓ Configuration validated")
+        # Import and load config
+        from app.config import get_config
+        config = get_config()
+        print("✓ Configuration loaded")
 
         # Import and start app
         from app import create_app
@@ -59,7 +58,7 @@ def start_application() -> bool:
         print("=" * 40)
 
         # Start the app
-        app.run(debug=Config.DEBUG, host="0.0.0.0", port=5001)
+        app.run(debug=config.DEBUG, host="0.0.0.0", port=5001)
         return True  # This line will never be reached, but satisfies mypy
 
     except ValueError as e:

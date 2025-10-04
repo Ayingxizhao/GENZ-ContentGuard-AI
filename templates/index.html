@@ -35,24 +35,64 @@
                         <a href="#bug-report" class="nav-link">Report Bug</a>
                         <a href="#about" class="nav-link">About</a>
                         <a href="#contact" class="nav-link">Contact</a>
+                        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                            <i class="fas fa-moon" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </nav>
             <div class="hero">
-                <h2 class="hero-title">AI-Powered Content Protection</h2>
-                <p class="hero-subtitle">Detect malicious language, hate speech, harassment, and threats in Gen Z language</p>
-                <div class="hero-stats">
-                    <div class="stat">
-                        <span class="stat-number">99.8%</span>
-                        <span class="stat-label">Accuracy</span>
+                <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
+                <div class="blob blob-1" aria-hidden="true"></div>
+                <div class="blob blob-2" aria-hidden="true"></div>
+                <div class="hero-inner">
+                    <div class="hero-left">
+                        <h2 class="hero-title">Protect your platform<br><span class="accent">with AI content analysis</span></h2>
+                        <p class="hero-subtitle">Detect malicious language, hate speech, harassment, and threats in real time. Built for modern communities.</p>
+                        <div class="hero-cta">
+                            <a href="#main-content" class="cta-primary">
+                                <i class="fas fa-magic" aria-hidden="true"></i>
+                                <span>Start Analyzing</span>
+                            </a>
+                            <a href="#examples" class="cta-secondary">
+                                <i class="fas fa-icons" aria-hidden="true"></i>
+                                <span>See Examples</span>
+                            </a>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="stat">
+                                <span class="stat-number">99.8%</span>
+                                <span class="stat-label">Accuracy</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">50K+</span>
+                                <span class="stat-label">Analyses</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">24/7</span>
+                                <span class="stat-label">Available</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat">
-                        <span class="stat-number">50K+</span>
-                        <span class="stat-label">Analyses</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">24/7</span>
-                        <span class="stat-label">Available</span>
+                    <div class="hero-right">
+                        <!-- Glass App Preview Card -->
+                        <div class="glass-card hero-preview" id="examples" aria-label="Live analysis preview">
+                            <div class="demo-header">
+                                <span class="demo-badge" id="heroDemoBadge">Analyzing…</span>
+                            </div>
+                            <div class="demo-bars">
+                                <div class="demo-row">
+                                    <span>Safe</span>
+                                    <div class="demo-bar"><div id="heroDemoSafe" class="demo-fill safe" style="width: 50%"></div></div>
+                                    <span id="heroDemoSafeVal" class="demo-val">50%</span>
+                                </div>
+                                <div class="demo-row">
+                                    <span>Malicious</span>
+                                    <div class="demo-bar"><div id="heroDemoMal" class="demo-fill malicious" style="width: 50%"></div></div>
+                                    <span id="heroDemoMalVal" class="demo-val">50%</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -104,17 +144,42 @@
                             <i class="fas fa-search" aria-hidden="true"></i>
                             <span>Analyze Content</span>
                         </button>
-                        <button type="button" class="example-btn" id="exampleBtn">
-                            <i class="fas fa-lightbulb" aria-hidden="true"></i>
-                            <span>Try Example</span>
+                    </div>
+
+                    <div class="example-actions" aria-describedby="examples-help">
+                        <button type="button" class="example-btn safe" id="exampleSafeBtn">
+                            <i class="fas fa-thumbs-up" aria-hidden="true"></i>
+                            <span>Safe Example</span>
+                        </button>
+                        <button type="button" class="example-btn malicious" id="exampleMaliciousBtn">
+                            <i class="fas fa-exclamation" aria-hidden="true"></i>
+                            <span>Malicious Example</span>
                         </button>
                     </div>
-                    <div id="submit-help" class="sr-only">Submit content for AI analysis</div>
+                    <div id="examples-help" class="sr-only">Use the Safe or Malicious example to prefill the form.</div>
                 </form>
             </section>
 
             <section class="results-section" id="resultsSection" style="display: none;" aria-labelledby="results-heading" role="region" aria-live="polite">
                 <h2 id="results-heading">Analysis Results</h2>
+                <!-- Skeleton Loading Card -->
+                <div class="result-card skeleton" id="skeletonCard" style="display: none;" aria-hidden="true">
+                    <div class="result-header">
+                        <div class="status-indicator skeleton-avatar"></div>
+                        <div class="result-info">
+                            <div class="skeleton-line skeleton-title"></div>
+                            <div class="skeleton-line skeleton-subtitle"></div>
+                        </div>
+                    </div>
+                    <div class="result-details">
+                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
+                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
+                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
+                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
+                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
+                    </div>
+                </div>
+
                 <div class="result-card" id="resultCard">
                     <div class="result-header">
                         <div class="status-indicator" id="statusIndicator" role="img" aria-label="Analysis status">
@@ -123,6 +188,7 @@
                         <div class="result-info">
                             <h3 id="resultTitle">Analyzing...</h3>
                             <p id="resultSubtitle">Processing your content</p>
+                            <span id="riskBadge" class="badge" aria-live="polite">Pending</span>
                         </div>
                     </div>
                     
@@ -148,10 +214,28 @@
                             <span class="value" id="timestampText">-</span>
                         </div>
                     </div>
+
+                    <!-- Probability bars -->
+                    <div class="probability-section" id="probabilitySection" aria-label="Classification Probabilities">
+                        <div class="prob-row">
+                            <span class="prob-label">Safe</span>
+                            <div class="prob-bar" aria-hidden="true"><div class="prob-fill safe" id="safeBar" style="width:0%"></div></div>
+                            <span class="prob-value" id="safeValue">0%</span>
+                        </div>
+                        <div class="prob-row">
+                            <span class="prob-label">Malicious</span>
+                            <div class="prob-bar" aria-hidden="true"><div class="prob-fill malicious" id="maliciousBar" style="width:0%"></div></div>
+                            <span class="prob-value" id="maliciousValue">0%</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Detailed Analysis Section -->
                 <div class="detailed-analysis" id="detailedAnalysis" style="display: none;" aria-labelledby="detailed-heading">
+                    <button class="details-toggle" id="detailsToggle" aria-expanded="false" aria-controls="detailedAnalysis">
+                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        <span>Show details</span>
+                    </button>
                     <h3 id="detailed-heading">Detailed Analysis</h3>
                     <div class="analysis-breakdown">
                         <div class="breakdown-section" id="riskCategories">
@@ -178,13 +262,7 @@
                 </div>
             </section>
 
-            <section class="loading-section" id="loadingSection" style="display: none;" aria-labelledby="loading-heading" role="status" aria-live="polite">
-                <h2 id="loading-heading" class="sr-only">Loading</h2>
-                <div class="loading-spinner">
-                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                </div>
-                <p>Analyzing content with AI...</p>
-            </section>
+            
 
             <section class="error-section" id="errorSection" style="display: none;" aria-labelledby="error-heading" role="alert" aria-live="assertive">
                 <h2 id="error-heading" class="sr-only">Error</h2>

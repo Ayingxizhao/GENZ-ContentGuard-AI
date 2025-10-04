@@ -5,7 +5,6 @@ from typing import Tuple, Union
 
 from flask import Blueprint, Response, jsonify, render_template, request
 
-from advanced_model import advanced_detector, analyze_with_advanced_model
 from local_model import analyze_with_local_model, local_detector
 
 main_bp = Blueprint("main", __name__)
@@ -19,7 +18,7 @@ def index() -> str:
 
 @main_bp.route("/analyze", methods=["POST"])
 def analyze() -> Union[Response, Tuple[Response, int]]:
-    """Analyze content for malicious language."""
+    """Analyze content for malicious language using local model only."""
     try:
         data = request.get_json()
         title = data.get("title", "")
@@ -28,11 +27,8 @@ def analyze() -> Union[Response, Tuple[Response, int]]:
         if not title and not content:
             return jsonify({"error": "Please provide either a title or content to analyze"}), 400
 
-        # Try advanced model first, fallback to local model
-        if advanced_detector.model_loaded:
-            result = analyze_with_advanced_model(title, content)
-            model_source = "advanced"
-        elif local_detector.model_loaded:
+        # Use local model only
+        if local_detector.model_loaded:
             result = analyze_with_local_model(title, content)
             model_source = "local"
         else:
@@ -63,11 +59,10 @@ def analyze() -> Union[Response, Tuple[Response, int]]:
 
 @main_bp.route("/model-info")
 def model_info() -> Union[Response, Tuple[Response, int]]:
-    """Get information about available models."""
+    """Get information about available models (local only)."""
     return jsonify(
         {
             "local_model": local_detector.get_model_info(),
-            "advanced_model": advanced_detector.get_model_info(),
             "openai_available": False,
         }
     )

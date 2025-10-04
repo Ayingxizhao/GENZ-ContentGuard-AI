@@ -1,16 +1,191 @@
+    const skeletonCard = document.getElementById('skeletonCard');
+    const resultCard = document.getElementById('resultCard');
 document.addEventListener('DOMContentLoaded', function() {
+    // Sticky nav blur on scroll
+    const navEl = document.querySelector('.nav');
+    function updateNavOnScroll() {
+        if (!navEl) return;
+        if (window.scrollY > 8) {
+            navEl.classList.add('scrolled');
+        } else {
+            navEl.classList.remove('scrolled');
+        }
+    }
+    updateNavOnScroll();
+    window.addEventListener('scroll', updateNavOnScroll, { passive: true });
+    // Theme toggle logic
+    const themeToggle = document.getElementById('themeToggle');
+    const root = document.documentElement;
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            root.classList.add('dark');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-sun" aria-hidden="true"></i>';
+        } else {
+            root.classList.remove('dark');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-moon" aria-hidden="true"></i>';
+        }
+    }
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        applyTheme(savedTheme);
+    } else {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light');
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const next = root.classList.contains('dark') ? 'light' : 'dark';
+            localStorage.setItem('theme', next);
+            applyTheme(next);
+        });
+    }
+
     const form = document.getElementById('analysisForm');
     const resultsSection = document.getElementById('resultsSection');
-    const loadingSection = document.getElementById('loadingSection');
+    const loadingSection = document.getElementById('loadingSection'); // may be null (removed)
     const errorSection = document.getElementById('errorSection');
     const analyzeBtn = document.querySelector('.analyze-btn');
-    const exampleBtn = document.getElementById('exampleBtn');
+    const exampleSafeBtn = document.getElementById('exampleSafeBtn');
+    const exampleMaliciousBtn = document.getElementById('exampleMaliciousBtn');
     const contentTextarea = document.getElementById('content');
     const titleInput = document.getElementById('title');
     const charCounter = document.getElementById('content-counter');
     const charCount = charCounter.querySelector('.char-count');
     const progressBar = charCounter.querySelector('.progress-bar');
     const charLimit = charCounter.querySelector('.char-limit');
+    // Skeleton/result cards (must be queried after DOM is ready)
+    const skeletonCard = document.getElementById('skeletonCard');
+    const resultCard = document.getElementById('resultCard');
+    // Results UI elements
+    const riskBadge = document.getElementById('riskBadge');
+    const safeBar = document.getElementById('safeBar');
+    const maliciousBar = document.getElementById('maliciousBar');
+    const safeValue = document.getElementById('safeValue');
+    const maliciousValue = document.getElementById('maliciousValue');
+    const detailsToggle = document.getElementById('detailsToggle');
+    const detailedAnalysisSection = document.getElementById('detailedAnalysis');
+    // Hero elements
+    const heroCanvas = document.getElementById('heroCanvas');
+    const demoSafeBar = document.getElementById('heroDemoSafe');
+    const demoMalBar = document.getElementById('heroDemoMal');
+    const demoSafeVal = document.getElementById('heroDemoSafeVal');
+    const demoMalVal = document.getElementById('heroDemoMalVal');
+    const demoBadge = document.getElementById('heroDemoBadge');
+
+    // Ripple helper for buttons
+    function createRipple(e, el) {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        ripple.style.left = `${e.clientX - rect.left}px`;
+        ripple.style.top = `${e.clientY - rect.top}px`;
+        el.appendChild(ripple);
+        ripple.addEventListener('animationend', () => ripple.remove());
+    }
+
+    // Attach ripple to primary buttons
+    [analyzeBtn, exampleSafeBtn, exampleMaliciousBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', (e) => createRipple(e, btn));
+        }
+    });
+
+    // =============================
+    // Hero Canvas Particles (lightweight)
+    // =============================
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (heroCanvas && !reduceMotion) {
+        const ctx = heroCanvas.getContext('2d');
+        let width, height, particles, rafId;
+        function resize() {
+            width = heroCanvas.width = heroCanvas.offsetWidth;
+            height = heroCanvas.height = heroCanvas.offsetHeight;
+            initParticles();
+        }
+        function initParticles() {
+            const count = Math.max(50, Math.floor(width * height / 25000));
+            particles = new Array(count).fill(0).map(() => makeParticle());
+        }
+        function makeParticle() {
+            const dark = root.classList.contains('dark') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('theme'));
+            const colors = dark ? ['#22d3ee55','#60a5fa55','#a78bfa55'] : ['#ffffff40','#93c5fd55','#fbbf2455'];
+            return {
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 2 + 0.5,
+                vx: (Math.random() - 0.5) * 0.25,
+                vy: (Math.random() - 0.5) * 0.25,
+                color: colors[Math.floor(Math.random()*colors.length)]
+            };
+        }
+        function step() {
+            ctx.clearRect(0,0,width,height);
+            // draw
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < -5) p.x = width+5; if (p.x > width+5) p.x = -5;
+                if (p.y < -5) p.y = height+5; if (p.y > height+5) p.y = -5;
+                ctx.beginPath();
+                ctx.fillStyle = p.color;
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fill();
+            });
+            rafId = requestAnimationFrame(step);
+        }
+        const ro = new ResizeObserver(resize);
+        ro.observe(heroCanvas);
+        resize();
+        step();
+        // Update particle colors on theme toggle
+        const applyThemeOriginal = applyTheme;
+        applyTheme = function(theme) {
+            applyThemeOriginal(theme);
+            initParticles();
+        };
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => cancelAnimationFrame(rafId));
+    }
+
+    // =============================
+    // Hero Live Demo Loop
+    // =============================
+    function setDemoValues(safePct, malPct, status) {
+        if (demoSafeBar) demoSafeBar.style.width = `${safePct}%`;
+        if (demoMalBar) demoMalBar.style.width = `${malPct}%`;
+        if (demoSafeVal) demoSafeVal.textContent = `${safePct.toFixed(0)}%`;
+        if (demoMalVal) demoMalVal.textContent = `${malPct.toFixed(0)}%`;
+        if (demoBadge) {
+            if (status === 'safe') {
+                demoBadge.textContent = 'Safe';
+                demoBadge.style.background = 'rgba(16,185,129,0.35)';
+            } else if (status === 'malicious') {
+                demoBadge.textContent = 'Malicious';
+                demoBadge.style.background = 'rgba(239,68,68,0.35)';
+            } else {
+                demoBadge.textContent = 'Analyzing…';
+                demoBadge.style.background = 'rgba(255,255,255,0.25)';
+            }
+        }
+    }
+    if (demoSafeBar && demoMalBar && !reduceMotion) {
+        setDemoValues(50, 50, 'analyzing');
+        setInterval(() => {
+            // phase 1: analyzing shimmer
+            setDemoValues(50, 50, 'analyzing');
+            setTimeout(() => {
+                // phase 2: random result
+                const safe = Math.random() * 70 + 20; // 20-90
+                const mal = 100 - safe;
+                const status = safe >= 60 ? 'safe' : 'malicious';
+                setDemoValues(safe, mal, status);
+            }, 700);
+        }, 3500);
+    }
 
     // Character counter functionality
     function updateCharCounter() {
@@ -81,25 +256,38 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function showLoading() {
-        // Hide other sections
-        resultsSection.style.display = 'none';
+        // Hide error
         errorSection.style.display = 'none';
-        
-        // Show loading
-        loadingSection.style.display = 'block';
-        
+        // Show results shell and skeleton
+        resultsSection.style.display = 'block';
+        if (skeletonCard) skeletonCard.style.display = 'block';
+        if (resultCard) resultCard.style.display = 'none';
+
+        // Also keep global loading minimal or hidden (if present)
+        if (loadingSection) loadingSection.style.display = 'none';
+
         // Disable button and update text
         analyzeBtn.disabled = true;
         analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Analyzing...</span>';
-        
+
         // Announce to screen readers
         announceToScreenReader('Analysis in progress. Please wait.');
     }
 
     function showResults(data) {
-        // Hide loading and error sections
-        loadingSection.style.display = 'none';
+        // Hide loading, skeleton, and error sections
+        if (loadingSection) loadingSection.style.display = 'none';
         errorSection.style.display = 'none';
+        if (skeletonCard) skeletonCard.style.display = 'none';
+        if (resultCard) {
+            resultCard.style.display = 'block';
+            // Trigger reveal animation
+            resultCard.classList.remove('reveal-in');
+            // force reflow for restart animation
+            // eslint-disable-next-line no-unused-expressions
+            resultCard.offsetHeight;
+            resultCard.classList.add('reveal-in');
+        }
         
         // Update result elements
         const statusIndicator = document.getElementById('statusIndicator');
@@ -121,12 +309,20 @@ document.addEventListener('DOMContentLoaded', function() {
             resultTitle.textContent = 'Malicious Content Detected';
             resultSubtitle.textContent = 'This content appears to contain harmful language';
             statusMessage = 'Malicious content detected';
+            if (riskBadge) {
+                riskBadge.className = 'badge malicious';
+                riskBadge.textContent = 'Malicious';
+            }
         } else {
             statusIndicator.classList.add('safe');
             statusIndicator.innerHTML = '<i class="fas fa-check-circle" aria-hidden="true"></i>';
             resultTitle.textContent = 'Content is Safe';
             resultSubtitle.textContent = 'No malicious content detected';
             statusMessage = 'Content is safe';
+            if (riskBadge) {
+                riskBadge.className = 'badge safe';
+                riskBadge.textContent = 'Safe';
+            }
         }
         
         // Update basic details
@@ -159,6 +355,43 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Announce to screen readers
         announceToScreenReader(`Analysis complete. ${statusMessage}. Confidence: ${data.confidence}`);
+
+        // Update probability bars if available
+        if (data.probabilities) {
+            const parsePercent = (val) => {
+                if (typeof val === 'number') return Math.max(0, Math.min(100, val));
+                if (!val) return 0;
+                const num = parseFloat(String(val).replace('%',''));
+                return isNaN(num) ? 0 : Math.max(0, Math.min(100, num));
+            };
+            const safePct = parsePercent(data.probabilities.safe);
+            const malPct = parsePercent(data.probabilities.malicious);
+            if (safeBar) safeBar.style.width = `${safePct}%`;
+            if (maliciousBar) maliciousBar.style.width = `${malPct}%`;
+            // Count-up labels
+            if (safeValue) animateValue(safeValue, 0, safePct, 700, '%');
+            if (maliciousValue) animateValue(maliciousValue, 0, malPct, 700, '%');
+        }
+
+        // Optionally animate confidence number if formatted like "85.3%"
+        const confNum = parseFloat(String(data.confidence).replace('%',''));
+        if (!isNaN(confNum) && confidenceText) {
+            animateValue(confidenceText, 0, confNum, 800, '%');
+        }
+    }
+
+    // Generic count-up animation
+    function animateValue(el, start, end, duration, suffix = '') {
+        const startTime = performance.now();
+        function frame(now) {
+            const t = Math.min(1, (now - startTime) / duration);
+            // easeOutCubic
+            const eased = 1 - Math.pow(1 - t, 3);
+            const val = start + (end - start) * eased;
+            el.textContent = `${val.toFixed(1)}${suffix}`;
+            if (t < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
     }
 
     function showDetailedAnalysis(detailedAnalysis) {
@@ -236,9 +469,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showError(message) {
-        // Hide other sections
-        resultsSection.style.display = 'none';
-        loadingSection.style.display = 'none';
+        // Hide skeleton and loading, keep results shell hidden
+        if (skeletonCard) skeletonCard.style.display = 'none';
+        if (resultCard) resultCard.style.display = 'none';
+        if (loadingSection) loadingSection.style.display = 'none';
         
         // Update error message
         document.getElementById('errorMessage').textContent = message;
@@ -294,20 +528,30 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     });
 
-    // Example button functionality
-    exampleBtn.addEventListener('click', function() {
-        titleInput.value = 'Example Post';
-        contentTextarea.value = 'This is an example of content that would be analyzed for malicious language. The AI will evaluate this text and provide a determination.';
-        contentTextarea.style.height = 'auto';
-        contentTextarea.style.height = Math.max(140, contentTextarea.scrollHeight) + 'px';
-        updateCharCounter();
-        
-        // Focus on content textarea
-        contentTextarea.focus();
-        
-        // Announce to screen readers
-        announceToScreenReader('Example content loaded');
-    });
+    // Example buttons functionality
+    if (exampleSafeBtn) {
+        exampleSafeBtn.addEventListener('click', function() {
+            titleInput.value = 'Positive Community Post';
+            contentTextarea.value = 'Hey everyone! Just a reminder to be kind to each other. If you need help or support, please reach out. We are here for you and we will get through this together.';
+            contentTextarea.style.height = 'auto';
+            contentTextarea.style.height = Math.max(140, contentTextarea.scrollHeight) + 'px';
+            updateCharCounter();
+            contentTextarea.focus();
+            announceToScreenReader('Safe example content loaded');
+        });
+    }
+
+    if (exampleMaliciousBtn) {
+        exampleMaliciousBtn.addEventListener('click', function() {
+            titleInput.value = 'Toxic Comment';
+            contentTextarea.value = "This post is full of insults and harassment. You're such an idiot—just leave and stop bothering people.";
+            contentTextarea.style.height = 'auto';
+            contentTextarea.style.height = Math.max(140, contentTextarea.scrollHeight) + 'px';
+            updateCharCounter();
+            contentTextarea.focus();
+            announceToScreenReader('Malicious example content loaded');
+        });
+    }
 
     // Add keyboard shortcuts
     document.addEventListener('keydown', function(e) {
@@ -379,13 +623,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, true);
 
-    // Add loading state for better UX
+    // Add loading state for better UX (skeleton only). Keep timeout logic safe if loadingSection is absent
     let loadingTimeout;
     form.addEventListener('submit', function() {
-        // Set a minimum loading time for better UX
         loadingTimeout = setTimeout(() => {
-            if (loadingSection.style.display === 'block') {
-                loadingSection.querySelector('p').textContent = 'This may take a few moments...';
+            if (loadingSection && loadingSection.style.display === 'block') {
+                const p = loadingSection.querySelector('p');
+                if (p) p.textContent = 'This may take a few moments...';
             }
         }, 2000);
     });
@@ -439,6 +683,23 @@ document.addEventListener('DOMContentLoaded', function() {
         el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
         observer.observe(el);
     });
+
+    // Details toggle behavior
+    if (detailsToggle) {
+        const analysisBreakdown = document.querySelector('#detailedAnalysis .analysis-breakdown');
+        const explanationSection = document.querySelector('#detailedAnalysis .explanation-section');
+        const toggleLabel = detailsToggle.querySelector('span');
+        detailsToggle.addEventListener('click', () => {
+            const expanded = detailsToggle.getAttribute('aria-expanded') === 'true';
+            detailsToggle.setAttribute('aria-expanded', String(!expanded));
+            if (analysisBreakdown) analysisBreakdown.style.display = expanded ? 'none' : 'grid';
+            if (explanationSection) explanationSection.style.display = expanded ? 'none' : 'block';
+            if (toggleLabel) toggleLabel.textContent = expanded ? 'Show details' : 'Hide details';
+        });
+        // Start collapsed by default
+        if (analysisBreakdown) analysisBreakdown.style.display = 'none';
+        if (explanationSection) explanationSection.style.display = 'none';
+    }
 
     // Bug Report Form Functionality
     const bugReportForm = document.getElementById('bugReportForm');

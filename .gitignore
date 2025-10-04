@@ -160,3 +160,7 @@ tmp/
 # Generated files
 generate_icon.py
 create_extension_icon.py
+
+# Ignore large model artifacts
+final_model/
+*.safetensors
