@@ -49,8 +49,21 @@
                             <i class="fas fa-moon" aria-hidden="true"></i>
                         </button>
                     </div>
+                    <!-- Mobile burger toggle -->
+                    <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-controls="mobileNav">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
                 </div>
             </nav>
+            <!-- Mobile navigation drawer -->
+            <sl-drawer id="mobileNav" placement="start" label="Menu">
+                <nav class="drawer-links">
+                    <a href="#main-content" class="nav-link">Analyze</a>
+                    <a href="#bug-report" class="nav-link">Report Bug</a>
+                    <a href="#about" class="nav-link" id="aboutLinkDrawer">About</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </nav>
+            </sl-drawer>
             <div class="hero" data-aos="fade-up">
                 <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
                 <div class="blob blob-1" aria-hidden="true"></div>
@@ -110,27 +123,26 @@
                 <form id="analysisForm" class="analysis-form" role="form" aria-label="Content analysis form">
                     <div class="form-group">
                         <label for="title">Title (Optional)</label>
-                        <input 
-                            type="text" 
-                            id="title" 
-                            name="title" 
+                        <sl-input
+                            id="title"
+                            name="title"
                             placeholder="Enter post title..."
                             aria-describedby="title-help"
-                        >
+                        ></sl-input>
                         <div id="title-help" class="sr-only">Optional title for context</div>
                     </div>
                     
                     <div class="form-group">
                         <label for="content">Content <span aria-label="required">*</span></label>
-                        <textarea 
-                            id="content" 
-                            name="content" 
-                            rows="6" 
-                            placeholder="Enter the content you want to analyze..." 
+                        <sl-textarea
+                            id="content"
+                            name="content"
+                            rows="6"
+                            placeholder="Enter the content you want to analyze..."
                             required
                             aria-describedby="content-help content-counter"
                             maxlength="5000"
-                        ></textarea>
+                        ></sl-textarea>
                         <div id="content-help" class="sr-only">Required content to analyze for malicious language</div>
                         <div class="char-counter" id="content-counter" aria-live="polite">
                             <span class="char-count">0 characters</span>
@@ -142,10 +154,10 @@
                     </div>
                     
                     <div class="form-actions">
-                        <button type="submit" class="analyze-btn" aria-describedby="submit-help">
+                        <sl-button type="submit" class="analyze-btn" variant="primary" size="large" aria-describedby="submit-help">
                             <i class="fas fa-search" aria-hidden="true"></i>
                             <span>Analyze Content</span>
-                        </button>
+                        </sl-button>
                     </div>
 
                     <div class="example-actions" aria-describedby="examples-help">
@@ -164,21 +176,21 @@
 
             <section class="results-section" id="resultsSection" style="display: none;" aria-labelledby="results-heading" role="region" aria-live="polite" data-aos="fade-up">
                 <h2 id="results-heading">Analysis Results</h2>
-                <!-- Skeleton Loading Card -->
+                <!-- Skeleton Loading Card (Shoelace) -->
                 <div class="result-card skeleton" id="skeletonCard" style="display: none;" aria-hidden="true">
-                    <div class="result-header">
-                        <div class="status-indicator skeleton-avatar"></div>
-                        <div class="result-info">
-                            <div class="skeleton-line skeleton-title"></div>
-                            <div class="skeleton-line skeleton-subtitle"></div>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <sl-skeleton effect="pulse" style="--width:48px; --height:48px; border-radius:50%;"></sl-skeleton>
+                        <div style="flex:1">
+                            <sl-skeleton effect="pulse" style="--width:40%; --height:16px;"></sl-skeleton>
+                            <sl-skeleton effect="pulse" style="--width:60%; --height:12px; margin-top:8px;"></sl-skeleton>
                         </div>
                     </div>
-                    <div class="result-details">
-                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
-                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
-                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
-                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
-                        <div class="detail-item"><span class="skeleton-line skeleton-chip"></span></div>
+                    <div style="margin-top:12px; display:grid; gap:8px;">
+                        <sl-skeleton effect="pulse"></sl-skeleton>
+                        <sl-skeleton effect="pulse"></sl-skeleton>
+                        <sl-skeleton effect="pulse"></sl-skeleton>
+                        <sl-skeleton effect="pulse"></sl-skeleton>
+                        <sl-skeleton effect="pulse"></sl-skeleton>
                     </div>
                 </div>
 
@@ -268,11 +280,11 @@
 
             <section class="error-section" id="errorSection" style="display: none;" aria-labelledby="error-heading" role="alert" aria-live="assertive">
                 <h2 id="error-heading" class="sr-only">Error</h2>
-                <div class="error-card">
-                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                    <h3>Error</h3>
-                    <p id="errorMessage">Something went wrong</p>
-                </div>
+                <sl-alert id="errorAlert" variant="danger">
+                    <sl-icon slot="icon" name="exclamation-triangle"></sl-icon>
+                    <strong>Error</strong><br />
+                    <span id="errorMessage">Something went wrong</span>
+                </sl-alert>
             </section>
 
             <!-- Bug Report Section -->

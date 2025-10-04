@@ -1,9 +1,35 @@
-"""Main application entry point."""
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from gradio_client import Client
 
-from app import create_app
+app = Flask(__name__)
+CORS(app)
 
-# Create Flask application instance
-app = create_app()
+# Initialize Gradio client
+hf_client = Client("Ayingxizhao/contentguard-model")
 
-if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=5001)
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    try:
+        data = request.get_json()
+        text = data.get('content', '')
+        
+        if not text:
+            return jsonify({"error": "No content provided"}), 400
+        
+        # Call your HF Space
+        result = hf_client.predict(text=text, api_name="/predict")
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"}), 200
+
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', port=port)

@@ -70,6 +70,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Third-party UI libs
     const aboutLink = document.getElementById('aboutLink');
     const aboutDialog = document.getElementById('aboutDialog');
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileNav = document.getElementById('mobileNav');
+    const aboutLinkDrawer = document.getElementById('aboutLinkDrawer');
     // Hero elements
     const heroCanvas = document.getElementById('heroCanvas');
     const demoSafeBar = document.getElementById('heroDemoSafe');
@@ -110,6 +113,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // About dialog open
     if (aboutLink && aboutDialog && typeof aboutDialog.show === 'function') {
         aboutLink.addEventListener('click', (e) => { e.preventDefault(); aboutDialog.show(); });
+    }
+    // Mobile drawer wiring
+    if (menuToggle && mobileNav && typeof mobileNav.show === 'function') {
+        menuToggle.addEventListener('click', () => mobileNav.show());
+        // Close drawer on any nav link click
+        mobileNav.addEventListener('click', (e) => {
+            const a = e.target.closest('a');
+            if (a) {
+                if (typeof mobileNav.hide === 'function') mobileNav.hide();
+            }
+        });
+    }
+    if (aboutLinkDrawer && aboutDialog) {
+        aboutLinkDrawer.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof mobileNav?.hide === 'function') mobileNav.hide();
+            if (typeof aboutDialog.show === 'function') aboutDialog.show();
+        });
     }
 
     // Strengthen AOS init on full load to ensure layout settled (top-level, not inside other handlers)
@@ -604,8 +625,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-resize textarea
     contentTextarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.max(140, this.scrollHeight) + 'px';
+        // Skip direct height manipulation for Shoelace sl-textarea
+        if (!this.tagName || this.tagName.toLowerCase() !== 'sl-textarea') {
+            this.style.height = 'auto';
+            this.style.height = Math.max(140, this.scrollHeight) + 'px';
+        }
         updateCharCounter();
     });
 
@@ -628,8 +652,10 @@ document.addEventListener('DOMContentLoaded', function() {
         exampleSafeBtn.addEventListener('click', function() {
             titleInput.value = 'Positive Community Post';
             contentTextarea.value = 'Hey everyone! Just a reminder to be kind to each other. If you need help or support, please reach out. We are here for you and we will get through this together.';
-            contentTextarea.style.height = 'auto';
-            contentTextarea.style.height = Math.max(140, contentTextarea.scrollHeight) + 'px';
+            if (!contentTextarea.tagName || contentTextarea.tagName.toLowerCase() !== 'sl-textarea') {
+                contentTextarea.style.height = 'auto';
+                contentTextarea.style.height = Math.max(140, contentTextarea.scrollHeight) + 'px';
+            }
             updateCharCounter();
             contentTextarea.focus();
             announceToScreenReader('Safe example content loaded');
@@ -662,7 +688,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') {
             titleInput.value = '';
             contentTextarea.value = '';
-            contentTextarea.style.height = '140px';
+            if (!contentTextarea.tagName || contentTextarea.tagName.toLowerCase() !== 'sl-textarea') {
+                contentTextarea.style.height = '140px';
+            }
             updateCharCounter();
             
             // Hide all sections
