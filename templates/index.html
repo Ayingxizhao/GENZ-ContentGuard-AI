@@ -103,7 +103,7 @@
                 <nav class="drawer-links" aria-label="Main navigation">
                     <div class="drawer-section-label">Navigation</div>
                     <a href="#main-content" class="nav-link"><i class="fas fa-magic"></i><span>Analyze</span></a>
-                    <a href="#bug-report" class="nav-link"><i class="fas fa-bug"></i><span>Report Bug</span></a>
+                    <a href="/bug-report" class="nav-link"><i class="fas fa-bug"></i><span>Report Bug</span></a>
                     <a href="#about" class="nav-link" id="aboutLinkDrawer"><i class="fas fa-info-circle"></i><span>About</span></a>
                     <a href="#contact" class="nav-link"><i class="fas fa-envelope"></i><span>Contact</span></a>
 
@@ -132,7 +132,7 @@
                     <div class="drawer-section-label">Utilities</div>
                     <button type="button" class="drawer-util-btn" id="drawerThemeToggle"><i class="fas fa-adjust"></i><span>Toggle Theme</span></button>
                     <a href="#examples" class="drawer-util-link"><i class="fas fa-code"></i><span>API Examples</span></a>
-                    <a href="#bug-report" class="drawer-util-link"><i class="fas fa-comment-dots"></i><span>Send Feedback</span></a>
+                    <a href="/bug-report" class="drawer-util-link"><i class="fas fa-comment-dots"></i><span>Send Feedback</span></a>
 
                     <sl-divider></sl-divider>
 
@@ -148,7 +148,7 @@
                 <div class="hero-inner">
                     <div class="hero-left">
                         <h2 class="hero-title">Protect your platform<br><span class="accent">with AI content analysis</span></h2>
-                        <p class="hero-subtitle">Detect malicious language, hate speech, harassment, and threats in real time. Built for modern communities.</p>
+                        <p class="hero-subtitle">Detect malicious language, hate speech, harassment, and threats in real time. Built for modern teenage communities.</p>
                         <div class="hero-cta">
                             <a href="#main-content" class="cta-primary">
                                 <i class="fas fa-magic" aria-hidden="true"></i>
@@ -479,173 +479,6 @@ puts result</code></pre>
                 </sl-alert>
             </section>
 
-            <!-- Bug Report Section -->
-            <section class="bug-report-section" id="bug-report" aria-labelledby="bug-report-heading">
-                <div class="section-header">
-                    <h2 id="bug-report-heading">Report a Bug</h2>
-                    <p>Found an issue? Help us improve by reporting bugs or suggesting features</p>
-                </div>
-                
-                <form id="bugReportForm" class="bug-report-form" role="form" aria-label="Bug report form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bugTitle">Title <span aria-label="required">*</span></label>
-                            <input 
-                                type="text" 
-                                id="bugTitle" 
-                                name="title" 
-                                placeholder="Brief description of the issue..."
-                                required
-                                maxlength="200"
-                                aria-describedby="bug-title-help"
-                            >
-                            <div id="bug-title-help" class="sr-only">Brief title describing the bug</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="bugPriority">Priority</label>
-                            <select id="bugPriority" name="priority" aria-describedby="bug-priority-help">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                                <option value="critical">Critical</option>
-                            </select>
-                            <div id="bug-priority-help" class="sr-only">Priority level of the bug</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="bugDescription">Description <span aria-label="required">*</span></label>
-                        <textarea 
-                            id="bugDescription" 
-                            name="description" 
-                            rows="4" 
-                            placeholder="Detailed description of the bug..."
-                            required
-                            maxlength="10000"
-                            aria-describedby="bug-description-help bug-desc-counter"
-                        ></textarea>
-                        <div id="bug-description-help" class="sr-only">Detailed description of the bug</div>
-                        <div class="char-counter" id="bug-desc-counter" aria-live="polite">
-                            <span class="char-count">0 characters</span>
-                            <div class="progress">
-                                <div class="progress-bar" style="width: 0%"></div>
-                            </div>
-                            <span class="char-limit">/ 10000</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bugSteps">Steps to Reproduce</label>
-                            <textarea 
-                                id="bugSteps" 
-                                name="steps_to_reproduce" 
-                                rows="3" 
-                                placeholder="1. Go to...&#10;2. Click on...&#10;3. See error..."
-                                aria-describedby="bug-steps-help"
-                            ></textarea>
-                            <div id="bug-steps-help" class="sr-only">Steps to reproduce the bug</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="bugExpected">Expected Behavior</label>
-                            <textarea 
-                                id="bugExpected" 
-                                name="expected_behavior" 
-                                rows="3" 
-                                placeholder="What should have happened?"
-                                aria-describedby="bug-expected-help"
-                            ></textarea>
-                            <div id="bug-expected-help" class="sr-only">What should have happened</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="bugActual">Actual Behavior</label>
-                        <textarea 
-                            id="bugActual" 
-                            name="actual_behavior" 
-                            rows="3" 
-                            placeholder="What actually happened?"
-                            aria-describedby="bug-actual-help"
-                        ></textarea>
-                        <div id="bug-actual-help" class="sr-only">What actually happened</div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bugBrowser">Browser</label>
-                            <input 
-                                type="text" 
-                                id="bugBrowser" 
-                                name="browser_info" 
-                                placeholder="e.g., Chrome 120.0, Firefox 119.0"
-                                aria-describedby="bug-browser-help"
-                            >
-                            <div id="bug-browser-help" class="sr-only">Browser and version</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="bugOS">Operating System</label>
-                            <input 
-                                type="text" 
-                                id="bugOS" 
-                                name="operating_system" 
-                                placeholder="e.g., Windows 11, macOS 14.0, Ubuntu 22.04"
-                                aria-describedby="bug-os-help"
-                            >
-                            <div id="bug-os-help" class="sr-only">Operating system</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bugEmail">Your Email (Optional)</label>
-                            <input 
-                                type="email" 
-                                id="bugEmail" 
-                                name="reporter_email" 
-                                placeholder="your.email@example.com"
-                                aria-describedby="bug-email-help"
-                            >
-                            <div id="bug-email-help" class="sr-only">Email for follow-up (optional)</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="bugName">Your Name (Optional)</label>
-                            <input 
-                                type="text" 
-                                id="bugName" 
-                                name="reporter_name" 
-                                placeholder="Your name"
-                                aria-describedby="bug-name-help"
-                            >
-                            <div id="bug-name-help" class="sr-only">Your name (optional)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="submit-btn" aria-describedby="bug-submit-help">
-                            <i class="fas fa-bug" aria-hidden="true"></i>
-                            <span>Submit Bug Report</span>
-                        </button>
-                        <button type="button" class="clear-btn" id="clearBugForm">
-                            <i class="fas fa-eraser" aria-hidden="true"></i>
-                            <span>Clear Form</span>
-                        </button>
-                    </div>
-                    <div id="bug-submit-help" class="sr-only">Submit the bug report</div>
-                </form>
-                
-                <!-- Bug Report Success/Error Messages -->
-                <div class="bug-report-messages" id="bugReportMessages" style="display: none;" role="alert" aria-live="polite">
-                    <div class="message-card" id="bugMessageCard">
-                        <i class="fas fa-info-circle" aria-hidden="true"></i>
-                        <p id="bugMessageText">Message</p>
-                    </div>
-                </div>
-            </section>
         </main>
 
         <section class="features-section" id="about" data-aos="fade-up">
@@ -719,11 +552,7 @@ puts result</code></pre>
         }
     </style>
 
-    <!-- Shoelace About Dialog -->
-    <sl-dialog label="About ContentGuard AI" id="aboutDialog">
-        <p>ContentGuard AI helps detect malicious language, hate speech, harassment and threats in real time.</p>
-        <sl-button slot="footer" variant="primary" onclick="this.closest('sl-dialog').hide()">Close</sl-button>
-    </sl-dialog>
+    
 
     <!-- Login Modal -->
     <sl-dialog label="Sign In to ContentGuard AI" id="loginDialog" class="auth-dialog">

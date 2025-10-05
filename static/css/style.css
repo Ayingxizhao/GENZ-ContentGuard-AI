@@ -349,12 +349,67 @@ html.dark .drawer-util-btn:hover,
 html.dark .drawer-auth-btn:hover,
 html.dark .drawer-logout-btn:hover { background: rgba(255, 255, 255, 0.08); }
 
+/* Strong visual for Sign In button inside drawer */
+#mobileNav .drawer-auth-btn {
+  background: #111827 !important; /* gray-900 */
+  color: #ffffff !important;
+  border-color: #111827 !important;
+  justify-content: center;
+  font-weight: 700;
+}
+
+#mobileNav .drawer-auth-btn:hover { background: #1f2937 !important; }
+
+html.dark #mobileNav .drawer-auth-btn {
+  background: var(--primary-600) !important;
+  color: #0b1220 !important; /* high contrast on cyan/blue */
+  border-color: var(--primary-600) !important;
+}
+
+html.dark #mobileNav .drawer-auth-btn:hover { background: var(--primary-700) !important; color: #0a0f1a !important; }
+
 /* Drawer account block */
 .drawer-user { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-4); }
 .drawer-user-name { font-weight: 600; }
 .drawer-user-meta { display: flex; flex-direction: column; gap: 2px; }
 .drawer-usage { font-size: 0.875rem; color: var(--gray-600); }
 html.dark .drawer-usage { color: rgba(255,255,255,0.7); }
+
+/* =============================
+   Drawer Contrast Overrides
+   Ensures drawer links are readable in light mode despite global .nav-link
+   ============================= */
+.drawer-links .nav-link,
+.drawer-links .nav-link:visited,
+.drawer-util-link,
+.drawer-util-link:visited,
+.drawer-meta-link,
+.drawer-meta-link:visited {
+  color: #111827 !important; /* solid gray-900 for maximum readability */
+}
+
+html.dark .drawer-links .nav-link,
+html.dark .drawer-util-link,
+html.dark .drawer-meta-link {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* Also ensure icons inherit proper contrast */
+.drawer-links .nav-link i,
+.drawer-util-link i,
+.drawer-meta-link i { color: var(--gray-600) !important; }
+html.dark .drawer-links .nav-link i,
+html.dark .drawer-util-link i,
+html.dark .drawer-meta-link i { color: rgba(255,255,255,0.7) !important; }
+
+/* Light-mode hover background stronger for clarity */
+.drawer-links .nav-link:hover,
+.drawer-util-link:hover,
+.drawer-meta-link:hover { background: #f3f4f6; } /* gray-100 */
+
+/* Drawer dividers visible in both themes */
+#mobileNav::part(body) sl-divider::part(base) { border-color: var(--gray-200); }
+html.dark #mobileNav::part(body) sl-divider::part(base) { border-color: rgba(255,255,255,0.12); }
 
 /* Reset and Base Styles */
 *,

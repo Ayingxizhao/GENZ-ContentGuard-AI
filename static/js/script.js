@@ -110,10 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
         tippy('[data-tippy-content], [data-tippy]', { theme: 'light', delay: [100, 50], maxWidth: 260 });
     }
 
-    // About dialog open
-    if (aboutLink && aboutDialog && typeof aboutDialog.show === 'function') {
-        aboutLink.addEventListener('click', (e) => { e.preventDefault(); aboutDialog.show(); });
-    }
+    // About link should scroll to the section at the end of the page. No dialog.
+    // Desktop About link uses default anchor behavior; no JS needed.
     // Mobile drawer wiring
     if (menuToggle && mobileNav && typeof mobileNav.show === 'function') {
         menuToggle.addEventListener('click', () => mobileNav.show());
@@ -125,11 +123,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    if (aboutLinkDrawer && aboutDialog) {
-        aboutLinkDrawer.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof mobileNav?.hide === 'function') mobileNav.hide();
-            if (typeof aboutDialog.show === 'function') aboutDialog.show();
+    if (aboutLinkDrawer && mobileNav) {
+        aboutLinkDrawer.addEventListener('click', () => {
+            // Let the anchor navigate to #about and close the drawer immediately after
+            if (typeof mobileNav?.hide === 'function') setTimeout(() => mobileNav.hide(), 0);
         });
     }
 
@@ -872,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // (removed legacy inner-sections toggle; replaced by container-level toggle above)
 
-    // Bug Report Form Functionality
+    // Bug Report Form Functionality (only if form exists on page)
     const bugReportForm = document.getElementById('bugReportForm');
     const bugReportMessages = document.getElementById('bugReportMessages');
     const bugMessageCard = document.getElementById('bugMessageCard');
@@ -880,104 +877,120 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearBugFormBtn = document.getElementById('clearBugForm');
     const bugDescriptionTextarea = document.getElementById('bugDescription');
     const bugDescCounter = document.getElementById('bug-desc-counter');
-    const bugDescCharCount = bugDescCounter.querySelector('.char-count');
-    const bugDescProgressBar = bugDescCounter.querySelector('.progress-bar');
 
-    // Bug report character counter
-    function updateBugCharCounter() {
-        const count = bugDescriptionTextarea.value.length;
-        const maxChars = 10000;
-        const percentage = (count / maxChars) * 100;
-        
-        bugDescCharCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
-        bugDescProgressBar.style.width = `${percentage}%`;
-        
-        // Update counter styling based on usage
-        bugDescCounter.className = 'char-counter';
-        if (percentage >= 90) {
-            bugDescCounter.classList.add('danger');
-        } else if (percentage >= 70) {
-            bugDescCounter.classList.add('warning');
+    if (bugReportForm && bugDescriptionTextarea && bugDescCounter) {
+        const bugDescCharCount = bugDescCounter.querySelector('.char-count');
+        const bugDescProgressBar = bugDescCounter.querySelector('.progress-bar');
+
+        // Bug report character counter
+        function updateBugCharCounter() {
+            const count = bugDescriptionTextarea.value.length;
+            const maxChars = 10000;
+            const percentage = (count / maxChars) * 100;
+            
+            bugDescCharCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+            bugDescProgressBar.style.width = `${percentage}%`;
+            
+            // Update counter styling based on usage
+            bugDescCounter.className = 'char-counter';
+            if (percentage >= 90) {
+                bugDescCounter.classList.add('danger');
+            } else if (percentage >= 70) {
+                bugDescCounter.classList.add('warning');
+            }
+            
+            // Update aria-live for screen readers
+            bugDescCounter.setAttribute('aria-label', `${count} of ${maxChars} characters used`);
         }
-        
-        // Update aria-live for screen readers
-        bugDescCounter.setAttribute('aria-label', `${count} of ${maxChars} characters used`);
-    }
 
-    // Initialize bug report character counter
-    updateBugCharCounter();
+        // Initialize bug report character counter
+        updateBugCharCounter();
 
-    // Bug report form submission
-    bugReportForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(bugReportForm);
-        const bugData = Object.fromEntries(formData.entries());
-        
-        // Add browser info automatically
-        bugData.browser_info = bugData.browser_info || navigator.userAgent;
-        bugData.user_agent = navigator.userAgent;
-        bugData.url_where_bug_occurred = window.location.href;
-        
-        try {
-            showBugMessage('Submitting bug report...', 'info');
-            if (response.ok) {
-                showBugMessage('Bug report submitted successfully! Thank you for helping us improve.', 'success');
+        // Bug report form submission
+        bugReportForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(bugReportForm);
+            const bugData = Object.fromEntries(formData.entries());
+            
+            // Add browser info automatically
+            bugData.browser_info = bugData.browser_info || navigator.userAgent;
+            bugData.user_agent = navigator.userAgent;
+            bugData.url_where_bug_occurred = window.location.href;
+            
+            try {
+                showBugMessage('Submitting bug report...', 'info');
+                const response = await fetch('/api/bug-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bugData)
+                });
+                if (response.ok) {
+                    showBugMessage('Bug report submitted successfully! Thank you for helping us improve.', 'success');
+                    bugReportForm.reset();
+                    updateBugCharCounter();
+                } else {
+                    showBugMessage('Failed to submit bug report.', 'error');
+                }
+            } catch (error) {
+                showBugMessage('Network error. Please check your connection and try again.', 'error');
+            }
+        });
+
+        // Clear bug report form
+        if (clearBugFormBtn) {
+            clearBugFormBtn.addEventListener('click', function() {
                 bugReportForm.reset();
                 updateBugCharCounter();
-            } else {
-                showBugMessage('Failed to submit bug report.', 'error');
-            }
-        } catch (error) {
-            showBugMessage('Network error. Please check your connection and try again.', 'error');
-        }
-    });
-
-    // Clear bug report form
-    clearBugFormBtn.addEventListener('click', function() {
-        bugReportForm.reset();
-        updateBugCharCounter();
-        hideBugMessage();
-    });
-
-    // Show bug report message
-    function showBugMessage(message, type) {
-        bugMessageText.textContent = message;
-        bugMessageCard.className = `message-card ${type}`;
-        
-        // Update icon based on type
-        const icon = bugMessageCard.querySelector('i');
-        icon.className = 'fas';
-        switch(type) {
-            case 'success':
-                icon.classList.add('fa-check-circle');
-                break;
-            case 'error':
-                icon.classList.add('fa-exclamation-triangle');
-                break;
-            case 'info':
-            default:
-                icon.classList.add('fa-info-circle');
-                break;
-        }
-        
-        bugReportMessages.style.display = 'block';
-        
-        // Auto-hide success messages after 5 seconds
-        if (type === 'success') {
-            setTimeout(() => {
                 hideBugMessage();
-            }, 5000);
+            });
         }
-    }
 
-    // Hide bug report message
-    function hideBugMessage() {
-        bugReportMessages.style.display = 'none';
-    }
+        // Show bug report message
+        function showBugMessage(message, type) {
+            if (!bugMessageText || !bugMessageCard || !bugReportMessages) return;
+            
+            bugMessageText.textContent = message;
+            bugMessageCard.className = `message-card ${type}`;
+            
+            // Update icon based on type
+            const icon = bugMessageCard.querySelector('i');
+            if (icon) {
+                icon.className = 'fas';
+                switch(type) {
+                    case 'success':
+                        icon.classList.add('fa-check-circle');
+                        break;
+                    case 'error':
+                        icon.classList.add('fa-exclamation-triangle');
+                        break;
+                    case 'info':
+                    default:
+                        icon.classList.add('fa-info-circle');
+                        break;
+                }
+            }
+            
+            bugReportMessages.style.display = 'block';
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    hideBugMessage();
+                }, 5000);
+            }
+        }
 
-    // Add event listener for bug description character counter
-    bugDescriptionTextarea.addEventListener('input', updateBugCharCounter);
+        // Hide bug report message
+        function hideBugMessage() {
+            if (bugReportMessages) {
+                bugReportMessages.style.display = 'none';
+            }
+        }
+
+        // Add event listener for bug description character counter
+        bugDescriptionTextarea.addEventListener('input', updateBugCharCounter);
+    }
 
     // =============================
     // Authentication State Management

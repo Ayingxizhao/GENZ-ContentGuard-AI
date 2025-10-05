@@ -364,6 +364,10 @@ def space_info():
 def index():
     return render_template('index.html')
 
+@app.route('/bug-report')
+def bug_report():
+    return render_template('bug_report.html')
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     HF_SPACE_ID = os.getenv("HF_SPACE_ID", "Ayingxizhao/contentguard-model")
