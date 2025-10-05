@@ -1,176 +1,126 @@
-# 🛡️ GENZ ContentGuard AI
+# 🛡️ ContentGuard AI
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
-[![Machine Learning](https://img.shields.io/badge/ML-Scikit--learn-orange.svg)](https://scikit-learn.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
 
-> **AI-powered malicious content detection system optimized for Gen Z language patterns**
+> **AI-powered content moderation for modern teenage communities**
 
-GENZ ContentGuard AI is an advanced machine learning system designed to detect and analyze malicious content, hate speech, harassment, and harmful language patterns commonly used in modern online communication, with special focus on Gen Z language and internet slang.
+ContentGuard AI detects malicious language, hate speech, harassment, and threats in real-time. Built specifically for Gen Z communication patterns, it understands modern slang, internet language, and evolving online behaviors.
 
-## 🌟 Features
+---
 
-### 🔍 **Advanced Content Analysis**
-- **Real-time Detection**: Instant analysis of text content for malicious patterns
-- **Multi-Category Classification**: Detects 11+ types of harmful content:
-  - Suicide/Self-harm content
-  - Hate speech and discrimination
-  - Violence and threats
-  - Bullying and harassment
-  - Body shaming and appearance-based attacks
-  - Mental health shaming
-  - Gen Z slang harassment patterns
-  - Online harassment tactics
-  - Sexual harassment and exploitation
-  - Scams and fraud attempts
-  - Conspiracy theories and misinformation
-  - Trolling and baiting behavior
+## 🚀 Getting Started
 
-### 📊 **Detailed Analysis Reports**
-- **Risk Assessment**: HIGH/MEDIUM/LOW risk levels with explanations
-- **Keyword Detection**: Specific harmful and positive keywords identified
-- **Context Analysis**: Understanding of language context and intent
-- **Confidence Scoring**: Probability-based confidence levels
-- **Comprehensive Explanations**: Detailed breakdown of findings and recommendations
+### Web Interface [https://plankton-app-xj6ib.ondigitalocean.app/](https://plankton-app-xj6ib.ondigitalocean.app/)
+Visit our platform to analyze content instantly:
+1. Navigate to the homepage
+2. Enter text in the analysis form (title + content)
+3. Click **"Analyze Content"** 
+4. View detailed results with risk assessment and recommendations
 
-### 🎯 **Gen Z Language Optimization**
-- **Modern Slang Detection**: Recognizes contemporary internet language
-- **Emoji and Symbol Handling**: Processes modern communication patterns
-- **Context-Aware Analysis**: Understands nuanced language usage
-- **Cultural Sensitivity**: Adapts to evolving language trends
+### API Integration
+Integrate ContentGuard into your platform via REST API:
 
-### 🖥️ **Modern Web Interface**
-- **Responsive Design**: Works seamlessly on desktop and mobile
-- **Real-time Analysis**: Instant feedback and results
-- **Visual Indicators**: Color-coded risk levels and categories
-- **User-Friendly**: Clean, intuitive interface
+**Endpoint:** `POST /analyze`
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.8 or higher
-- pip package manager
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/contentguard-ai.git
-   cd contentguard-ai
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Train the model** (if using custom data)
-   ```bash
-   python data_processor.py
-   ```
-
-4. **Run the application**
-   ```bash
-   python app.py
-   ```
-
-5. **Access the web interface**
-   Open your browser and navigate to `http://localhost:5001`
-
-## 📁 Project Structure
-
-```
-contentguard-ai/
-├── app.py                 # Main Flask application
-├── data_processor.py      # Data processing and model training
-├── local_model.py         # Local ML model implementation
-├── requirements.txt       # Python dependencies
-├── templates/
-│   └── index.html        # Web interface template
-├── static/
-│   ├── css/
-│   │   └── style.css     # Styling
-│   └── js/
-│       └── script.js     # Frontend functionality
-├── genz_detector_model.pkl # Trained ML model
-└── README.md             # This file
+**Request:**
+```json
+{
+  "title": "Post Title",
+  "content": "Text content to analyze"
+}
 ```
 
-## 🔧 Technical Details
-
-### **API Endpoints**
-- `POST /analyze` - Analyze text content
-- `GET /model-info` - Get model information
-- `GET /health` - Health check endpoint
-
-## 📊 Example Usage
-
-### API Request
-```bash
-curl -X POST http://localhost:5001/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Test Post",
-    "content": "This is a test message for analysis."
-  }'
-```
-
-### API Response
+**Response:**
 ```json
 {
   "analysis": "SAFE",
-  "confidence": "85.2%",
+  "confidence": "92.5%",
   "is_malicious": false,
-  "detailed_analysis": {
-    "risk_level": "LOW",
-    "elements_scanned": 2,
-    "explanation": "✅ Detected Positive Elements: Positive Support, Health Wellness...",
-    "keyword_analysis": {
-      "malicious_keywords": {},
-      "safe_keywords": {
-        "positive_support": ["help", "support"],
-        "health_wellness": ["health"]
-      }
-    }
+  "risk_level": "LOW",
+  "explanation": "Content appears safe with positive language patterns detected.",
+  "keyword_analysis": {
+    "malicious_keywords": [],
+    "safe_keywords": ["support", "help", "community"]
   }
 }
 ```
 
+---
+
+## ✨ Features
+
+### 🔍 Real-Time Content Analysis
+- **Instant Detection**: Analyze text in milliseconds
+- **Multi-Category Classification**: Identifies 11+ types of harmful content including suicide/self-harm, hate speech, harassment, threats, body shaming, and scams
+- **Confidence Scoring**: Probability-based risk assessment (HIGH/MEDIUM/LOW)
+
+### 🎯 Gen Z Language Understanding
+- **Modern Slang Recognition**: Trained on contemporary internet language
+- **Context-Aware**: Distinguishes between harmful intent and casual usage
+- **Emoji & Symbol Processing**: Handles modern communication patterns
+- **Evolving Detection**: Adapts to new language trends
+
+### 📊 Detailed Reporting
+- **Risk Level Assessment**: Clear HIGH/MEDIUM/LOW classification
+- **Keyword Breakdown**: Specific harmful and safe keywords identified
+- **Actionable Recommendations**: Guidance for content moderation decisions
+- **Visual Indicators**: Color-coded results for quick scanning
+
+### 🔐 Authentication & Rate Limiting
+- **OAuth Integration**: Sign in with Google or GitHub
+- **Usage Tracking**: Monitor API calls per day
+- **Rate Limits**: Fair usage policies for all users
+
+---
+
 ## 🎯 Use Cases
 
-- **Social Media Moderation**: Automated content filtering
-- **Online Communities**: Community safety and moderation
-- **Educational Platforms**: Safe learning environments
-- **Gaming Communities**: Toxicity detection and prevention
-- **Customer Support**: Automated harmful content detection
+- **Social Media Platforms**: Automated content moderation at scale
+- **Online Communities**: Protect members from harassment and hate speech
+- **Educational Platforms**: Maintain safe learning environments
+- **Gaming Communities**: Detect and prevent toxic behavior
+- **Customer Support**: Flag harmful messages for review
 
-## 🤝 Contributing
+---
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+## 📖 How It Works
 
-### How to Contribute
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. **Submit Content**: Provide text via web interface or API
+2. **AI Analysis**: Our ML model processes language patterns, context, and keywords
+3. **Risk Assessment**: Content is classified as SAFE or MALICIOUS with confidence score
+4. **Detailed Report**: Receive breakdown of findings with specific keywords and recommendations
+5. **Take Action**: Use insights to moderate, flag, or approve content
+
+---
+
+## 🛠️ API Reference
+
+### Authentication
+Sign in via OAuth (Google/GitHub) to access API features and track usage.
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/analyze` | Analyze text content |
+| `GET` | `/auth/user` | Get current user info |
+| `GET` | `/health` | Service health check |
+
+### Rate Limits
+- **Free Tier**: 100 requests/day
+- **Authenticated Users**: Higher limits based on account type
+
+---
+
+## 🐛 Report Issues
+
+Found a bug or have a feature request? Visit our [Bug Report Page](/bug-report) or [open an issue](https://github.com/Ayingxizhao/GENZ-ContentGuard-AI/issues).
+
+---
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- Reddit community for providing training data
-- Scikit-learn team for the excellent ML framework
-- Flask community for the web framework
-- All contributors and users of this project
-
 ---
-
-<div align="center">
-  <p>Made with ❤️ for a safer internet</p>
-  <p><strong>ContentGuard AI</strong> - Protecting digital spaces one message at a time</p>
-</div>
