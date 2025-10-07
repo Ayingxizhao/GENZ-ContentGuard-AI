@@ -16,6 +16,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-neumorphic.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <!-- Shoelace (Web Components) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
@@ -36,6 +37,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
     <!-- Lottie Player (Cute Animations) -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js"></script>
+    <!-- Motion (Framer Motion) - Modern Animation Library -->
+    <script src="https://cdn.jsdelivr.net/npm/motion@11.11.17/dist/motion.js"></script>
 </head>
 <body>
     <!-- Skip to content link for accessibility -->
@@ -52,6 +55,7 @@
                     
                     <!-- Desktop Nav Links (hidden on mobile) -->
                     <div class="nav-links desktop-only">
+                        <a href="#hero-section" class="nav-link">Home</a>
                         <a href="#main-content" class="nav-link">Analyze</a>
                         <a href="#about" class="nav-link" id="aboutLink">About</a>
                     </div>
@@ -104,6 +108,7 @@
             <sl-drawer id="mobileNav" placement="start" label="Menu">
                 <nav class="drawer-links" aria-label="Main navigation">
                     <div class="drawer-section-label">Navigation</div>
+                    <a href="#hero-section" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
                     <a href="#main-content" class="nav-link"><i class="fas fa-magic"></i><span>Analyze</span></a>
                     <a href="/bug-report" class="nav-link"><i class="fas fa-bug"></i><span>Report Bug</span></a>
                     <a href="#about" class="nav-link" id="aboutLinkDrawer"><i class="fas fa-info-circle"></i><span>About</span></a>
@@ -143,7 +148,7 @@
                     <a href="#terms" class="drawer-meta-link"><i class="fas fa-file-contract"></i><span>Terms</span></a>
                 </nav>
             </sl-drawer>
-            <div class="hero" data-aos="fade-up">
+            <div class="hero" id="hero-section" data-aos="fade-up">
                 <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
                 <div class="blob blob-1" aria-hidden="true"></div>
                 <div class="blob blob-2" aria-hidden="true"></div>
@@ -168,9 +173,20 @@
                             </div>
                         </div>
                     </div>
-                    <div class="hero-right" data-aos="zoom-in">
-                        <!-- Interactive API Code Snippet -->
-                        <div class="glass-card api-showcase" id="examples" aria-label="API code examples">
+                </div>
+            </div>
+        </header>
+
+        <!-- API Examples Section (Moved from hero) -->
+        <section class="examples-section" id="examples" data-aos="fade-up">
+            <div class="container">
+                <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
+                    <h2>API Examples</h2>
+                    <p>See how easy it is to integrate ContentGuard AI into your application</p>
+                </div>
+                <div class="examples-content">
+                    <!-- Interactive API Code Snippet -->
+                    <div class="glass-card api-showcase" aria-label="API code examples">
                             <!-- Animated API Flow Visualization -->
                             <div class="api-flow-animation" id="apiFlowAnimation">
                                 <div class="flow-step" data-step="1">
@@ -305,7 +321,7 @@ puts result</code></pre>
                     </div>
                 </div>
             </div>
-        </header>
+        </section>
 
         <main class="main-content" id="main-content" role="main" data-aos="fade-up">
             <section class="input-section" aria-labelledby="analyze-heading">
@@ -772,6 +788,12 @@ puts result</code></pre>
     <!-- Toast container (Shoelace alerts will be appended here) -->
     <div id="toastContainer" style="position: fixed; top: 16px; right: 16px; z-index: 9999;"></div>
 
+    <!-- Back to Top Button -->
+    <button id="backToTop" class="back-to-top" aria-label="Back to top" title="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/modern-animations.js') }}"></script>
 </body>
 </html>

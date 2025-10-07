@@ -1341,38 +1341,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateProgress(percentage, text, phase) {
+        // Use Motion-powered progress if available
+        if (typeof updateProgressWithMotion !== 'undefined') {
+            updateProgressWithMotion(percentage, text, phase);
+        }
+
         const progressBar = document.getElementById('urlProgressBar');
         const progressText = document.getElementById('progressText');
         const progressPercentage = document.getElementById('progressPercentage');
         const scrapingStatus = document.getElementById('scrapingStatus');
         const postStatus = document.getElementById('postStatus');
         const commentsStatus = document.getElementById('commentsStatus');
-        const lottieAnimation = document.getElementById('lottieAnimation');
 
         if (progressBar) progressBar.value = percentage;
         if (progressText) progressText.textContent = text;
         if (progressPercentage) progressPercentage.textContent = `${Math.round(percentage)}%`;
-
-        // Update Lottie animation based on phase
-        if (lottieAnimation) {
-            const animations = {
-                scraping: 'https://assets3.lottiefiles.com/packages/lf20_h9kds1my.json', // Cute loading circles
-                post: 'https://assets9.lottiefiles.com/packages/lf20_xyadoh9h.json', // Document animation
-                comments: 'https://assets7.lottiefiles.com/packages/lf20_kyu7xb1v.json', // Chat bubbles
-                complete: 'https://assets4.lottiefiles.com/packages/lf20_jbrw3hcz.json' // Success checkmark
-            };
-
-            if (animations[phase]) {
-                console.log('Switching Lottie animation to phase:', phase);
-                lottieAnimation.load(animations[phase]);
-                // Ensure it plays after loading
-                setTimeout(() => {
-                    if (lottieAnimation && lottieAnimation.play) {
-                        lottieAnimation.play();
-                    }
-                }, 100);
-            }
-        }
 
         // Update phase-specific statuses
         if (phase === 'scraping') {

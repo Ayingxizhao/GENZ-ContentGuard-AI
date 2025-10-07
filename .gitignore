@@ -164,3 +164,4 @@ create_extension_icon.py
 # Ignore large model artifacts
 final_model/
 *.safetensors
+CLUADE.md
