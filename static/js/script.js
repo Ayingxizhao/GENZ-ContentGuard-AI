@@ -1183,4 +1183,511 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
+
+    // ========================================
+    // URL ANALYSIS FUNCTIONALITY
+    // ========================================
+
+    // Input mode toggle
+    const urlModeBtn = document.getElementById('urlModeBtn');
+    const manualModeBtn = document.getElementById('manualModeBtn');
+    const urlInputSection = document.getElementById('urlInputSection');
+    const manualInputSection = document.getElementById('manualInputSection');
+    const urlAnalysisForm = document.getElementById('urlAnalysisForm');
+    const urlResultsSection = document.getElementById('urlResultsSection');
+
+    // Toggle between URL and Manual input modes
+    if (urlModeBtn && manualModeBtn) {
+        urlModeBtn.addEventListener('click', function() {
+            // Activate URL mode
+            urlModeBtn.classList.add('active');
+            urlModeBtn.setAttribute('aria-selected', 'true');
+            manualModeBtn.classList.remove('active');
+            manualModeBtn.setAttribute('aria-selected', 'false');
+
+            urlInputSection.style.display = 'block';
+            urlInputSection.classList.add('active');
+            manualInputSection.style.display = 'none';
+            manualInputSection.classList.remove('active');
+
+            // Hide results sections
+            if (resultsSection) resultsSection.style.display = 'none';
+            if (urlResultsSection) urlResultsSection.style.display = 'none';
+        });
+
+        manualModeBtn.addEventListener('click', function() {
+            // Activate Manual mode
+            manualModeBtn.classList.add('active');
+            manualModeBtn.setAttribute('aria-selected', 'true');
+            urlModeBtn.classList.remove('active');
+            urlModeBtn.setAttribute('aria-selected', 'false');
+
+            manualInputSection.style.display = 'block';
+            manualInputSection.classList.add('active');
+            urlInputSection.style.display = 'none';
+            urlInputSection.classList.remove('active');
+
+            // Hide results sections
+            if (resultsSection) resultsSection.style.display = 'none';
+            if (urlResultsSection) urlResultsSection.style.display = 'none';
+        });
+    }
+
+    // URL Analysis Form Submission
+    if (urlAnalysisForm) {
+        urlAnalysisForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const urlInput = document.getElementById('url');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showError('Please enter a URL to analyze.');
+                return;
+            }
+
+            // Show loading state
+            showURLLoading();
+
+            try {
+                const response = await fetch('/analyze-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'URL analysis failed');
+                }
+
+                // Show URL results
+                showURLResults(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || 'An error occurred during URL analysis. Please try again.');
+                hideURLLoading();
+            }
+        });
+    }
+
+    // Example Reddit button
+    const exampleRedditBtn = document.getElementById('exampleRedditBtn');
+    if (exampleRedditBtn) {
+        exampleRedditBtn.addEventListener('click', function() {
+            const urlInput = document.getElementById('url');
+            // Use a safe example Reddit post
+            urlInput.value = 'https://reddit.com/r/wholesomememes/comments/1234567/example/';
+            createRipple(event, exampleRedditBtn);
+        });
+    }
+
+    function showURLLoading() {
+        // Hide error and regular results
+        if (errorSection) errorSection.style.display = 'none';
+        if (resultsSection) resultsSection.style.display = 'none';
+
+        // Show URL results section in loading state
+        if (urlResultsSection) {
+            urlResultsSection.style.display = 'block';
+
+            // Show progress bar
+            const progressContainer = document.getElementById('progressContainer');
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+
+                // Debug: Check if Lottie player exists
+                const lottieAnimation = document.getElementById('lottieAnimation');
+                console.log('Lottie player element:', lottieAnimation);
+                if (lottieAnimation) {
+                    console.log('Lottie player src:', lottieAnimation.getAttribute('src'));
+                }
+
+                updateProgress(0, 'Scraping URL...', 'scraping');
+
+                // Smooth scroll to progress bar after a tiny delay (so it's visible first)
+                setTimeout(() => {
+                    progressContainer.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }, 100);
+            }
+
+            // Hide summary and cards during loading
+            const summaryBanner = document.getElementById('summaryBanner');
+            const postCard = document.getElementById('postCard');
+            const commentsSection = document.getElementById('commentsSection');
+            if (summaryBanner) summaryBanner.style.display = 'none';
+            if (postCard) postCard.style.display = 'none';
+            if (commentsSection) commentsSection.style.display = 'none';
+        }
+
+        // Disable submit button
+        const urlSubmitBtn = urlAnalysisForm.querySelector('.analyze-btn');
+        if (urlSubmitBtn) {
+            urlSubmitBtn.disabled = true;
+            urlSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Analyzing...</span>';
+        }
+
+        // Simulate progress updates
+        simulateProgress();
+
+        announceToScreenReader('URL analysis in progress. Please wait.');
+    }
+
+    function updateProgress(percentage, text, phase) {
+        const progressBar = document.getElementById('urlProgressBar');
+        const progressText = document.getElementById('progressText');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const scrapingStatus = document.getElementById('scrapingStatus');
+        const postStatus = document.getElementById('postStatus');
+        const commentsStatus = document.getElementById('commentsStatus');
+        const lottieAnimation = document.getElementById('lottieAnimation');
+
+        if (progressBar) progressBar.value = percentage;
+        if (progressText) progressText.textContent = text;
+        if (progressPercentage) progressPercentage.textContent = `${Math.round(percentage)}%`;
+
+        // Update Lottie animation based on phase
+        if (lottieAnimation) {
+            const animations = {
+                scraping: 'https://assets3.lottiefiles.com/packages/lf20_h9kds1my.json', // Cute loading circles
+                post: 'https://assets9.lottiefiles.com/packages/lf20_xyadoh9h.json', // Document animation
+                comments: 'https://assets7.lottiefiles.com/packages/lf20_kyu7xb1v.json', // Chat bubbles
+                complete: 'https://assets4.lottiefiles.com/packages/lf20_jbrw3hcz.json' // Success checkmark
+            };
+
+            if (animations[phase]) {
+                console.log('Switching Lottie animation to phase:', phase);
+                lottieAnimation.load(animations[phase]);
+                // Ensure it plays after loading
+                setTimeout(() => {
+                    if (lottieAnimation && lottieAnimation.play) {
+                        lottieAnimation.play();
+                    }
+                }, 100);
+            }
+        }
+
+        // Update phase-specific statuses
+        if (phase === 'scraping') {
+            if (scrapingStatus) {
+                scrapingStatus.textContent = 'In Progress';
+                scrapingStatus.className = 'status-active';
+            }
+        } else if (phase === 'post') {
+            if (scrapingStatus) {
+                scrapingStatus.textContent = 'Complete';
+                scrapingStatus.className = 'status-complete';
+            }
+            if (postStatus) {
+                postStatus.textContent = 'Analyzing';
+                postStatus.className = 'status-active';
+            }
+        } else if (phase === 'comments') {
+            if (postStatus) {
+                postStatus.textContent = 'Complete';
+                postStatus.className = 'status-complete';
+            }
+        } else if (phase === 'complete') {
+            if (commentsStatus) {
+                commentsStatus.className = 'status-complete';
+            }
+        }
+    }
+
+    function simulateProgress() {
+        // Simulate scraping phase (0-30%)
+        let progress = 0;
+        const scrapingInterval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress >= 30) {
+                progress = 30;
+                clearInterval(scrapingInterval);
+                updateProgress(progress, 'Analyzing post...', 'post');
+
+                // Simulate post analysis (30-60%)
+                const postInterval = setInterval(() => {
+                    progress += Math.random() * 8;
+                    if (progress >= 60) {
+                        progress = 60;
+                        clearInterval(postInterval);
+                        updateProgress(progress, 'Analyzing comments...', 'comments');
+
+                        // Simulate comment counting (60-95%)
+                        let commentCount = 0;
+                        const commentInterval = setInterval(() => {
+                            progress += Math.random() * 5;
+                            commentCount += Math.floor(Math.random() * 3);
+                            const commentsStatus = document.getElementById('commentsStatus');
+                            if (commentsStatus) {
+                                commentsStatus.textContent = `${commentCount}/~20`;
+                                commentsStatus.className = 'status-active';
+                            }
+                            if (progress >= 95) {
+                                clearInterval(commentInterval);
+                                updateProgress(95, 'Finalizing...', 'comments');
+                            } else {
+                                updateProgress(progress, 'Analyzing comments...', 'comments');
+                            }
+                        }, 300);
+                    } else {
+                        updateProgress(progress, 'Analyzing post...', 'post');
+                    }
+                }, 200);
+            } else {
+                updateProgress(progress, 'Scraping URL...', 'scraping');
+            }
+        }, 150);
+    }
+
+    function hideURLLoading() {
+        const urlSubmitBtn = urlAnalysisForm.querySelector('.analyze-btn');
+        if (urlSubmitBtn) {
+            urlSubmitBtn.disabled = false;
+            urlSubmitBtn.innerHTML = '<i class="fas fa-search" aria-hidden="true"></i><span>Analyze URL</span>';
+        }
+    }
+
+    function showURLResults(data) {
+        if (!urlResultsSection) return;
+
+        // Complete progress to 100%
+        const commentsStatus = document.getElementById('commentsStatus');
+        if (commentsStatus) {
+            commentsStatus.textContent = `${data.comments.length}/${data.summary.total_comments}`;
+        }
+        updateProgress(100, 'Analysis complete!', 'complete');
+
+        // Wait a moment before hiding progress bar
+        setTimeout(() => {
+            const progressContainer = document.getElementById('progressContainer');
+            if (progressContainer) {
+                progressContainer.style.display = 'none';
+            }
+
+            // Show summary and cards
+            const summaryBanner = document.getElementById('summaryBanner');
+            const postCard = document.getElementById('postCard');
+            const commentsSection = document.getElementById('commentsSection');
+            if (summaryBanner) summaryBanner.style.display = 'flex';
+            if (postCard) postCard.style.display = 'block';
+            if (commentsSection) commentsSection.style.display = 'block';
+        }, 800);
+
+        // Hide loading state
+        hideURLLoading();
+
+        // Remove loading class
+        const postCard = document.getElementById('postCard');
+        if (postCard) {
+            postCard.classList.remove('loading');
+        }
+
+        // Update summary banner
+        document.getElementById('totalAnalyzed').textContent = data.summary.total_analyzed;
+        document.getElementById('safeCount').textContent = data.summary.safe_count;
+        document.getElementById('maliciousCount').textContent = data.summary.malicious_count;
+
+        // Show cache indicator if cached
+        const cacheIndicator = document.getElementById('cacheIndicator');
+        if (cacheIndicator) {
+            cacheIndicator.style.display = data.cached ? 'flex' : 'none';
+        }
+
+        // Update post card
+        updatePostCard(data.post);
+
+        // Update comments section
+        updateCommentsSection(data.comments, data.summary);
+
+        // Show truncated notice if needed
+        const truncatedNotice = document.getElementById('truncatedNotice');
+        if (truncatedNotice && data.summary.comments_truncated) {
+            truncatedNotice.style.display = 'flex';
+            document.getElementById('extractedCount').textContent = data.summary.extracted_comments;
+            document.getElementById('totalCommentsCount').textContent = data.summary.total_comments;
+        } else if (truncatedNotice) {
+            truncatedNotice.style.display = 'none';
+        }
+
+        // Show results section
+        urlResultsSection.style.display = 'block';
+
+        // Scroll to results
+        urlResultsSection.scrollIntoView({ behavior: 'smooth' });
+
+        // Announce to screen readers
+        const maliciousCount = data.summary.malicious_count;
+        const statusMessage = maliciousCount > 0
+            ? `Found ${maliciousCount} malicious item${maliciousCount > 1 ? 's' : ''}`
+            : 'All content appears safe';
+        announceToScreenReader(`Analysis complete. ${statusMessage}.`);
+
+        // Refresh AOS animations
+        if (window.AOS && typeof AOS.refresh === 'function') {
+            AOS.refresh();
+        }
+    }
+
+    function updatePostCard(post) {
+        const postTitle = document.getElementById('postTitle');
+        const postContent = document.getElementById('postContent');
+        const postAuthor = document.getElementById('postAuthor');
+        const postScore = document.getElementById('postScore');
+        const postRiskBadge = document.getElementById('postRiskBadge');
+        const postConfidence = document.getElementById('postConfidence');
+        const postAnalysis = document.getElementById('postAnalysis');
+        const postCard = document.getElementById('postCard');
+
+        if (postTitle) postTitle.textContent = post.title || 'No title';
+        if (postContent) postContent.textContent = post.content || '[No content]';
+        if (postAuthor) postAuthor.textContent = post.author || '[deleted]';
+        if (postScore) postScore.textContent = post.score || 0;
+
+        // Update analysis
+        const analysis = post.analysis;
+        if (analysis) {
+            if (postConfidence) postConfidence.textContent = analysis.confidence || 'N/A';
+            if (postAnalysis) postAnalysis.textContent = analysis.analysis || 'N/A';
+
+            // Update risk badge
+            if (postRiskBadge) {
+                if (analysis.is_malicious) {
+                    postRiskBadge.variant = 'danger';
+                    postRiskBadge.textContent = 'Malicious';
+                    if (postCard) postCard.classList.add('malicious');
+                } else {
+                    postRiskBadge.variant = 'success';
+                    postRiskBadge.textContent = 'Safe';
+                    if (postCard) postCard.classList.remove('malicious');
+                }
+            }
+        }
+    }
+
+    function updateCommentsSection(comments, summary) {
+        const commentsList = document.getElementById('commentsList');
+        const commentsCount = document.getElementById('commentsCount');
+
+        if (commentsCount) {
+            commentsCount.textContent = comments.length;
+        }
+
+        if (!commentsList) return;
+
+        // Clear existing comments
+        commentsList.innerHTML = '';
+
+        if (comments.length === 0) {
+            commentsList.innerHTML = '<div class="no-comments"><i class="fas fa-inbox"></i><p>No comments found</p></div>';
+            return;
+        }
+
+        // Create comment cards
+        comments.forEach((comment, index) => {
+            const commentCard = createCommentCard(comment, index);
+            commentsList.appendChild(commentCard);
+        });
+
+        // Setup filter button
+        setupCommentFilter(comments);
+    }
+
+    function createCommentCard(comment, index) {
+        const card = document.createElement('div');
+        card.className = 'comment-card';
+        card.dataset.index = index;
+        card.dataset.isMalicious = comment.analysis.is_malicious;
+
+        // Add depth indicator
+        const depthClass = `depth-${Math.min(comment.depth, 3)}`;
+        card.classList.add(depthClass);
+
+        if (comment.analysis.is_malicious) {
+            card.classList.add('malicious');
+        }
+
+        card.innerHTML = `
+            <div class="comment-header">
+                <div class="comment-author">
+                    <i class="fas fa-user"></i>
+                    <span>${comment.author || '[deleted]'}</span>
+                    ${comment.depth > 0 ? `<span class="depth-badge">Depth ${comment.depth}</span>` : ''}
+                </div>
+                <sl-badge variant="${comment.analysis.is_malicious ? 'danger' : 'success'}">
+                    ${comment.analysis.is_malicious ? 'Malicious' : 'Safe'}
+                </sl-badge>
+            </div>
+            <div class="comment-content">
+                <p>${escapeHtml(comment.content)}</p>
+            </div>
+            <div class="comment-analysis">
+                <span class="analysis-label">Confidence:</span>
+                <span class="analysis-value">${comment.analysis.confidence || 'N/A'}</span>
+                ${comment.score ? `<span class="comment-score"><i class="fas fa-arrow-up"></i> ${comment.score}</span>` : ''}
+            </div>
+        `;
+
+        return card;
+    }
+
+    function setupCommentFilter(comments) {
+        const filterBtn = document.getElementById('filterMaliciousBtn');
+        if (!filterBtn) return;
+
+        let showMaliciousOnly = false;
+
+        filterBtn.addEventListener('click', function() {
+            showMaliciousOnly = !showMaliciousOnly;
+            filterBtn.setAttribute('aria-pressed', showMaliciousOnly);
+
+            const commentCards = document.querySelectorAll('.comment-card');
+            commentCards.forEach(card => {
+                if (showMaliciousOnly) {
+                    const isMalicious = card.dataset.isMalicious === 'true';
+                    card.style.display = isMalicious ? 'block' : 'none';
+                } else {
+                    card.style.display = 'block';
+                }
+            });
+
+            // Update button text
+            const btnText = filterBtn.querySelector('span');
+            if (btnText) {
+                btnText.textContent = showMaliciousOnly ? 'Show all comments' : 'Show malicious only';
+            }
+
+            // Update icon
+            const icon = filterBtn.querySelector('i');
+            if (icon) {
+                icon.className = showMaliciousOnly ? 'fas fa-filter-circle-xmark' : 'fas fa-filter';
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function announceToScreenReader(message) {
+        // Create or use existing live region for screen readers
+        let liveRegion = document.getElementById('sr-live-region');
+        if (!liveRegion) {
+            liveRegion = document.createElement('div');
+            liveRegion.id = 'sr-live-region';
+            liveRegion.className = 'sr-only';
+            liveRegion.setAttribute('aria-live', 'polite');
+            liveRegion.setAttribute('aria-atomic', 'true');
+            document.body.appendChild(liveRegion);
+        }
+        liveRegion.textContent = message;
+    }
 });

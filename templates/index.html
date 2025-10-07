@@ -34,6 +34,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
+    <!-- Lottie Player (Cute Animations) -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js"></script>
 </head>
 <body>
     <!-- Skip to content link for accessibility -->
@@ -309,61 +311,126 @@ puts result</code></pre>
             <section class="input-section" aria-labelledby="analyze-heading">
                 <div class="section-header">
                     <h2 id="analyze-heading">Analyze Your Content</h2>
-                    <p>Enter text to detect malicious language, hate speech, harassment, or threats</p>
+                    <p>Enter a URL or text to detect malicious language, hate speech, harassment, or threats</p>
                 </div>
-                
-                <form id="analysisForm" class="analysis-form" role="form" aria-label="Content analysis form">
-                    <div class="form-group">
-                        <label for="title">Title (Optional)</label>
-                        <sl-input
-                            id="title"
-                            name="title"
-                            placeholder="Enter post title..."
-                            aria-describedby="title-help"
-                        ></sl-input>
-                        <div id="title-help" class="sr-only">Optional title for context</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="content">Content <span aria-label="required">*</span></label>
-                        <sl-textarea
-                            id="content"
-                            name="content"
-                            rows="6"
-                            placeholder="Enter the content you want to analyze..."
-                            required
-                            aria-describedby="content-help content-counter"
-                            maxlength="5000"
-                        ></sl-textarea>
-                        <div id="content-help" class="sr-only">Required content to analyze for malicious language</div>
-                        <div class="char-counter" id="content-counter" aria-live="polite">
-                            <span class="char-count">0 characters</span>
-                            <div class="progress">
-                                <div class="progress-bar" style="width: 0%"></div>
-                            </div>
-                            <span class="char-limit">/ 5000</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <sl-button type="submit" class="analyze-btn" variant="primary" size="large" aria-describedby="submit-help">
-                            <i class="fas fa-search" aria-hidden="true"></i>
-                            <span>Analyze Content</span>
-                        </sl-button>
-                    </div>
 
-                    <div class="example-actions" aria-describedby="examples-help">
-                        <button type="button" class="example-btn safe" id="exampleSafeBtn">
-                            <i class="fas fa-thumbs-up" aria-hidden="true"></i>
-                            <span>Safe Example</span>
-                        </button>
-                        <button type="button" class="example-btn malicious" id="exampleMaliciousBtn">
-                            <i class="fas fa-exclamation" aria-hidden="true"></i>
-                            <span>Malicious Example</span>
-                        </button>
-                    </div>
-                    <div id="examples-help" class="sr-only">Use the Safe or Malicious example to prefill the form.</div>
-                </form>
+                <!-- Input Mode Toggle -->
+                <div class="input-mode-toggle" role="tablist" aria-label="Input mode selection">
+                    <button
+                        type="button"
+                        class="toggle-btn active"
+                        id="urlModeBtn"
+                        role="tab"
+                        aria-selected="true"
+                        aria-controls="urlInputSection"
+                    >
+                        <i class="fas fa-link" aria-hidden="true"></i>
+                        <span>URL Analysis</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="toggle-btn"
+                        id="manualModeBtn"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="manualInputSection"
+                    >
+                        <i class="fas fa-keyboard" aria-hidden="true"></i>
+                        <span>Manual Input</span>
+                    </button>
+                </div>
+
+                <!-- URL Input Section (Default) -->
+                <div id="urlInputSection" class="input-mode-content active" role="tabpanel" aria-labelledby="urlModeBtn">
+                    <form id="urlAnalysisForm" class="analysis-form" role="form" aria-label="URL analysis form">
+                        <div class="form-group">
+                            <label for="url">Social Media URL <span aria-label="required">*</span></label>
+                            <sl-input
+                                id="url"
+                                name="url"
+                                type="url"
+                                placeholder="https://reddit.com/r/.../comments/..."
+                                required
+                                aria-describedby="url-help"
+                            ></sl-input>
+                            <div id="url-help" class="input-help">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Currently supports Reddit posts. Paste a Reddit post URL to analyze the post and comments.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <sl-button type="submit" class="analyze-btn" variant="primary" size="large">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <span>Analyze URL</span>
+                            </sl-button>
+                        </div>
+
+                        <div class="example-actions" aria-describedby="url-examples-help">
+                            <button type="button" class="example-btn" id="exampleRedditBtn">
+                                <i class="fab fa-reddit" aria-hidden="true"></i>
+                                <span>Reddit Example</span>
+                            </button>
+                        </div>
+                        <div id="url-examples-help" class="sr-only">Use the example button to prefill with a sample Reddit URL.</div>
+                    </form>
+                </div>
+
+                <!-- Manual Input Section (Hidden by default) -->
+                <div id="manualInputSection" class="input-mode-content" role="tabpanel" aria-labelledby="manualModeBtn" style="display: none;">
+                    <form id="analysisForm" class="analysis-form" role="form" aria-label="Content analysis form">
+                        <div class="form-group">
+                            <label for="title">Title (Optional)</label>
+                            <sl-input
+                                id="title"
+                                name="title"
+                                placeholder="Enter post title..."
+                                aria-describedby="title-help"
+                            ></sl-input>
+                            <div id="title-help" class="sr-only">Optional title for context</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="content">Content <span aria-label="required">*</span></label>
+                            <sl-textarea
+                                id="content"
+                                name="content"
+                                rows="6"
+                                placeholder="Enter the content you want to analyze..."
+                                required
+                                aria-describedby="content-help content-counter"
+                                maxlength="5000"
+                            ></sl-textarea>
+                            <div id="content-help" class="sr-only">Required content to analyze for malicious language</div>
+                            <div class="char-counter" id="content-counter" aria-live="polite">
+                                <span class="char-count">0 characters</span>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: 0%"></div>
+                                </div>
+                                <span class="char-limit">/ 5000</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <sl-button type="submit" class="analyze-btn" variant="primary" size="large" aria-describedby="submit-help">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <span>Analyze Content</span>
+                            </sl-button>
+                        </div>
+
+                        <div class="example-actions" aria-describedby="examples-help">
+                            <button type="button" class="example-btn safe" id="exampleSafeBtn">
+                                <i class="fas fa-thumbs-up" aria-hidden="true"></i>
+                                <span>Safe Example</span>
+                            </button>
+                            <button type="button" class="example-btn malicious" id="exampleMaliciousBtn">
+                                <i class="fas fa-exclamation" aria-hidden="true"></i>
+                                <span>Malicious Example</span>
+                            </button>
+                        </div>
+                        <div id="examples-help" class="sr-only">Use the Safe or Malicious example to prefill the form.</div>
+                    </form>
+                </div>
             </section>
 
             <section class="results-section" id="resultsSection" style="display: none;" aria-labelledby="results-heading" role="region" aria-live="polite" data-aos="fade-up">
@@ -468,7 +535,114 @@ puts result</code></pre>
                 </div>
             </section>
 
-            
+            <!-- URL Analysis Results Section -->
+            <section class="url-results-section" id="urlResultsSection" style="display: none;" aria-labelledby="url-results-heading" role="region" aria-live="polite" data-aos="fade-up">
+                <h2 id="url-results-heading">URL Analysis Results</h2>
+
+                <!-- Modern Progress Bar with Cute Lottie Animation -->
+                <div class="progress-container" id="progressContainer" style="display: none;">
+                    <div class="progress-animation-wrapper">
+                        <lottie-player
+                            id="lottieAnimation"
+                            src="https://assets3.lottiefiles.com/packages/lf20_h9kds1my.json"
+                            background="transparent"
+                            speed="1.5"
+                            style="width: 150px; height: 150px; margin: 0 auto; display: block;"
+                            loop
+                            autoplay
+                            mode="normal"
+                        ></lottie-player>
+                    </div>
+                    <div class="progress-header">
+                        <div class="progress-status">
+                            <span class="progress-text" id="progressText">Initializing...</span>
+                        </div>
+                        <span class="progress-percentage" id="progressPercentage">0%</span>
+                    </div>
+                    <sl-progress-bar
+                        id="urlProgressBar"
+                        value="0"
+                        style="--height: 8px; --indicator-color: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);"
+                    ></sl-progress-bar>
+                    <div class="progress-details" id="progressDetails">
+                        <span class="detail-item"><i class="fas fa-globe"></i> Scraping: <span id="scrapingStatus">Pending</span></span>
+                        <span class="detail-item"><i class="fas fa-file-alt"></i> Post: <span id="postStatus">Pending</span></span>
+                        <span class="detail-item"><i class="fas fa-comments"></i> Comments: <span id="commentsStatus">0/0</span></span>
+                    </div>
+                </div>
+
+                <!-- Summary Banner -->
+                <div class="summary-banner" id="summaryBanner">
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-chart-line" aria-hidden="true"></i>
+                            <span class="stat-label">Total Analyzed:</span>
+                            <span class="stat-value" id="totalAnalyzed">0</span>
+                        </div>
+                        <div class="stat-item safe">
+                            <i class="fas fa-check-circle" aria-hidden="true"></i>
+                            <span class="stat-label">Safe:</span>
+                            <span class="stat-value" id="safeCount">0</span>
+                        </div>
+                        <div class="stat-item malicious">
+                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            <span class="stat-label">Malicious:</span>
+                            <span class="stat-value" id="maliciousCount">0</span>
+                        </div>
+                    </div>
+                    <div class="cache-indicator" id="cacheIndicator" style="display: none;">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span>Cached result</span>
+                    </div>
+                </div>
+
+                <!-- Post Analysis Card -->
+                <div class="url-result-card post-card" id="postCard">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fab fa-reddit" aria-hidden="true"></i>
+                            <h3>Post</h3>
+                        </div>
+                        <sl-badge id="postRiskBadge" variant="neutral">Analyzing...</sl-badge>
+                    </div>
+                    <div class="card-content">
+                        <h4 id="postTitle" class="post-title">Loading...</h4>
+                        <p id="postContent" class="post-content">Loading...</p>
+                        <div class="post-meta">
+                            <span><i class="fas fa-user"></i> <span id="postAuthor">...</span></span>
+                            <span><i class="fas fa-arrow-up"></i> <span id="postScore">0</span></span>
+                        </div>
+                    </div>
+                    <div class="card-analysis">
+                        <div class="analysis-item">
+                            <span class="label">Confidence:</span>
+                            <span class="value" id="postConfidence">-</span>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="label">Analysis:</span>
+                            <span class="value" id="postAnalysis">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="comments-section" id="commentsSection">
+                    <div class="comments-header">
+                        <h3><i class="fas fa-comments" aria-hidden="true"></i> Comments (<span id="commentsCount">0</span>)</h3>
+                        <button class="filter-btn" id="filterMaliciousBtn" aria-pressed="false">
+                            <i class="fas fa-filter"></i>
+                            <span>Show malicious only</span>
+                        </button>
+                    </div>
+                    <div class="comments-list" id="commentsList">
+                        <!-- Comments will be dynamically inserted here -->
+                    </div>
+                    <div class="truncated-notice" id="truncatedNotice" style="display: none;">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Showing <span id="extractedCount">20</span> of <span id="totalCommentsCount">100</span> total comments</span>
+                    </div>
+                </div>
+            </section>
 
             <section class="error-section" id="errorSection" style="display: none;" aria-labelledby="error-heading" role="alert" aria-live="assertive">
                 <h2 id="error-heading" class="sr-only">Error</h2>

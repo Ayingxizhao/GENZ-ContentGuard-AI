@@ -342,6 +342,193 @@ def analyze():
             "hint": "Ensure Space is running and gradio_client is up to date"
         }), 502
 
+@app.route('/analyze-url', methods=['POST'])
+def analyze_url():
+    """
+    Analyze content from a URL (e.g., Reddit post with comments)
+    Scrapes content, caches it, and analyzes for malicious content
+    """
+    try:
+        # Import scraping dependencies
+        from scrapers import get_scraper
+        from cache_service import get_cache
+        from scraper_config import ScraperConfig
+
+        # Check if user is logged in and track usage
+        if current_user.is_authenticated:
+            if current_user.has_exceeded_daily_limit():
+                return jsonify({
+                    "error": "Daily API limit exceeded",
+                    "daily_limit": current_user.daily_limit,
+                    "api_calls_today": current_user.api_calls_today,
+                    "hint": "Please try again tomorrow or contact support for higher limits"
+                }), 429
+
+        # Get URL from request
+        data = request.get_json() or {}
+        url = (data.get('url') or '').strip()
+
+        if not url:
+            return jsonify({"error": "No URL provided"}), 400
+
+        # Validate URL format
+        if not (url.startswith('http://') or url.startswith('https://')):
+            return jsonify({"error": "Invalid URL format. Must start with http:// or https://"}), 400
+
+        # Check if platform is supported
+        if not ScraperConfig.is_supported_platform(url):
+            platform = ScraperConfig.get_platform_from_url(url)
+            return jsonify({
+                "error": f"Platform not supported: {platform}",
+                "hint": "Currently supported platforms: Reddit"
+            }), 400
+
+        # Check cache first
+        cache = get_cache()
+        cached_result = cache.get(url)
+        if cached_result:
+            logging.info(f"Returning cached result for URL: {url[:50]}...")
+            # Track usage even for cached results
+            if current_user.is_authenticated:
+                try:
+                    current_user.increment_api_usage()
+                    cached_result['usage'] = {
+                        'api_calls_today': current_user.api_calls_today,
+                        'daily_limit': current_user.daily_limit,
+                        'remaining_calls': current_user.get_remaining_calls()
+                    }
+                except Exception as usage_err:
+                    logging.error("Failed to track usage: %s", str(usage_err))
+            return jsonify(cached_result)
+
+        # Scrape content
+        logging.info(f"Scraping URL: {url}")
+        try:
+            scraper = get_scraper(url)
+            scraped_content = scraper.scrape(
+                url,
+                max_comments=ScraperConfig.MAX_COMMENTS,
+                max_depth=ScraperConfig.MAX_COMMENT_DEPTH
+            )
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
+        except NotImplementedError as nie:
+            return jsonify({"error": str(nie)}), 501
+        except Exception as scrape_err:
+            logging.error(f"Scraping failed: {str(scrape_err)}")
+            return jsonify({"error": f"Failed to scrape content: {str(scrape_err)}"}), 502
+
+        # Get HF client once at the beginning
+        try:
+            client = get_hf_client()
+        except Exception as e:
+            logging.error(f"Failed to initialize HF client: {str(e)}")
+            return jsonify({
+                "error": "Failed to initialize analysis service",
+                "hint": "Please check HF_TOKEN in .env file. Get your token from https://huggingface.co/settings/tokens"
+            }), 502
+
+        # Analyze post
+        logging.info("Analyzing post content")
+        post_text = f"{scraped_content.post.title} {scraped_content.post.content}".strip()
+        try:
+            post_result = client.predict(post_text, api_name="/predict")
+            logging.info(f"Raw post_result from HF: {post_result}")
+            logging.info(f"Post result type: {type(post_result)}")
+            post_analysis = _normalize_result(post_result)
+            logging.info(f"Normalized post_analysis: {post_analysis}")
+        except Exception as e:
+            logging.error(f"Post analysis failed: {str(e)}")
+            post_analysis = {
+                "error": "Analysis failed",
+                "is_malicious": False,
+                "confidence": "0%"
+            }
+
+        # Analyze comments
+        logging.info(f"Analyzing {len(scraped_content.comments)} comments")
+        comments_analysis = []
+        malicious_count = 0
+        safe_count = 0
+
+        for comment in scraped_content.comments:
+            try:
+                comment_result = client.predict(comment.content, api_name="/predict")
+                analysis = _normalize_result(comment_result)
+
+                comment_data = comment.to_dict()
+                comment_data['analysis'] = analysis
+                comments_analysis.append(comment_data)
+
+                if analysis.get('is_malicious', False):
+                    malicious_count += 1
+                else:
+                    safe_count += 1
+
+            except Exception as e:
+                logging.error(f"Comment analysis failed: {str(e)}")
+                comment_data = comment.to_dict()
+                comment_data['analysis'] = {
+                    "error": "Analysis failed",
+                    "is_malicious": False,
+                    "confidence": "0%"
+                }
+                comments_analysis.append(comment_data)
+                safe_count += 1
+
+        # Track post analysis result
+        if post_analysis.get('is_malicious', False):
+            malicious_count += 1
+        else:
+            safe_count += 1
+
+        # Build response
+        response = {
+            "url": url,
+            "platform": scraped_content.platform,
+            "cached": False,
+            "post": {
+                **scraped_content.post.to_dict(),
+                "analysis": post_analysis
+            },
+            "comments": comments_analysis,
+            "summary": {
+                "total_analyzed": len(comments_analysis) + 1,  # +1 for post
+                "malicious_count": malicious_count,
+                "safe_count": safe_count,
+                "comments_truncated": scraped_content.metadata.get('comments_truncated', False),
+                "total_comments": scraped_content.metadata.get('total_comments', 0),
+                "extracted_comments": scraped_content.metadata.get('extracted_comments', 0)
+            },
+            "metadata": scraped_content.metadata
+        }
+
+        # Cache the result
+        cache.set(url, response)
+        logging.info(f"Cached result for URL: {url[:50]}...")
+
+        # Track usage for logged-in users
+        if current_user.is_authenticated:
+            try:
+                current_user.increment_api_usage()
+                response['usage'] = {
+                    'api_calls_today': current_user.api_calls_today,
+                    'daily_limit': current_user.daily_limit,
+                    'remaining_calls': current_user.get_remaining_calls()
+                }
+            except Exception as usage_err:
+                logging.error("Failed to track usage: %s", str(usage_err))
+
+        return jsonify(response)
+
+    except Exception as e:
+        logging.error("/analyze-url failed: %s\n%s", str(e), traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "hint": "Please check the URL and try again"
+        }), 502
+
+
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "healthy"}), 200
