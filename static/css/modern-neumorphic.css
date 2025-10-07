@@ -882,6 +882,112 @@ html.dark .back-to-hero-link i {
   outline-offset: 2px;
 }
 
+/* ===================================
+   MOTION PROGRESS ANIMATION STYLES
+   =================================== */
+
+.motion-animation {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  display: block;
+}
+
+.motion-animation svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 12px rgba(102, 126, 234, 0.2));
+}
+
+.motion-circle-bg {
+  color: var(--primary-500, #667eea);
+  opacity: 0.15;
+}
+
+html.dark .motion-circle-bg {
+  color: #667eea;
+  opacity: 0.25;
+}
+
+.motion-circle-progress {
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.6));
+}
+
+.motion-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: pulse-icon 2s ease-in-out infinite;
+}
+
+html.dark .motion-icon {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes pulse-icon {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Rotating glow effect for the circle */
+@keyframes rotate-glow {
+  0% {
+    filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.6)) hue-rotate(0deg);
+  }
+  100% {
+    filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.6)) hue-rotate(360deg);
+  }
+}
+
+.motion-circle-progress {
+  animation: rotate-glow 3s linear infinite;
+}
+
+/* Progress container styling */
+.progress-container {
+  background: var(--neo-bg-light);
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  box-shadow: var(--neo-shadow-light);
+  margin-bottom: 2rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.progress-container[style*="display: block"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html.dark .progress-container {
+  background: var(--neo-bg-dark);
+}
+
+.progress-animation-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -890,5 +996,13 @@ html.dark .back-to-hero-link i {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .motion-icon {
+    animation: none;
+  }
+
+  .motion-circle-progress {
+    animation: none;
   }
 }

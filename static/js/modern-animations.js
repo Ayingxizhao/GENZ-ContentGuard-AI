@@ -233,64 +233,32 @@ function createEnhancedRipple(e, element) {
  * Modern Progress Bar Animations (replacing Lottie)
  */
 function initProgressAnimations() {
+    const motionAnimation = document.getElementById('motionAnimation');
+    if (!motionAnimation) return;
+
+    console.log('Motion animation initialized');
+
+    // Add entrance animation when element is shown
     const progressContainer = document.getElementById('progressContainer');
-    if (!progressContainer) return;
+    if (progressContainer && typeof Motion !== 'undefined') {
+        // Observe when progressContainer becomes visible
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const isVisible = progressContainer.style.display === 'block';
+                    if (isVisible) {
+                        // Animate entrance
+                        Motion.animate(motionAnimation,
+                            { opacity: [0, 1], scale: [0.8, 1] },
+                            { duration: 0.5, easing: [0.22, 1, 0.36, 1] }
+                        );
+                    }
+                }
+            });
+        });
 
-    // Create Motion-powered animation element
-    const motionAnimationHTML = `
-        <div class="motion-animation" id="motionAnimation">
-            <svg width="120" height="120" viewBox="0 0 120 120">
-                <circle class="motion-circle-bg" cx="60" cy="60" r="50"
-                    fill="none" stroke="currentColor" stroke-width="8" opacity="0.2"/>
-                <circle class="motion-circle-progress" cx="60" cy="60" r="50"
-                    fill="none" stroke="url(#gradient)" stroke-width="8"
-                    stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
-                    transform="rotate(-90 60 60)"/>
-                <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-                    </linearGradient>
-                </defs>
-            </svg>
-            <div class="motion-icon">
-                <i class="fas fa-brain"></i>
-            </div>
-        </div>
-    `;
-
-    // Add styles for the motion animation
-    const style = document.createElement('style');
-    style.textContent = `
-        .motion-animation {
-            position: relative;
-            width: 150px;
-            height: 150px;
-        }
-
-        .motion-animation svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .motion-circle-bg,
-        .motion-circle-progress {
-            color: var(--primary-500);
-        }
-
-        .motion-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-    `;
-    document.head.appendChild(style);
+        observer.observe(progressContainer, { attributes: true });
+    }
 }
 
 /**
@@ -305,15 +273,17 @@ window.updateProgressWithMotion = function(percentage, text, phase) {
 
     if (progressBar) progressBar.value = percentage;
     if (progressText) progressText.textContent = text;
-    if (progressPercentage) progressPercentage.textContent = percentage + '%';
+    if (progressPercentage) progressPercentage.textContent = Math.round(percentage) + '%';
 
     // Animate circular progress
     if (motionCircle && typeof Motion !== 'undefined') {
-        const circumference = 314;
+        // Calculate circle circumference (2 * π * r, where r = 60)
+        const circumference = 2 * Math.PI * 60; // 377
         const offset = circumference - (percentage / 100) * circumference;
+
         Motion.animate(motionCircle,
             { strokeDashoffset: offset },
-            { duration: 0.5, easing: 'ease-out' }
+            { duration: 0.8, easing: [0.22, 1, 0.36, 1] }
         );
     }
 
@@ -326,81 +296,21 @@ window.updateProgressWithMotion = function(percentage, text, phase) {
             complete: 'fa-check-circle'
         };
 
-        if (icons[phase]) {
-            motionIcon.className = 'fas ' + icons[phase];
+        const newIcon = icons[phase];
+        if (newIcon && !motionIcon.classList.contains(newIcon)) {
+            motionIcon.className = 'fas ' + newIcon;
 
             // Pulse animation on icon change
             if (typeof Motion !== 'undefined') {
                 Motion.animate(motionIcon.parentElement,
-                    { scale: [1, 1.2, 1] },
-                    { duration: 0.4, easing: 'ease-in-out' }
+                    { scale: [1, 1.3, 1] },
+                    { duration: 0.5, easing: [0.22, 1, 0.36, 1] }
                 );
             }
         }
     }
 };
 
-/**
- * Show URL loading with animation
- */
-window.showURLLoadingWithMotion = function() {
-    const progressContainer = document.getElementById('progressContainer');
-    const animationWrapper = progressContainer?.querySelector('.progress-animation-wrapper');
-
-    if (!progressContainer) return;
-
-    // Replace Lottie with Motion animation if it exists
-    const lottiePlayer = document.getElementById('lottieAnimation');
-    if (lottiePlayer && animationWrapper) {
-        lottiePlayer.style.display = 'none';
-
-        // Add Motion animation
-        const existingMotion = document.getElementById('motionAnimation');
-        if (!existingMotion) {
-            const motionDiv = document.createElement('div');
-            motionDiv.className = 'motion-animation';
-            motionDiv.id = 'motionAnimation';
-            motionDiv.innerHTML = `
-                <svg width="120" height="120" viewBox="0 0 120 120">
-                    <circle class="motion-circle-bg" cx="60" cy="60" r="50"
-                        fill="none" stroke="currentColor" stroke-width="8" opacity="0.2"/>
-                    <circle class="motion-circle-progress" cx="60" cy="60" r="50"
-                        fill="none" stroke="url(#gradient)" stroke-width="8"
-                        stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
-                        transform="rotate(-90 60 60)"/>
-                    <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-                <div class="motion-icon">
-                    <i class="fas fa-brain"></i>
-                </div>
-            `;
-            animationWrapper.appendChild(motionDiv);
-        }
-    }
-
-    progressContainer.style.display = 'block';
-
-    // Smooth scroll with animation
-    setTimeout(() => {
-        progressContainer.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
-
-        // Entrance animation
-        if (typeof Motion !== 'undefined') {
-            Motion.animate(progressContainer,
-                { opacity: [0, 1], y: [20, 0] },
-                { duration: 0.5, easing: [0.22, 1, 0.36, 1] }
-            );
-        }
-    }, 100);
-};
 
 /**
  * Animate result cards entrance

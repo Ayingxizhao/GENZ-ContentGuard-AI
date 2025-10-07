@@ -35,8 +35,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
-    <!-- Lottie Player (Cute Animations) -->
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.4/dist/lottie-player.js"></script>
     <!-- Motion (Framer Motion) - Modern Animation Library -->
     <script src="https://cdn.jsdelivr.net/npm/motion@11.11.17/dist/motion.js"></script>
 </head>
@@ -555,19 +553,32 @@ puts result</code></pre>
             <section class="url-results-section" id="urlResultsSection" style="display: none;" aria-labelledby="url-results-heading" role="region" aria-live="polite" data-aos="fade-up">
                 <h2 id="url-results-heading">URL Analysis Results</h2>
 
-                <!-- Modern Progress Bar with Cute Lottie Animation -->
+                <!-- Modern Progress Animation with Motion.js -->
                 <div class="progress-container" id="progressContainer" style="display: none;">
                     <div class="progress-animation-wrapper">
-                        <lottie-player
-                            id="lottieAnimation"
-                            src="https://assets3.lottiefiles.com/packages/lf20_h9kds1my.json"
-                            background="transparent"
-                            speed="1.5"
-                            style="width: 150px; height: 150px; margin: 0 auto; display: block;"
-                            loop
-                            autoplay
-                            mode="normal"
-                        ></lottie-player>
+                        <div class="motion-animation" id="motionAnimation">
+                            <svg width="150" height="150" viewBox="0 0 150 150">
+                                <!-- Background circle -->
+                                <circle class="motion-circle-bg" cx="75" cy="75" r="60"
+                                    fill="none" stroke="currentColor" stroke-width="8" opacity="0.15"/>
+                                <!-- Animated progress circle -->
+                                <circle class="motion-circle-progress" cx="75" cy="75" r="60"
+                                    fill="none" stroke="url(#progressGradient)" stroke-width="8"
+                                    stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377"
+                                    transform="rotate(-90 75 75)"/>
+                                <!-- Gradient definition -->
+                                <defs>
+                                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                        <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#f093fb;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="motion-icon">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                        </div>
                     </div>
                     <div class="progress-header">
                         <div class="progress-status">
