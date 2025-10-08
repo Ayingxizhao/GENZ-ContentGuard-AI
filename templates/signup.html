@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - ContentGuard AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-neumorphic.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Create Account</h1>
+                <p>Join ContentGuard AI and get 200 API requests per day</p>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="auth-message" class="auth-message" style="display: none;"></div>
+
+            <!-- OAuth Signup -->
+            <div class="auth-oauth">
+                <a href="/auth/login/google" class="oauth-btn oauth-google">
+                    <i class="fab fa-google"></i>
+                    <span>Sign up with Google</span>
+                </a>
+                <a href="/auth/login/github" class="oauth-btn oauth-github">
+                    <i class="fab fa-github"></i>
+                    <span>Sign up with GitHub</span>
+                </a>
+            </div>
+
+            <!-- Divider -->
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <!-- Email/Password Signup Form -->
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label for="name">Name (Optional)</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-input"
+                        placeholder="Your name"
+                        autocomplete="name"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="Create a strong password"
+                        required
+                        autocomplete="new-password"
+                    >
+                    <div class="password-requirements">
+                        <small>
+                            <i class="fas fa-info-circle"></i>
+                            Must be at least 8 characters with uppercase, lowercase, and a number or special character
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input
+                        type="password"
+                        id="confirm-password"
+                        name="confirm-password"
+                        class="form-input"
+                        placeholder="Re-enter your password"
+                        required
+                        autocomplete="new-password"
+                    >
+                </div>
+
+                <button type="submit" class="auth-submit-btn" id="signup-btn">
+                    <span id="signup-btn-text">Create Account</span>
+                    <i class="fas fa-spinner fa-spin" id="signup-spinner" style="display: none;"></i>
+                </button>
+            </form>
+
+            <!-- Footer Links -->
+            <div class="auth-footer">
+                <p>Already have an account? <a href="/auth/login">Sign in</a></p>
+                <p><a href="/">Back to Home</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script>
+        // Initialize signup form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            initSignupForm();
+        });
+    </script>
+</body>
+</html>

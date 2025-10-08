@@ -4,41 +4,71 @@ Database models for ContentGuard AI
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
 
 class User(UserMixin, db.Model):
-    """User model for OAuth authentication and usage tracking"""
+    """User model for OAuth and email/password authentication with usage tracking"""
     __tablename__ = 'users'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     name = db.Column(db.String(255), nullable=True)
     avatar_url = db.Column(db.String(512), nullable=True)
-    
-    # OAuth provider info
-    provider = db.Column(db.String(50), nullable=False)  # 'google' or 'github'
-    provider_user_id = db.Column(db.String(255), nullable=False)
-    
+
+    # Email/password authentication
+    password_hash = db.Column(db.String(255), nullable=True)
+
+    # OAuth provider info (nullable for email/password users)
+    provider = db.Column(db.String(50), nullable=True)  # 'google', 'github', or None for email/password
+    provider_user_id = db.Column(db.String(255), nullable=True)
+
     # Usage tracking
     api_calls_count = db.Column(db.Integer, default=0, nullable=False)
     api_calls_today = db.Column(db.Integer, default=0, nullable=False)
     last_api_call = db.Column(db.DateTime, nullable=True)
-    daily_limit = db.Column(db.Integer, default=100, nullable=False)  # 100 calls/day default
-    
+    daily_limit = db.Column(db.Integer, default=200, nullable=False)  # 200 calls/day for authenticated users
+
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_login = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    
-    # Unique constraint on provider + provider_user_id
+
+    # Unique constraint on provider + provider_user_id (only for OAuth users)
     __table_args__ = (
-        db.UniqueConstraint('provider', 'provider_user_id', name='unique_provider_user'),
+        db.Index('idx_provider_user', 'provider', 'provider_user_id'),
     )
     
     def __repr__(self):
         return f'<User {self.email} ({self.provider})>'
-    
+
+    def set_password(self, password):
+        """Hash and set user password (for email/password authentication)"""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Verify password against hash"""
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
+
+    @classmethod
+    def create_user(cls, email, password=None, name=None, provider=None, provider_user_id=None, avatar_url=None):
+        """Create a new user (email/password or OAuth)"""
+        user = cls(
+            email=email,
+            name=name,
+            provider=provider,
+            provider_user_id=provider_user_id,
+            avatar_url=avatar_url,
+            created_at=datetime.utcnow(),
+            last_login=datetime.utcnow()
+        )
+        if password:
+            user.set_password(password)
+        return user
+
     def increment_api_usage(self):
         """Increment API usage counter and check if limit exceeded"""
         now = datetime.utcnow()

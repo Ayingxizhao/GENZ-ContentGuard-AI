@@ -1065,3 +1065,296 @@ h1, h2, h3, h4, h5, h6 {
     animation: none;
   }
 }
+
+/* ============================================================================
+   Authentication Pages Styles
+   ============================================================================ */
+
+/* Auth Container */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--background);
+}
+
+/* Auth Card */
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-xl);
+}
+
+/* Auth Header */
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-header h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+  font-size: 0.9375rem;
+  color: var(--muted-foreground);
+}
+
+/* Message Box */
+.auth-message {
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: none;
+}
+
+.auth-message-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--destructive);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.auth-message-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+html.dark .auth-message-error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+html.dark .auth-message-success {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* OAuth Buttons */
+.auth-oauth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.oauth-btn:hover {
+  background: var(--muted);
+  border-color: var(--ring);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.oauth-btn i {
+  font-size: 1.125rem;
+}
+
+.oauth-google:hover {
+  border-color: #4285f4;
+}
+
+.oauth-github:hover {
+  border-color: #333;
+}
+
+html.dark .oauth-github:hover {
+  border-color: #fff;
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.auth-divider span {
+  padding: 0 1rem;
+}
+
+/* Auth Form */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.1);
+}
+
+html.dark .form-input:focus {
+  box-shadow: 0 0 0 3px rgba(212, 212, 216, 0.1);
+}
+
+.form-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* Checkbox */
+.form-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.form-checkbox label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Password Requirements */
+.password-requirements {
+  margin-top: 0.25rem;
+}
+
+.password-requirements small {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  line-height: 1.4;
+}
+
+.password-requirements i {
+  font-size: 0.875rem;
+  color: var(--info);
+}
+
+/* Submit Button */
+.auth-submit-btn {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  background: var(--ring);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Footer Links */
+.auth-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.auth-footer p {
+  margin: 0.5rem 0;
+  color: var(--muted-foreground);
+}
+
+.auth-footer a {
+  color: var(--foreground);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.auth-footer a:hover {
+  color: var(--ring);
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .auth-container {
+    padding: 1rem;
+  }
+
+  .auth-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .auth-header h1 {
+    font-size: 1.5rem;
+  }
+}

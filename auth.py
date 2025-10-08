@@ -3,7 +3,7 @@ OAuth authentication handlers for Google and GitHub
 """
 import os
 from datetime import datetime
-from flask import Blueprint, redirect, url_for, session, request, jsonify
+from flask import Blueprint, redirect, url_for, session, request, jsonify, render_template
 from flask_login import login_user, logout_user, current_user, login_required
 from authlib.integrations.flask_client import OAuth
 from models import db, User
@@ -101,24 +101,38 @@ def callback(provider):
         
         if not email:
             return jsonify({'error': 'Could not retrieve email from provider'}), 400
-        
-        # Find or create user
+
+        # Find user by provider credentials first
         user = User.query.filter_by(provider=provider, provider_user_id=provider_user_id).first()
-        
+
         if not user:
-            # Create new user
-            user = User(
-                email=email,
-                name=name,
-                avatar_url=avatar_url,
-                provider=provider,
-                provider_user_id=provider_user_id,
-                created_at=datetime.utcnow(),
-                last_login=datetime.utcnow()
-            )
-            db.session.add(user)
+            # Check if user exists with this email (for account merging)
+            user = User.query.filter_by(email=email).first()
+
+            if user:
+                # Merge OAuth with existing account
+                # Link OAuth provider to existing email/password account
+                user.provider = provider
+                user.provider_user_id = provider_user_id
+                if not user.name:
+                    user.name = name
+                if not user.avatar_url:
+                    user.avatar_url = avatar_url
+                user.last_login = datetime.utcnow()
+            else:
+                # Create new user
+                user = User(
+                    email=email,
+                    name=name,
+                    avatar_url=avatar_url,
+                    provider=provider,
+                    provider_user_id=provider_user_id,
+                    created_at=datetime.utcnow(),
+                    last_login=datetime.utcnow()
+                )
+                db.session.add(user)
         else:
-            # Update existing user info
+            # Update existing OAuth user info
             user.email = email
             user.name = name
             user.avatar_url = avatar_url
@@ -171,3 +185,127 @@ def get_usage():
         'remaining_calls': current_user.get_remaining_calls(),
         'has_exceeded_limit': current_user.has_exceeded_daily_limit()
     })
+
+
+# ============================================================================
+# Email/Password Authentication Routes
+# ============================================================================
+
+@auth_bp.route('/signup', methods=['GET'])
+def signup_page():
+    """Show signup page"""
+    if current_user.is_authenticated:
+        return redirect('/')
+    return render_template('signup.html')
+
+
+@auth_bp.route('/login', methods=['GET'])
+def login_page():
+    """Show login page"""
+    if current_user.is_authenticated:
+        return redirect('/')
+    return render_template('login.html')
+
+
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    """Register new user with email/password"""
+    from utils.validators import validate_email, validate_password, validate_name
+
+    try:
+        data = request.get_json() or {}
+
+        email = (data.get('email') or '').strip().lower()
+        password = data.get('password')
+        name = (data.get('name') or '').strip() or None
+
+        # Validate email
+        email_valid, email_error = validate_email(email)
+        if not email_valid:
+            return jsonify({'error': email_error}), 400
+
+        # Validate password
+        password_valid, password_error = validate_password(password)
+        if not password_valid:
+            return jsonify({'error': password_error}), 400
+
+        # Validate name if provided
+        if name:
+            name_valid, name_error = validate_name(name)
+            if not name_valid:
+                return jsonify({'error': name_error}), 400
+
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return jsonify({'error': 'An account with this email already exists'}), 400
+
+        # Create new user
+        user = User.create_user(email=email, password=password, name=name)
+        db.session.add(user)
+        db.session.commit()
+
+        # Log the user in
+        login_user(user, remember=True)
+
+        return jsonify({
+            'success': True,
+            'message': 'Account created successfully',
+            'user': user.to_dict()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Registration error: {e}")
+        return jsonify({'error': 'Registration failed. Please try again.'}), 500
+
+
+@auth_bp.route('/login-email', methods=['POST'])
+def login_email():
+    """Login with email/password"""
+    from utils.validators import validate_email
+
+    try:
+        data = request.get_json() or {}
+
+        email = (data.get('email') or '').strip().lower()
+        password = data.get('password')
+        remember = data.get('remember', True)
+
+        # Validate email format
+        email_valid, email_error = validate_email(email)
+        if not email_valid:
+            return jsonify({'error': email_error}), 400
+
+        if not password:
+            return jsonify({'error': 'Password is required'}), 400
+
+        # Find user by email
+        user = User.query.filter_by(email=email).first()
+
+        # Check if user exists and password is correct
+        if not user or not user.check_password(password):
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        # Check if this is an OAuth-only account
+        if user.provider and not user.password_hash:
+            return jsonify({
+                'error': f'This account uses {user.provider.title()} login. Please use the {user.provider.title()} button to sign in.'
+            }), 400
+
+        # Update last login
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+
+        # Log the user in
+        login_user(user, remember=remember)
+
+        return jsonify({
+            'success': True,
+            'message': 'Login successful',
+            'user': user.to_dict()
+        }), 200
+
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'error': 'Login failed. Please try again.'}), 500

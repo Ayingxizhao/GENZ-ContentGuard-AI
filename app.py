@@ -287,10 +287,12 @@ def _normalize_result(space_result):
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
+    from middleware.rate_limit import anonymous_rate_limit, check_anonymous_rate_limit
+
     try:
-        # Check if user is logged in and track usage
+        # Check rate limits based on authentication status
         if current_user.is_authenticated:
-            # Check daily limit for logged-in users
+            # Check daily limit for logged-in users (200/day)
             if current_user.has_exceeded_daily_limit():
                 return jsonify({
                     "error": "Daily API limit exceeded",
@@ -298,6 +300,24 @@ def analyze():
                     "api_calls_today": current_user.api_calls_today,
                     "hint": "Please try again tomorrow or contact support for higher limits"
                 }), 429
+        else:
+            # Check anonymous rate limit (100/day per IP)
+            from middleware.rate_limit import increment_anonymous_usage
+            allowed, remaining, limit, reset_time = check_anonymous_rate_limit()
+            if not allowed:
+                return jsonify({
+                    'error': 'Daily API limit exceeded for anonymous users',
+                    'daily_limit': limit,
+                    'remaining': 0,
+                    'reset_time': reset_time.isoformat(),
+                    'hint': 'Sign in for 200 requests per day',
+                    'actions': {
+                        'login': '/auth/login',
+                        'signup': '/auth/signup'
+                    }
+                }), 429
+            # Increment anonymous usage
+            increment_anonymous_usage()
         
         data = request.get_json() or {}
         text = (data.get('content') or '').strip()
@@ -353,9 +373,11 @@ def analyze_url():
         from scrapers import get_scraper
         from cache_service import get_cache
         from scraper_config import ScraperConfig
+        from middleware.rate_limit import check_anonymous_rate_limit, increment_anonymous_usage
 
-        # Check if user is logged in and track usage
+        # Check rate limits based on authentication status
         if current_user.is_authenticated:
+            # Check daily limit for logged-in users (200/day)
             if current_user.has_exceeded_daily_limit():
                 return jsonify({
                     "error": "Daily API limit exceeded",
@@ -363,6 +385,23 @@ def analyze_url():
                     "api_calls_today": current_user.api_calls_today,
                     "hint": "Please try again tomorrow or contact support for higher limits"
                 }), 429
+        else:
+            # Check anonymous rate limit (100/day per IP)
+            allowed, remaining, limit, reset_time = check_anonymous_rate_limit()
+            if not allowed:
+                return jsonify({
+                    'error': 'Daily API limit exceeded for anonymous users',
+                    'daily_limit': limit,
+                    'remaining': 0,
+                    'reset_time': reset_time.isoformat(),
+                    'hint': 'Sign in for 200 requests per day',
+                    'actions': {
+                        'login': '/auth/login',
+                        'signup': '/auth/signup'
+                    }
+                }), 429
+            # Increment anonymous usage
+            increment_anonymous_usage()
 
         # Get URL from request
         data = request.get_json() or {}

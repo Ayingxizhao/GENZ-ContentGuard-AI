@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ContentGuard AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-neumorphic.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Welcome Back</h1>
+                <p>Sign in to your ContentGuard AI account</p>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="auth-message" class="auth-message" style="display: none;"></div>
+
+            <!-- OAuth Login -->
+            <div class="auth-oauth">
+                <a href="/auth/login/google" class="oauth-btn oauth-google">
+                    <i class="fab fa-google"></i>
+                    <span>Continue with Google</span>
+                </a>
+                <a href="/auth/login/github" class="oauth-btn oauth-github">
+                    <i class="fab fa-github"></i>
+                    <span>Continue with GitHub</span>
+                </a>
+            </div>
+
+            <!-- Divider -->
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <!-- Email/Password Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <div class="form-group form-checkbox">
+                    <input type="checkbox" id="remember" name="remember" checked>
+                    <label for="remember">Remember me</label>
+                </div>
+
+                <button type="submit" class="auth-submit-btn" id="login-btn">
+                    <span id="login-btn-text">Sign In</span>
+                    <i class="fas fa-spinner fa-spin" id="login-spinner" style="display: none;"></i>
+                </button>
+            </form>
+
+            <!-- Footer Links -->
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/auth/signup">Sign up</a></p>
+                <p><a href="/">Back to Home</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script>
+        // Initialize login form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            initLoginForm();
+        });
+    </script>
+</body>
+</html>

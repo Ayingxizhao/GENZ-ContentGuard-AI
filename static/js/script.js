@@ -1051,11 +1051,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (userDropdown) {
             userDropdown.style.display = 'inline-block';
         }
-        
+
         // Update user info
-        if (userAvatar && user.avatar_url) {
-            userAvatar.src = user.avatar_url;
-            userAvatar.alt = user.name || user.email;
+        if (userAvatar) {
+            if (user.avatar_url) {
+                userAvatar.src = user.avatar_url;
+                userAvatar.alt = user.name || user.email;
+            } else {
+                // Generate avatar from initials for email/password users
+                const initials = (user.name || user.email).charAt(0).toUpperCase();
+                userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=18181b&color=fafafa&size=128`;
+                userAvatar.alt = user.name || user.email;
+            }
         }
         if (userName) {
             userName.textContent = user.name || user.email.split('@')[0];
@@ -1064,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', function() {
             usageCount.textContent = user.api_calls_today || 0;
         }
         if (usageLimit) {
-            usageLimit.textContent = user.daily_limit || 100;
+            usageLimit.textContent = user.daily_limit || 200;
         }
     }
 
@@ -1072,31 +1079,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user && drawerAccount && drawerLoginBtn) {
             drawerLoginBtn.style.display = 'none';
             drawerAccount.style.display = 'block';
-            if (drawerUserAvatar && user.avatar_url) {
-                drawerUserAvatar.src = user.avatar_url;
-                drawerUserAvatar.alt = user.name || user.email;
+            if (drawerUserAvatar) {
+                if (user.avatar_url) {
+                    drawerUserAvatar.src = user.avatar_url;
+                    drawerUserAvatar.alt = user.name || user.email;
+                } else {
+                    // Generate avatar from initials for email/password users
+                    drawerUserAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=18181b&color=fafafa&size=128`;
+                    drawerUserAvatar.alt = user.name || user.email;
+                }
             }
             if (drawerUserName) drawerUserName.textContent = user.name || (user.email ? user.email.split('@')[0] : 'User');
             if (drawerUsageCount) drawerUsageCount.textContent = user.api_calls_today || 0;
-            if (drawerUsageLimit) drawerUsageLimit.textContent = user.daily_limit || 100;
+            if (drawerUsageLimit) drawerUsageLimit.textContent = user.daily_limit || 200;
         } else {
             if (drawerLoginBtn) drawerLoginBtn.style.display = 'flex';
             if (drawerAccount) drawerAccount.style.display = 'none';
         }
     }
 
-    // Open login dialog
-    if (loginBtn && loginDialog) {
+    // Open login page
+    if (loginBtn) {
         loginBtn.addEventListener('click', () => {
-            loginDialog.show();
+            window.location.href = '/auth/login';
         });
     }
 
-    // Drawer: open login dialog
-    if (drawerLoginBtn && loginDialog) {
+    // Drawer: open login page
+    if (drawerLoginBtn) {
         drawerLoginBtn.addEventListener('click', () => {
-            loginDialog.show();
-            if (typeof mobileNav?.hide === 'function') mobileNav.hide();
+            window.location.href = '/auth/login';
         });
     }
 
