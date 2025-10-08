@@ -42,9 +42,12 @@ def load_user(user_id):
 # Register auth blueprint
 app.register_blueprint(auth_bp)
 
-# Create tables
-with app.app_context():
-    db.create_all()
+# Create tables (development only - use init_db.py for production)
+# In production with gunicorn, skip this to avoid race conditions between workers
+if __name__ == '__main__':
+    # Only run when using python app.py directly (development)
+    with app.app_context():
+        db.create_all()
 
 # Basic logging
 logging.basicConfig(level=logging.INFO)
