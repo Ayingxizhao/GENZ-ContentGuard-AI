@@ -687,14 +687,18 @@ html.dark .blob-2 { background: radial-gradient(circle at 70% 30%, #a78bfa, tran
 
 /* Glass card utility */
 .glass-card {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: var(--radius-2xl);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-  box-shadow: var(--shadow-2xl);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
 }
-html.dark .glass-card { background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.2); }
+
+html.dark .glass-card {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
 
 .hero-preview { width: min(560px, 90%); padding: var(--space-8); position: relative; z-index: 2; }
 
@@ -2253,13 +2257,15 @@ html.dark .details-toggle:hover { background: var(--gray-300); border-color: var
   justify-content: space-between;
   margin-bottom: var(--space-6);
   padding: var(--space-6) var(--space-4);
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--muted);
   border-radius: var(--radius-xl);
   position: relative;
+  border: 1px solid var(--border);
 }
 
 html.dark .api-flow-animation {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--muted);
+  border-color: var(--border);
 }
 
 .flow-step {
@@ -2308,12 +2314,12 @@ html.dark .api-flow-animation {
 }
 
 .flow-icon.request {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #71717a, #52525b);
   color: white;
 }
 
 .flow-icon.processing {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, #71717a, #52525b);
   color: white;
   animation: processingRotate 3s linear infinite;
 }
@@ -2324,20 +2330,20 @@ html.dark .api-flow-animation {
 }
 
 .flow-icon.response {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #71717a, #52525b);
   color: white;
 }
 
 .flow-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: white;
+  color: var(--foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 html.dark .flow-label {
-  color: var(--gray-800);
+  color: var(--foreground);
 }
 
 /* Animated Arrows */
@@ -2352,13 +2358,13 @@ html.dark .flow-label {
 .arrow-line {
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.6));
+  background: var(--border);
   position: relative;
   overflow: hidden;
 }
 
 html.dark .arrow-line {
-  background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.4));
+  background: var(--border);
 }
 
 .arrow-line::after {
@@ -2368,7 +2374,7 @@ html.dark .arrow-line {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  background: linear-gradient(90deg, transparent, var(--muted-foreground), transparent);
   animation: arrowFlow 2s ease-in-out infinite;
 }
 
@@ -2438,27 +2444,26 @@ html.dark .arrow-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1rem 1.5rem;
+  background: var(--muted);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .api-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: var(--foreground);
 }
 
 html.dark .api-title {
-  color: var(--gray-900);
-  text-shadow: none;
+  color: var(--foreground);
 }
 
 .copy-btn {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  color: var(--secondary-foreground);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -2470,8 +2475,9 @@ html.dark .api-title {
 }
 
 .copy-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--accent);
   transform: translateY(-1px);
+  box-shadow: var(--shadow);
 }
 
 .copy-btn:active {
@@ -2485,16 +2491,6 @@ html.dark .api-title {
 @keyframes copySuccess {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
-}
-
-html.dark .copy-btn {
-  background: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--gray-900);
-}
-
-html.dark .copy-btn:hover {
-  background: rgba(0, 0, 0, 0.3);
 }
 
 /* Code Tabs */
@@ -2512,9 +2508,9 @@ html.dark .copy-btn:hover {
 }
 
 .code-tab {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -2528,32 +2524,15 @@ html.dark .copy-btn:hover {
 }
 
 .code-tab:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 
 .code-tab.active {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-html.dark .code-tab {
-  background: rgba(0, 0, 0, 0.15);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: var(--gray-600);
-}
-
-html.dark .code-tab:hover {
-  background: rgba(0, 0, 0, 0.25);
-  color: var(--gray-800);
-}
-
-html.dark .code-tab.active {
-  background: rgba(0, 0, 0, 0.35);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: var(--gray-900);
+  background: var(--primary);
+  border-color: var(--ring);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow);
 }
 
 /* Code Panels */
@@ -2610,24 +2589,28 @@ html.dark .code-panel pre {
 
 .code-panel code {
   font-family: var(--font-mono);
-  color: #e0e0e0;
+  color: var(--foreground);
+}
+
+html.dark .code-panel code {
+  color: var(--foreground);
 }
 
 /* Prism.js theme overrides for glass card */
 .code-panel pre[class*="language-"] {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--muted);
   text-shadow: none;
 }
 
 html.dark .code-panel pre[class*="language-"] {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--muted);
 }
 
 /* Response Preview */
 .response-preview {
   margin-top: var(--space-6);
   padding-top: var(--space-4);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid var(--border);
 }
 
 .response-header {
@@ -2639,16 +2622,12 @@ html.dark .code-panel pre[class*="language-"] {
 }
 
 .response-status {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--foreground);
   font-weight: 500;
 }
 
-html.dark .response-status {
-  color: var(--gray-700);
-}
-
 .status-code {
-  color: #4ade80;
+  color: var(--success);
   font-weight: 600;
   font-family: var(--font-mono);
   animation: statusPulse 2s ease-in-out infinite;
@@ -2660,33 +2639,33 @@ html.dark .response-status {
 }
 
 .response-time {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--muted-foreground);
   font-family: var(--font-mono);
-}
-
-html.dark .response-time {
-  color: var(--gray-500);
 }
 
 .response-preview pre {
   margin: 0;
   padding: var(--space-4);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--muted);
   border-radius: var(--radius-lg);
   overflow-x: auto;
   font-size: 0.8125rem;
   line-height: 1.6;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
 }
 
 html.dark .response-preview pre {
-  background: rgba(0, 0, 0, 0.4);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--muted);
+  border-color: var(--border);
 }
 
 .response-preview code {
   font-family: var(--font-mono);
-  color: #e0e0e0;
+  color: var(--foreground);
+}
+
+html.dark .response-preview code {
+  color: var(--foreground);
 }
 
 /* Responsive adjustments */
@@ -3025,16 +3004,26 @@ html.dark .auth-privacy {
   gap: 8px;
   margin-top: 8px;
   padding: 12px;
-  background: var(--info-bg, #eff6ff);
-  border-left: 3px solid var(--primary-500);
+  background: var(--muted);
+  border-left: 3px solid var(--primary);
   border-radius: 6px;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--foreground);
 }
 
 .input-help i {
-  color: var(--primary-500);
+  color: var(--primary);
   font-size: 1rem;
+}
+
+html.dark .input-help {
+  background: var(--muted);
+  color: var(--foreground);
+  border-left-color: var(--primary);
+}
+
+html.dark .input-help i {
+  color: var(--primary);
 }
 
 /* URL Results Section */
