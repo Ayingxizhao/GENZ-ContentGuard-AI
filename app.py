@@ -42,11 +42,17 @@ def load_user(user_id):
 # Register auth blueprint
 app.register_blueprint(auth_bp)
 
+# Initialize access logging middleware
+from middleware.access_logger import init_access_logging
+init_access_logging(app)
+
 # Create tables (development only - use init_db.py for production)
 # In production with gunicorn, skip this to avoid race conditions between workers
 if __name__ == '__main__':
     # Only run when using python app.py directly (development)
     with app.app_context():
+        # Import analytics models to register them before creating tables
+        from models_analytics import AccessLog
         db.create_all()
 
 # Basic logging
@@ -596,6 +602,247 @@ def index():
 @app.route('/bug-report')
 def bug_report():
     return render_template('bug_report.html')
+
+# ========== Analytics Endpoints (Authentication Required) ==========
+
+def require_auth(f):
+    """Decorator to require authentication for analytics endpoints"""
+    from functools import wraps
+    from flask_login import login_required
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return jsonify({
+                'error': 'Authentication required',
+                'hint': 'Please log in to access analytics',
+                'actions': {
+                    'login': '/auth/login'
+                }
+            }), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@app.route('/analytics/dau', methods=['GET'])
+@require_auth
+def analytics_dau():
+    """Get Daily Active Users for a specific date"""
+    from utils.analytics import get_daily_active_users
+    from datetime import datetime
+
+    try:
+        # Parse date from query param (format: YYYY-MM-DD)
+        date_str = request.args.get('date')
+        date = None
+        if date_str:
+            try:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+
+        result = get_daily_active_users(date)
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error(f"DAU query failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/analytics/mau', methods=['GET'])
+@require_auth
+def analytics_mau():
+    """Get Monthly Active Users for a specific month"""
+    from utils.analytics import get_monthly_active_users
+
+    try:
+        # Parse year and month from query params
+        year = request.args.get('year', type=int)
+        month = request.args.get('month', type=int)
+
+        if month and (month < 1 or month > 12):
+            return jsonify({'error': 'Month must be between 1 and 12'}), 400
+
+        result = get_monthly_active_users(year, month)
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error(f"MAU query failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/analytics/unique-visitors', methods=['GET'])
+@require_auth
+def analytics_unique_visitors():
+    """Get unique visitors over the last N days"""
+    from utils.analytics import get_unique_visitors_last_n_days
+
+    try:
+        days = request.args.get('days', default=7, type=int)
+
+        if days < 1 or days > 365:
+            return jsonify({'error': 'Days must be between 1 and 365'}), 400
+
+        result = get_unique_visitors_last_n_days(days)
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error(f"Unique visitors query failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/analytics/popular-endpoints', methods=['GET'])
+@require_auth
+def analytics_popular_endpoints():
+    """Get most popular endpoints by request count"""
+    from utils.analytics import get_popular_endpoints
+    from datetime import datetime, timedelta
+
+    try:
+        # Parse date range from query params
+        start_str = request.args.get('start')
+        end_str = request.args.get('end')
+        limit = request.args.get('limit', default=10, type=int)
+
+        start_date = None
+        end_date = None
+
+        if start_str:
+            try:
+                start_date = datetime.strptime(start_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid start date format. Use YYYY-MM-DD'}), 400
+
+        if end_str:
+            try:
+                end_date = datetime.strptime(end_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid end date format. Use YYYY-MM-DD'}), 400
+
+        result = get_popular_endpoints(start_date, end_date, limit)
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error(f"Popular endpoints query failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/analytics/device-breakdown', methods=['GET'])
+@require_auth
+def analytics_device_breakdown():
+    """Get breakdown of requests by device type and browser"""
+    from utils.analytics import get_device_breakdown
+    from datetime import datetime
+
+    try:
+        # Parse date range from query params
+        start_str = request.args.get('start')
+        end_str = request.args.get('end')
+
+        start_date = None
+        end_date = None
+
+        if start_str:
+            try:
+                start_date = datetime.strptime(start_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid start date format. Use YYYY-MM-DD'}), 400
+
+        if end_str:
+            try:
+                end_date = datetime.strptime(end_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid end date format. Use YYYY-MM-DD'}), 400
+
+        result = get_device_breakdown(start_date, end_date)
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error(f"Device breakdown query failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/analytics/response-time', methods=['GET'])
+@require_auth
+def analytics_response_time():
+    """Get response time statistics"""
+    from utils.analytics import get_response_time_stats
+    from datetime import datetime
+
+    try:
+        # Parse date range from query params
+        start_str = request.args.get('start')
+        end_str = request.args.get('end')
+
+        start_date = None
+        end_date = None
+
+        if start_str:
+            try:
+                start_date = datetime.strptime(start_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid start date format. Use YYYY-MM-DD'}), 400
+
+        if end_str:
+            try:
+                end_date = datetime.strptime(end_str, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid end date format. Use YYYY-MM-DD'}), 400
+
+        result = get_response_time_stats(start_date, end_date)
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error(f"Response time query failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/analytics/overview', methods=['GET'])
+@require_auth
+def analytics_overview():
+    """Get comprehensive analytics overview"""
+    from utils.analytics import get_overview_stats
+
+    try:
+        days = request.args.get('days', default=7, type=int)
+
+        if days < 1 or days > 365:
+            return jsonify({'error': 'Days must be between 1 and 365'}), 400
+
+        result = get_overview_stats(days)
+        return jsonify(result)
+
+    except Exception as e:
+        logging.error(f"Overview query failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/analytics/cleanup', methods=['POST'])
+@require_auth
+def analytics_cleanup():
+    """Manually trigger cleanup of old access logs (retention: 1 year)"""
+    from models_analytics import AccessLog
+
+    try:
+        retention_days = request.json.get('retention_days', 365) if request.json else 365
+
+        if retention_days < 1:
+            return jsonify({'error': 'Retention days must be at least 1'}), 400
+
+        deleted_count = AccessLog.cleanup_old_logs(retention_days)
+
+        return jsonify({
+            'success': True,
+            'deleted_count': deleted_count,
+            'retention_days': retention_days,
+            'message': f'Cleaned up {deleted_count} logs older than {retention_days} days'
+        })
+
+    except Exception as e:
+        logging.error(f"Cleanup failed: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# ========== End Analytics Endpoints ==========
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
