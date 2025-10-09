@@ -1,44 +1,144 @@
-# 🛡️ ContentGuard AI
+# ContentGuard AI
+
+> AI-powered content moderation that understands Gen Z
+
+Detect harmful content, hate speech, harassment, and threats in real-time. Built for modern teenage communities with support for slang, internet language, and evolving online behaviors.
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)]()
-
-> **AI-powered content moderation for modern teenage communities**
-
-ContentGuard AI detects malicious language, hate speech, harassment, and threats in real-time. Built specifically for Gen Z communication patterns, it understands modern slang, internet language, and evolving online behaviors.
+[![Status](https://img.shields.io/badge/Status-Live-brightgreen.svg)](https://plankton-app-xj6ib.ondigitalocean.app)
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Try It Now
 
-### Web Interface [https://plankton-app-xj6ib.ondigitalocean.app/](https://plankton-app-xj6ib.ondigitalocean.app/)
-Visit our platform to analyze content instantly:
-1. Navigate to the homepage
-2. Enter text in the analysis form (title + content)
-3. Click **"Analyze Content"** 
-4. View detailed results with risk assessment and recommendations
+**Live Demo:** [https://plankton-app-xj6ib.ondigitalocean.app](https://plankton-app-xj6ib.ondigitalocean.app)
 
-### API Integration
-Integrate ContentGuard into your platform via REST API:
+![Interface Preview](assets/imgs/interface1.png)
 
-**Endpoint:** `POST /analyze`
+![Results Preview](assets/imgs/interface2.png)
 
-**Request:**
+---
+
+## Quick Start
+
+### Option 1: Web Interface
+
+1. Visit [https://plankton-app-xj6ib.ondigitalocean.app](https://plankton-app-xj6ib.ondigitalocean.app)
+2. Enter text to analyze (title + content)
+3. Click **"Analyze Content"**
+4. View risk assessment and detailed breakdown
+
+### Option 2: API Integration
+
+#### Python
+```python
+import requests
+
+response = requests.post(
+    "https://plankton-app-xj6ib.ondigitalocean.app/analyze",
+    json={
+        "title": "Post Title",
+        "content": "Text to analyze"
+    }
+)
+
+result = response.json()
+print(f"Risk Level: {result['risk_level']}")
+print(f"Confidence: {result['confidence']}")
+```
+
+#### JavaScript
+```javascript
+const response = await fetch('https://plankton-app-xj6ib.ondigitalocean.app/analyze', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: 'Post Title',
+    content: 'Text to analyze'
+  })
+});
+
+const result = await response.json();
+console.log(`Risk Level: ${result.risk_level}`);
+```
+
+#### cURL
+```bash
+curl -X POST https://plankton-app-xj6ib.ondigitalocean.app/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Post Title",
+    "content": "Text to analyze"
+  }'
+```
+
+---
+
+## 🔐 Authentication
+
+### Sign In with OAuth
+
+ContentGuard supports OAuth login via **Google** and **GitHub**:
+
+1. **Visit the app** → Click "Sign In"
+2. **Choose provider** → Google or GitHub
+3. **Authorize** → Grant permissions
+4. **Start analyzing** → Access enhanced features
+
+### Why Sign In?
+
+| Feature | Anonymous | Registered |
+|---------|-----------|------------|
+| Content Analysis | ✅ | ✅ |
+| Rate Limit | Limited | Higher |
+| Usage Tracking | ❌ | ✅ |
+| API Access | ❌ | ✅ |
+
+---
+
+## 📡 API Reference
+
+### Endpoint
+
+```
+POST https://plankton-app-xj6ib.ondigitalocean.app/analyze
+```
+
+### Request Format
+
 ```json
 {
-  "title": "Post Title",
-  "content": "Text content to analyze"
+  "title": "string (required)",
+  "content": "string (required)"
 }
 ```
 
-**Response:**
+### Response Format
+
+```json
+{
+  "analysis": "SAFE | MALICIOUS",
+  "confidence": "92.5%",
+  "is_malicious": false,
+  "risk_level": "LOW | MEDIUM | HIGH",
+  "explanation": "Detailed analysis explanation",
+  "keyword_analysis": {
+    "malicious_keywords": ["keyword1", "keyword2"],
+    "safe_keywords": ["keyword3", "keyword4"]
+  }
+}
+```
+
+### Example Responses
+
+#### Safe Content
 ```json
 {
   "analysis": "SAFE",
-  "confidence": "92.5%",
+  "confidence": "94.2%",
   "is_malicious": false,
   "risk_level": "LOW",
-  "explanation": "Content appears safe with positive language patterns detected.",
+  "explanation": "Content appears safe with positive language patterns.",
   "keyword_analysis": {
     "malicious_keywords": [],
     "safe_keywords": ["support", "help", "community"]
@@ -46,81 +146,115 @@ Integrate ContentGuard into your platform via REST API:
 }
 ```
 
+#### Harmful Content
+```json
+{
+  "analysis": "MALICIOUS",
+  "confidence": "87.8%",
+  "is_malicious": true,
+  "risk_level": "HIGH",
+  "explanation": "Content contains harassment and threatening language.",
+  "keyword_analysis": {
+    "malicious_keywords": ["threat", "harass"],
+    "safe_keywords": []
+  }
+}
+```
+
+### Rate Limits
+
+- **Anonymous Users**: Limited requests per day
+- **Registered Users**: Higher limits with usage tracking
+
 ---
 
 ## ✨ Features
 
-### 🔍 Real-Time Content Analysis
-- **Instant Detection**: Analyze text in milliseconds
-- **Multi-Category Classification**: Identifies 11+ types of harmful content including suicide/self-harm, hate speech, harassment, threats, body shaming, and scams
-- **Confidence Scoring**: Probability-based risk assessment (HIGH/MEDIUM/LOW)
+### 🎯 Detection Categories
+- Suicide & self-harm language
+- Hate speech & slurs
+- Harassment & bullying
+- Threats & violence
+- Body shaming
+- Scams & manipulation
+- Sexual content
+- Spam patterns
+- And more...
 
-### 🎯 Gen Z Language Understanding
-- **Modern Slang Recognition**: Trained on contemporary internet language
-- **Context-Aware**: Distinguishes between harmful intent and casual usage
-- **Emoji & Symbol Processing**: Handles modern communication patterns
-- **Evolving Detection**: Adapts to new language trends
+### 🔍 Analysis Capabilities
+- **Real-time processing** - Results in milliseconds
+- **Multi-language support** - English + internet slang
+- **Context awareness** - Understands intent vs casual usage
+- **Confidence scoring** - Probability-based risk levels
+- **Keyword extraction** - Identifies specific harmful terms
+- **Emoji processing** - Handles modern communication
 
-### 📊 Detailed Reporting
-- **Risk Level Assessment**: Clear HIGH/MEDIUM/LOW classification
-- **Keyword Breakdown**: Specific harmful and safe keywords identified
-- **Actionable Recommendations**: Guidance for content moderation decisions
-- **Visual Indicators**: Color-coded results for quick scanning
-
-### 🔐 Authentication & Rate Limiting
-- **OAuth Integration**: Sign in with Google or GitHub
-- **Usage Tracking**: Monitor API calls per day
-- **Rate Limits**: Fair usage policies for all users
-
----
-
-## 🎯 Use Cases
-
-- **Social Media Platforms**: Automated content moderation at scale
-- **Online Communities**: Protect members from harassment and hate speech
-- **Educational Platforms**: Maintain safe learning environments
-- **Gaming Communities**: Detect and prevent toxic behavior
-- **Customer Support**: Flag harmful messages for review
+### 📊 Reporting
+- Clear risk level classification (HIGH/MEDIUM/LOW)
+- Specific keyword breakdowns
+- Actionable recommendations
+- Visual indicators for quick scanning
 
 ---
 
-## 📖 How It Works
+## 💡 Use Cases
 
-1. **Submit Content**: Provide text via web interface or API
-2. **AI Analysis**: Our ML model processes language patterns, context, and keywords
-3. **Risk Assessment**: Content is classified as SAFE or MALICIOUS with confidence score
-4. **Detailed Report**: Receive breakdown of findings with specific keywords and recommendations
-5. **Take Action**: Use insights to moderate, flag, or approve content
+**Social Media Platforms**
+Automatically moderate user posts and comments at scale
 
----
+**Online Communities**
+Protect members from harassment before it spreads
 
-## 🛠️ API Reference
+**Educational Platforms**
+Maintain safe learning environments for students
 
-### Authentication
-Sign in via OAuth (Google/GitHub) to access API features and track usage.
+**Gaming Communities**
+Detect toxic behavior in chat and forums
 
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/analyze` | Analyze text content |
-| `GET` | `/auth/user` | Get current user info |
-| `GET` | `/health` | Service health check |
-
-### Rate Limits
-- **Free Tier**: 100 requests/day
-- **Authenticated Users**: Higher limits based on account type
+**Customer Support**
+Flag harmful messages for human review
 
 ---
 
-## 🐛 Report Issues
+## ❓ FAQ
 
-Found a bug or have a feature request? Visit our [Bug Report Page](/bug-report) or [open an issue](https://github.com/Ayingxizhao/GENZ-ContentGuard-AI/issues).
+**Q: How accurate is the detection?**
+A: Our model provides confidence scores with each analysis. Typical confidence ranges from 85-95% for clear cases.
+
+**Q: Does it support languages other than English?**
+A: Currently optimized for English and internet slang. Multi-language support coming soon.
+
+**Q: Can I customize the detection categories?**
+A: The current version uses pre-trained categories. Custom models available for enterprise users.
+
+**Q: Is my data stored or logged?**
+A: We do not store analyzed content. Only usage metrics are tracked for registered users.
+
+**Q: What happens if content is flagged?**
+A: The API returns risk assessment data. Your application decides what action to take (flag, review, remove, etc.).
+
+**Q: Can I test it without signing up?**
+A: Yes! Use the web interface or API with limited rate limits as an anonymous user.
+
+---
+
+## 🛠️ Support
+
+**Report Bugs**
+Visit our [Bug Report Page](https://plankton-app-xj6ib.ondigitalocean.app/bug-report)
+
+**Feature Requests**
+[Open an issue](https://github.com/Ayingxizhao/GENZ-ContentGuard-AI/issues)
+
+**Questions**
+Check the FAQ above or create an issue on GitHub
 
 ---
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details
 
 ---
+
+<p align="center">Built with ❤️ for safer online communities</p>
