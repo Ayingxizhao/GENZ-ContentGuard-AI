@@ -1,6 +1,35 @@
 /* Modern Neumorphic Design System - 2025 */
 /* Color palette optimized for Gen Z with vibrant gradients */
 
+/* ==================== ZOOM & ACCESSIBILITY SUPPORT ==================== */
+
+/* Enable proper browser zoom and text scaling */
+html {
+  font-size: 100%; /* Base font size - enables proper rem scaling */
+  -webkit-text-size-adjust: 100%; /* Prevent iOS Safari auto text size adjustment */
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Enable smooth zoom transitions */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure body respects user zoom settings */
+body {
+  /* Don't set fixed font-size, let it inherit from html */
+  /* This allows browser zoom to work properly */
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Ensure all containers respect zoom */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ==================== END ZOOM SUPPORT ==================== */
+
 :root {
   /* shadcn/ui + Modern Design System Color Palette */
   /* Exact colors from shadcn/ui, Tailwind, Linear, Vercel */
@@ -130,7 +159,7 @@ body {
 
 .hero {
   position: relative;
-  padding: 6rem 2rem;
+  padding: 6rem 0.5rem;
   overflow: hidden;
   background: var(--background);
 }
@@ -311,7 +340,7 @@ html.dark .stat-label {
 
 .examples-section {
   background: var(--muted);
-  padding: 5rem 2rem;
+  padding: 5rem 0.5rem;
   margin-bottom: 3rem;
 }
 
@@ -320,8 +349,9 @@ html.dark .examples-section {
 }
 
 .examples-section .container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0;
 }
 
 .examples-content {
@@ -793,13 +823,13 @@ html.dark .skeleton {
   .input-section,
   .results-section,
   .url-results-section {
-    padding: 2rem 1.5rem;
+    padding: 2rem 0.5rem;
     border-radius: 1.5rem;
   }
 
   .result-card,
   .url-result-card {
-    padding: 1.5rem;
+    padding: 1.5rem 1rem;
   }
 
   .hero-title {
@@ -813,7 +843,15 @@ html.dark .skeleton {
   }
 
   .progress-container {
-    padding: 2rem 1.5rem;
+    padding: 2rem 0.5rem;
+  }
+
+  .hero {
+    padding: 4rem 0.25rem;
+  }
+
+  .examples-section {
+    padding: 3rem 0.25rem;
   }
 }
 
