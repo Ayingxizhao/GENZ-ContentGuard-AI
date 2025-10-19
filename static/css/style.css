@@ -329,25 +329,47 @@ html.dark .drawer-section-label { color: rgba(255, 255, 255, 0.6); }
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-lg);
   border: 1px solid var(--gray-200);
-  background: transparent;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.95));
   color: var(--gray-800);
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
 }
 
 .drawer-util-btn:hover,
 .drawer-auth-btn:hover,
-.drawer-logout-btn:hover { background: var(--gray-100); }
+.drawer-logout-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(243, 244, 246, 1));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--gray-300);
+}
+
+.drawer-util-btn:active,
+.drawer-auth-btn:active,
+.drawer-logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
 
 html.dark .drawer-util-btn,
 html.dark .drawer-auth-btn,
 html.dark .drawer-logout-btn {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
   color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 html.dark .drawer-util-btn:hover,
 html.dark .drawer-auth-btn:hover,
-html.dark .drawer-logout-btn:hover { background: rgba(255, 255, 255, 0.08); }
+html.dark .drawer-logout-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.08));
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
 
 /* Strong visual for Sign In button inside drawer */
 #mobileNav .drawer-auth-btn {
@@ -380,32 +402,134 @@ html.dark .drawer-usage { color: rgba(255,255,255,0.7); }
    Ensures drawer links are readable in light mode despite global .nav-link
    ============================= */
 .drawer-links .nav-link,
-.drawer-links .nav-link:visited,
-.drawer-util-link,
-.drawer-util-link:visited,
-.drawer-meta-link,
-.drawer-meta-link:visited {
+.drawer-links .nav-link:visited {
   color: #111827 !important; /* solid gray-900 for maximum readability */
 }
 
-html.dark .drawer-links .nav-link,
-html.dark .drawer-util-link,
-html.dark .drawer-meta-link {
+html.dark .drawer-links .nav-link {
   color: rgba(255, 255, 255, 0.92) !important;
 }
 
-/* Also ensure icons inherit proper contrast */
-.drawer-links .nav-link i,
-.drawer-util-link i,
-.drawer-meta-link i { color: var(--gray-600) !important; }
-html.dark .drawer-links .nav-link i,
-html.dark .drawer-util-link i,
-html.dark .drawer-meta-link i { color: rgba(255,255,255,0.7) !important; }
+/* Drawer link icons */
+.drawer-links .nav-link i { color: var(--gray-600) !important; }
+html.dark .drawer-links .nav-link i { color: rgba(255,255,255,0.7) !important; }
 
-/* Light-mode hover background stronger for clarity */
-.drawer-links .nav-link:hover,
-.drawer-util-link:hover,
-.drawer-meta-link:hover { background: #f3f4f6; } /* gray-100 */
+/* Modern Utility Links (API Examples, Send Feedback) */
+.drawer-util-link,
+.drawer-util-link:visited {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  color: #111827 !important;
+  font-weight: 500;
+  text-decoration: none;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.06));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.drawer-util-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.drawer-util-link:hover::before {
+  left: 100%;
+}
+
+.drawer-util-link:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.1));
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.drawer-util-link i {
+  color: #6366f1 !important;
+  font-size: 1.1rem;
+  transition: transform 0.3s ease;
+}
+
+.drawer-util-link:hover i {
+  transform: scale(1.1);
+}
+
+html.dark .drawer-util-link,
+html.dark .drawer-util-link:visited {
+  color: rgba(255, 255, 255, 0.92) !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.12));
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+html.dark .drawer-util-link:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.18));
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+html.dark .drawer-util-link i {
+  color: #818cf8 !important;
+}
+
+/* Minimal Legal Links (Privacy, Terms) */
+.drawer-meta-link,
+.drawer-meta-link:visited {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--gray-600) !important;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.drawer-meta-link:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: #111827 !important;
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+.drawer-meta-link i {
+  color: var(--gray-500) !important;
+  font-size: 0.9rem;
+}
+
+.drawer-meta-link:hover i {
+  color: var(--gray-700) !important;
+}
+
+html.dark .drawer-meta-link,
+html.dark .drawer-meta-link:visited {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+html.dark .drawer-meta-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.dark .drawer-meta-link i {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+html.dark .drawer-meta-link:hover i {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
 
 /* Drawer dividers visible in both themes */
 #mobileNav::part(body) sl-divider::part(base) { border-color: var(--gray-200); }
