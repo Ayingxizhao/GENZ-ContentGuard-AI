@@ -30,6 +30,12 @@ class User(UserMixin, db.Model):
     api_calls_today = db.Column(db.Integer, default=0, nullable=False)
     last_api_call = db.Column(db.DateTime, nullable=True)
     daily_limit = db.Column(db.Integer, default=200, nullable=False)  # 200 calls/day for authenticated users
+    
+    # Gemini-specific usage tracking
+    gemini_calls_count = db.Column(db.Integer, default=0, nullable=False)
+    gemini_calls_today = db.Column(db.Integer, default=0, nullable=False)
+    last_gemini_call = db.Column(db.DateTime, nullable=True)
+    gemini_daily_limit = db.Column(db.Integer, default=10, nullable=False)  # 10 Gemini calls/day
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -93,6 +99,14 @@ class User(UserMixin, db.Model):
         """Get remaining API calls for today"""
         return max(0, self.daily_limit - self.api_calls_today)
     
+    def get_remaining_gemini_calls(self):
+        """Get remaining Gemini API calls for today"""
+        return max(0, self.gemini_daily_limit - self.gemini_calls_today)
+    
+    def has_exceeded_gemini_limit(self):
+        """Check if user has exceeded their daily Gemini limit"""
+        return self.gemini_calls_today >= self.gemini_daily_limit
+    
     def to_dict(self):
         """Convert user to dictionary for API responses"""
         return {
@@ -105,6 +119,10 @@ class User(UserMixin, db.Model):
             'api_calls_today': self.api_calls_today,
             'daily_limit': self.daily_limit,
             'remaining_calls': self.get_remaining_calls(),
+            'gemini_calls_count': self.gemini_calls_count,
+            'gemini_calls_today': self.gemini_calls_today,
+            'gemini_daily_limit': self.gemini_daily_limit,
+            'remaining_gemini_calls': self.get_remaining_gemini_calls(),
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None
         }

@@ -373,6 +373,29 @@ puts result</code></pre>
                             </div>
                         </div>
 
+                        <div class="form-group">
+                            <label for="urlModelSelect">AI Model <span aria-label="required">*</span></label>
+                            <sl-select
+                                id="urlModelSelect"
+                                name="model"
+                                value="gemini"
+                                aria-describedby="url-model-help"
+                            >
+                                <sl-option value="gemini">
+                                    <sl-icon slot="prefix" name="stars"></sl-icon>
+                                    Gemini 2.5 Flash (Finetuned) - 10 calls/day
+                                </sl-option>
+                                <sl-option value="huggingface">
+                                    <sl-icon slot="prefix" name="cpu"></sl-icon>
+                                    ContentGuard Model (Free) - 200 calls/day
+                                </sl-option>
+                            </sl-select>
+                            <div id="url-model-help" class="input-help">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Choose the AI model for content analysis. Gemini offers enhanced accuracy with limited daily usage.</span>
+                            </div>
+                        </div>
+
                         <div class="form-actions">
                             <sl-button type="submit" class="analyze-btn" variant="primary" size="large">
                                 <i class="fas fa-search" aria-hidden="true"></i>
@@ -422,6 +445,29 @@ puts result</code></pre>
                                     <div class="progress-bar" style="width: 0%"></div>
                                 </div>
                                 <span class="char-limit">/ 5000</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="modelSelect">AI Model <span aria-label="required">*</span></label>
+                            <sl-select
+                                id="modelSelect"
+                                name="model"
+                                value="gemini"
+                                aria-describedby="model-help"
+                            >
+                                <sl-option value="gemini">
+                                    <sl-icon slot="prefix" name="stars"></sl-icon>
+                                    Gemini 2.5 Flash (Finetuned) - 10 calls/day
+                                </sl-option>
+                                <sl-option value="huggingface">
+                                    <sl-icon slot="prefix" name="cpu"></sl-icon>
+                                    ContentGuard Model (Free) - 200 calls/day
+                                </sl-option>
+                            </sl-select>
+                            <div id="model-help" class="input-help">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Choose the AI model for content analysis. Gemini offers enhanced accuracy with limited daily usage.</span>
                             </div>
                         </div>
 

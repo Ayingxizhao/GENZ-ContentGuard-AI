@@ -356,6 +356,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const title = titleInput.value.trim();
         const content = contentTextarea.value.trim();
         
+        // Get selected model
+        const modelSelect = document.getElementById('modelSelect');
+        const selectedModel = modelSelect ? modelSelect.value : 'gemini';
+        
         if (!content) {
             showError('Please enter some content to analyze.');
             return;
@@ -375,7 +379,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ title, content })
+                body: JSON.stringify({ 
+                    title, 
+                    content,
+                    model: selectedModel
+                })
             });
             
             const data = await response.json();

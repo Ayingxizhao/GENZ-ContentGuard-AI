@@ -297,38 +297,72 @@ def _normalize_result(space_result):
 @app.route('/analyze', methods=['POST'])
 def analyze():
     from middleware.rate_limit import anonymous_rate_limit, check_anonymous_rate_limit
+    from services import get_model_service, ModelType
 
     try:
-        # Check rate limits based on authentication status
-        if current_user.is_authenticated:
-            # Check daily limit for logged-in users (200/day)
-            if current_user.has_exceeded_daily_limit():
-                return jsonify({
-                    "error": "Daily API limit exceeded",
-                    "daily_limit": current_user.daily_limit,
-                    "api_calls_today": current_user.api_calls_today,
-                    "hint": "Please try again tomorrow or contact support for higher limits"
-                }), 429
-        else:
-            # Check anonymous rate limit (100/day per IP)
-            from middleware.rate_limit import increment_anonymous_usage
-            allowed, remaining, limit, reset_time = check_anonymous_rate_limit()
-            if not allowed:
-                return jsonify({
-                    'error': 'Daily API limit exceeded for anonymous users',
-                    'daily_limit': limit,
-                    'remaining': 0,
-                    'reset_time': reset_time.isoformat(),
-                    'hint': 'Sign in for 200 requests per day',
-                    'actions': {
-                        'login': '/auth/login',
-                        'signup': '/auth/signup'
-                    }
-                }), 429
-            # Increment anonymous usage
-            increment_anonymous_usage()
-        
         data = request.get_json() or {}
+        
+        # Get model selection (default to Gemini)
+        model_param = (data.get('model') or 'gemini').lower()
+        
+        # Map model parameter to ModelType
+        if model_param in ['gemini', 'gemini-2.5-flash']:
+            model_type = ModelType.GEMINI
+        elif model_param in ['huggingface', 'hf', 'contentguard']:
+            model_type = ModelType.HUGGINGFACE
+        else:
+            return jsonify({
+                "error": f"Unknown model: {model_param}",
+                "hint": "Valid models: 'gemini', 'huggingface'"
+            }), 400
+        
+        # Check rate limits based on model and authentication
+        if model_type == ModelType.GEMINI:
+            # Gemini-specific rate limiting
+            from middleware.gemini_rate_limit import (
+                check_gemini_rate_limits,
+                increment_gemini_global_usage,
+                increment_user_gemini_usage
+            )
+            
+            # Check both global and user limits
+            allowed, error_response = check_gemini_rate_limits(
+                current_user if current_user.is_authenticated else None
+            )
+            
+            if not allowed:
+                return jsonify(error_response), 429
+        else:
+            # HuggingFace model - use existing rate limits
+            if current_user.is_authenticated:
+                # Check daily limit for logged-in users (200/day)
+                if current_user.has_exceeded_daily_limit():
+                    return jsonify({
+                        "error": "Daily API limit exceeded",
+                        "daily_limit": current_user.daily_limit,
+                        "api_calls_today": current_user.api_calls_today,
+                        "hint": "Please try again tomorrow or contact support for higher limits"
+                    }), 429
+            else:
+                # Check anonymous rate limit (100/day per IP)
+                from middleware.rate_limit import increment_anonymous_usage
+                allowed, remaining, limit, reset_time = check_anonymous_rate_limit()
+                if not allowed:
+                    return jsonify({
+                        'error': 'Daily API limit exceeded for anonymous users',
+                        'daily_limit': limit,
+                        'remaining': 0,
+                        'reset_time': reset_time.isoformat(),
+                        'hint': 'Sign in for 200 requests per day',
+                        'actions': {
+                            'login': '/auth/login',
+                            'signup': '/auth/signup'
+                        }
+                    }), 429
+                # Increment anonymous usage
+                increment_anonymous_usage()
+        
+        # Get content
         text = (data.get('content') or '').strip()
         title = (data.get('title') or '').strip()
         combined = f"{title} {text}".strip() if title else text
@@ -336,31 +370,52 @@ def analyze():
         if not combined:
             return jsonify({"error": "No content provided"}), 400
         
-        # Use gradio_client with proper error handling
-        # The client handles all protocol versions automatically
+        # Get model service and predict
         try:
-            client = get_hf_client()
-            # Call with text parameter as shown in HF API docs
-            result = client.predict(combined, api_name="/predict")
-        except Exception as client_err:
-            # If client fails, log and raise with context
-            logging.error("gradio_client.predict failed: %s", str(client_err))
-            raise RuntimeError(f"Space call failed: {str(client_err)}")
-
-        normalized = _normalize_result(result)
+            model_service = get_model_service(model_type)
+            normalized = model_service.predict(combined)
+        except Exception as model_err:
+            logging.error(f"{model_type.value} model prediction failed: %s", str(model_err))
+            return jsonify({
+                "error": str(model_err),
+                "hint": f"Model service error. Please try again or use a different model."
+            }), 502
         
-        # Track usage for logged-in users
-        if current_user.is_authenticated:
-            try:
-                current_user.increment_api_usage()
-                # Add usage info to response
-                normalized['usage'] = {
-                    'api_calls_today': current_user.api_calls_today,
-                    'daily_limit': current_user.daily_limit,
-                    'remaining_calls': current_user.get_remaining_calls()
-                }
-            except Exception as usage_err:
-                logging.error("Failed to track usage: %s", str(usage_err))
+        # Track usage
+        if model_type == ModelType.GEMINI:
+            # Track Gemini usage
+            increment_gemini_global_usage()
+            if current_user.is_authenticated:
+                try:
+                    increment_user_gemini_usage(current_user)
+                    # Add usage info to response
+                    normalized['usage'] = {
+                        'gemini_calls_today': current_user.gemini_calls_today,
+                        'gemini_daily_limit': current_user.gemini_daily_limit,
+                        'remaining_gemini_calls': current_user.get_remaining_gemini_calls()
+                    }
+                except Exception as usage_err:
+                    logging.error("Failed to track Gemini usage: %s", str(usage_err))
+            else:
+                # Track anonymous user cooldown
+                from middleware.gemini_rate_limit import update_anonymous_gemini_cooldown
+                try:
+                    update_anonymous_gemini_cooldown()
+                except Exception as cooldown_err:
+                    logging.error("Failed to update anonymous cooldown: %s", str(cooldown_err))
+        else:
+            # Track HF usage
+            if current_user.is_authenticated:
+                try:
+                    current_user.increment_api_usage()
+                    # Add usage info to response
+                    normalized['usage'] = {
+                        'api_calls_today': current_user.api_calls_today,
+                        'daily_limit': current_user.daily_limit,
+                        'remaining_calls': current_user.get_remaining_calls()
+                    }
+                except Exception as usage_err:
+                    logging.error("Failed to track usage: %s", str(usage_err))
         
         return jsonify(normalized)
     
@@ -368,7 +423,7 @@ def analyze():
         logging.error("/analyze failed: %s\n%s", str(e), traceback.format_exc())
         return jsonify({
             "error": str(e),
-            "hint": "Ensure Space is running and gradio_client is up to date"
+            "hint": "An unexpected error occurred. Please try again."
         }), 502
 
 @app.route('/analyze-url', methods=['POST'])
@@ -378,42 +433,75 @@ def analyze_url():
     Scrapes content, caches it, and analyzes for malicious content
     """
     try:
-        # Import scraping dependencies
+        # Import dependencies
         from scrapers import get_scraper
         from cache_service import get_cache
         from scraper_config import ScraperConfig
         from middleware.rate_limit import check_anonymous_rate_limit, increment_anonymous_usage
+        from services import get_model_service, ModelType
 
-        # Check rate limits based on authentication status
-        if current_user.is_authenticated:
-            # Check daily limit for logged-in users (200/day)
-            if current_user.has_exceeded_daily_limit():
-                return jsonify({
-                    "error": "Daily API limit exceeded",
-                    "daily_limit": current_user.daily_limit,
-                    "api_calls_today": current_user.api_calls_today,
-                    "hint": "Please try again tomorrow or contact support for higher limits"
-                }), 429
+        data = request.get_json() or {}
+        
+        # Get model selection (default to Gemini)
+        model_param = (data.get('model') or 'gemini').lower()
+        
+        # Map model parameter to ModelType
+        if model_param in ['gemini', 'gemini-2.5-flash']:
+            model_type = ModelType.GEMINI
+        elif model_param in ['huggingface', 'hf', 'contentguard']:
+            model_type = ModelType.HUGGINGFACE
         else:
-            # Check anonymous rate limit (100/day per IP)
-            allowed, remaining, limit, reset_time = check_anonymous_rate_limit()
+            return jsonify({
+                "error": f"Unknown model: {model_param}",
+                "hint": "Valid models: 'gemini', 'huggingface'"
+            }), 400
+        
+        # Check rate limits based on model and authentication
+        if model_type == ModelType.GEMINI:
+            # Gemini-specific rate limiting
+            from middleware.gemini_rate_limit import (
+                check_gemini_rate_limits,
+                increment_gemini_global_usage,
+                increment_user_gemini_usage
+            )
+            
+            # Check both global and user limits
+            allowed, error_response = check_gemini_rate_limits(
+                current_user if current_user.is_authenticated else None
+            )
+            
             if not allowed:
-                return jsonify({
-                    'error': 'Daily API limit exceeded for anonymous users',
-                    'daily_limit': limit,
-                    'remaining': 0,
-                    'reset_time': reset_time.isoformat(),
-                    'hint': 'Sign in for 200 requests per day',
-                    'actions': {
-                        'login': '/auth/login',
-                        'signup': '/auth/signup'
-                    }
-                }), 429
-            # Increment anonymous usage
-            increment_anonymous_usage()
+                return jsonify(error_response), 429
+        else:
+            # HuggingFace model - use existing rate limits
+            if current_user.is_authenticated:
+                # Check daily limit for logged-in users (200/day)
+                if current_user.has_exceeded_daily_limit():
+                    return jsonify({
+                        "error": "Daily API limit exceeded",
+                        "daily_limit": current_user.daily_limit,
+                        "api_calls_today": current_user.api_calls_today,
+                        "hint": "Please try again tomorrow or contact support for higher limits"
+                    }), 429
+            else:
+                # Check anonymous rate limit (100/day per IP)
+                allowed, remaining, limit, reset_time = check_anonymous_rate_limit()
+                if not allowed:
+                    return jsonify({
+                        'error': 'Daily API limit exceeded for anonymous users',
+                        'daily_limit': limit,
+                        'remaining': 0,
+                        'reset_time': reset_time.isoformat(),
+                        'hint': 'Sign in for 200 requests per day',
+                        'actions': {
+                            'login': '/auth/login',
+                            'signup': '/auth/signup'
+                        }
+                    }), 429
+                # Increment anonymous usage
+                increment_anonymous_usage()
 
         # Get URL from request
-        data = request.get_json() or {}
         url = (data.get('url') or '').strip()
 
         if not url:
@@ -466,31 +554,29 @@ def analyze_url():
             logging.error(f"Scraping failed: {str(scrape_err)}")
             return jsonify({"error": f"Failed to scrape content: {str(scrape_err)}"}), 502
 
-        # Get HF client once at the beginning
+        # Get model service
         try:
-            client = get_hf_client()
+            model_service = get_model_service(model_type)
         except Exception as e:
-            logging.error(f"Failed to initialize HF client: {str(e)}")
+            logging.error(f"Failed to initialize model service: {str(e)}")
             return jsonify({
                 "error": "Failed to initialize analysis service",
-                "hint": "Please check HF_TOKEN in .env file. Get your token from https://huggingface.co/settings/tokens"
+                "hint": f"Model service error: {str(e)}"
             }), 502
 
         # Analyze post
-        logging.info("Analyzing post content")
+        logging.info(f"Analyzing post content with {model_type.value} model")
         post_text = f"{scraped_content.post.title} {scraped_content.post.content}".strip()
         try:
-            post_result = client.predict(post_text, api_name="/predict")
-            logging.info(f"Raw post_result from HF: {post_result}")
-            logging.info(f"Post result type: {type(post_result)}")
-            post_analysis = _normalize_result(post_result)
-            logging.info(f"Normalized post_analysis: {post_analysis}")
+            post_analysis = model_service.predict(post_text)
+            logging.info(f"Post analysis completed: {post_analysis.get('is_malicious')}")
         except Exception as e:
             logging.error(f"Post analysis failed: {str(e)}")
             post_analysis = {
                 "error": "Analysis failed",
                 "is_malicious": False,
-                "confidence": "0%"
+                "confidence": "0%",
+                "model_type": model_service.get_model_name()
             }
 
         # Analyze comments
@@ -501,8 +587,7 @@ def analyze_url():
 
         for comment in scraped_content.comments:
             try:
-                comment_result = client.predict(comment.content, api_name="/predict")
-                analysis = _normalize_result(comment_result)
+                analysis = model_service.predict(comment.content)
 
                 comment_data = comment.to_dict()
                 comment_data['analysis'] = analysis
@@ -555,17 +640,39 @@ def analyze_url():
         cache.set(url, response)
         logging.info(f"Cached result for URL: {url[:50]}...")
 
-        # Track usage for logged-in users
-        if current_user.is_authenticated:
-            try:
-                current_user.increment_api_usage()
-                response['usage'] = {
-                    'api_calls_today': current_user.api_calls_today,
-                    'daily_limit': current_user.daily_limit,
-                    'remaining_calls': current_user.get_remaining_calls()
-                }
-            except Exception as usage_err:
-                logging.error("Failed to track usage: %s", str(usage_err))
+        # Track usage
+        if model_type == ModelType.GEMINI:
+            # Track Gemini usage
+            increment_gemini_global_usage()
+            if current_user.is_authenticated:
+                try:
+                    increment_user_gemini_usage(current_user)
+                    response['usage'] = {
+                        'gemini_calls_today': current_user.gemini_calls_today,
+                        'gemini_daily_limit': current_user.gemini_daily_limit,
+                        'remaining_gemini_calls': current_user.get_remaining_gemini_calls()
+                    }
+                except Exception as usage_err:
+                    logging.error("Failed to track Gemini usage: %s", str(usage_err))
+            else:
+                # Track anonymous user cooldown
+                from middleware.gemini_rate_limit import update_anonymous_gemini_cooldown
+                try:
+                    update_anonymous_gemini_cooldown()
+                except Exception as cooldown_err:
+                    logging.error("Failed to update anonymous cooldown: %s", str(cooldown_err))
+        else:
+            # Track HF usage
+            if current_user.is_authenticated:
+                try:
+                    current_user.increment_api_usage()
+                    response['usage'] = {
+                        'api_calls_today': current_user.api_calls_today,
+                        'daily_limit': current_user.daily_limit,
+                        'remaining_calls': current_user.get_remaining_calls()
+                    }
+                except Exception as usage_err:
+                    logging.error("Failed to track usage: %s", str(usage_err))
 
         return jsonify(response)
 

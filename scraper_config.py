@@ -8,7 +8,7 @@ class ScraperConfig:
     """Extensible configuration for content scraping"""
 
     # Comment extraction limits (extensible)
-    MAX_COMMENTS = 20  # Maximum number of comments to extract per URL
+    MAX_COMMENTS = 5  # Maximum number of comments to extract per URL
     MAX_COMMENT_DEPTH = 3  # Maximum depth of nested comments to traverse
 
     # Caching configuration (extensible)

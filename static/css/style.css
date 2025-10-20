@@ -3787,3 +3787,91 @@ sl-progress-bar::part(indicator) {
 :root.dark .progress-animation-wrapper lottie-player {
   filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.1));
 }
+
+/* =============================
+   Shoelace Component Dark Mode Fixes
+   ============================= */
+
+/* Fix sl-select dropdown contrast in dark mode */
+html.dark sl-select::part(combobox) {
+  background: var(--gray-200);
+  border-color: var(--gray-300);
+  color: var(--gray-900);
+}
+
+html.dark sl-select::part(display-input) {
+  color: var(--gray-900);
+}
+
+html.dark sl-select::part(listbox) {
+  background: var(--gray-100);
+  border-color: var(--gray-300);
+}
+
+html.dark sl-option::part(base) {
+  color: var(--gray-900);
+}
+
+html.dark sl-option::part(base):hover {
+  background: var(--gray-200);
+  color: var(--gray-900);
+}
+
+html.dark sl-option[aria-selected="true"]::part(base) {
+  background: var(--primary-600);
+  color: white;
+}
+
+/* Fix sl-input contrast in dark mode */
+html.dark sl-input::part(base) {
+  background: var(--gray-200);
+  border-color: var(--gray-300);
+  color: var(--gray-900);
+}
+
+html.dark sl-input::part(input) {
+  color: var(--gray-900);
+}
+
+html.dark sl-input::part(input)::placeholder {
+  color: var(--gray-500);
+}
+
+/* Fix sl-textarea contrast in dark mode */
+html.dark sl-textarea::part(base) {
+  background: var(--gray-200);
+  border-color: var(--gray-300);
+}
+
+html.dark sl-textarea::part(textarea) {
+  color: var(--gray-900);
+}
+
+html.dark sl-textarea::part(textarea)::placeholder {
+  color: var(--gray-500);
+}
+
+/* Fix sl-button in dark mode */
+html.dark sl-button::part(base) {
+  background: var(--primary-600);
+  border-color: var(--primary-600);
+  color: white;
+}
+
+html.dark sl-button::part(base):hover {
+  background: var(--primary-700);
+  border-color: var(--primary-700);
+}
+
+/* Fix sl-icon color in dark mode */
+html.dark sl-icon {
+  color: var(--gray-700);
+}
+
+html.dark sl-option sl-icon {
+  color: var(--gray-600);
+}
+
+html.dark sl-option[aria-selected="true"] sl-icon {
+  color: white;
+}

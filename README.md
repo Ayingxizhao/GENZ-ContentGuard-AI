@@ -38,12 +38,14 @@ response = requests.post(
     "https://plankton-app-xj6ib.ondigitalocean.app/analyze",
     json={
         "title": "Post Title",
-        "content": "Text to analyze"
+        "content": "Text to analyze",
+        "model": "gemini"  # or "huggingface"
     }
 )
 
 result = response.json()
-print(f"Risk Level: {result['risk_level']}")
+print(f"Model: {result['model_type']}")
+print(f"Is Malicious: {result['is_malicious']}")
 print(f"Confidence: {result['confidence']}")
 ```
 
@@ -54,12 +56,14 @@ const response = await fetch('https://plankton-app-xj6ib.ondigitalocean.app/anal
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     title: 'Post Title',
-    content: 'Text to analyze'
+    content: 'Text to analyze',
+    model: 'gemini'  // or 'huggingface'
   })
 });
 
 const result = await response.json();
-console.log(`Risk Level: ${result.risk_level}`);
+console.log(`Model: ${result.model_type}`);
+console.log(`Is Malicious: ${result.is_malicious}`);
 ```
 
 #### cURL
@@ -68,7 +72,8 @@ curl -X POST https://plankton-app-xj6ib.ondigitalocean.app/analyze \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Post Title",
-    "content": "Text to analyze"
+    "content": "Text to analyze",
+    "model": "gemini"
   }'
 ```
 
@@ -96,6 +101,38 @@ ContentGuard supports OAuth login via **Google** and **GitHub**:
 
 ---
 
+## 🤖 AI Model Selection
+
+ContentGuard now supports **two AI models** for content analysis:
+
+### 1. Gemini 2.5 Flash (Finetuned) - **Default**
+- **Enhanced accuracy** with Google's latest AI
+- **Specialized for Gen Z language** through custom finetuning
+- **Rate Limit**: 10 requests/day per user, 40 total/day globally
+- **Best for**: Critical content moderation requiring highest accuracy
+
+### 2. ContentGuard Model (Free)
+- **Unlimited usage** for registered users (200/day)
+- **Fast processing** with consistent results
+- **Rate Limit**: 100/day anonymous, 200/day registered
+- **Best for**: High-volume content screening
+
+### How to Choose
+
+Specify the model in your API request:
+
+```json
+{
+  "title": "Post Title",
+  "content": "Text to analyze",
+  "model": "gemini"  // or "huggingface"
+}
+```
+
+**Web Interface**: Select your preferred model from the dropdown before analyzing.
+
+---
+
 ## 📡 API Reference
 
 ### Endpoint
@@ -108,8 +145,9 @@ POST https://plankton-app-xj6ib.ondigitalocean.app/analyze
 
 ```json
 {
-  "title": "string (required)",
-  "content": "string (required)"
+  "title": "string (optional)",
+  "content": "string (required)",
+  "model": "gemini | huggingface (optional, default: gemini)"
 }
 ```
 
@@ -163,8 +201,15 @@ POST https://plankton-app-xj6ib.ondigitalocean.app/analyze
 
 ### Rate Limits
 
-- **Anonymous Users**: Limited requests per day
-- **Registered Users**: Higher limits with usage tracking
+#### Gemini 2.5 Flash Model
+- **Per User**: 10 requests/day (authenticated users only)
+- **Global**: 40 requests/day across all users
+- **Reset**: Daily at midnight UTC
+
+#### ContentGuard Model (Free)
+- **Anonymous Users**: 100 requests/day per IP
+- **Registered Users**: 200 requests/day
+- **Reset**: Daily at midnight UTC
 
 ---
 

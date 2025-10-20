@@ -165,3 +165,4 @@ create_extension_icon.py
 final_model/
 *.safetensors
 CLAUDE.md
+debug.md
