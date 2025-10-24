@@ -317,6 +317,7 @@ def analyze():
             }), 400
         
         # Check rate limits based on model and authentication
+        rate_limit_info = {}
         if model_type == ModelType.GEMINI:
             # Gemini-specific rate limiting
             from middleware.gemini_rate_limit import (
@@ -326,12 +327,15 @@ def analyze():
             )
             
             # Check both global and user limits
-            allowed, error_response = check_gemini_rate_limits(
+            allowed, response_data = check_gemini_rate_limits(
                 current_user if current_user.is_authenticated else None
             )
             
             if not allowed:
-                return jsonify(error_response), 429
+                return jsonify(response_data), 429
+            
+            # Store rate limit info for response
+            rate_limit_info = response_data
         else:
             # HuggingFace model - use existing rate limits
             if current_user.is_authenticated:
@@ -394,6 +398,9 @@ def analyze():
                         'gemini_daily_limit': current_user.gemini_daily_limit,
                         'remaining_gemini_calls': current_user.get_remaining_gemini_calls()
                     }
+                    # Add rate limit info
+                    if 'rate_limit_info' in locals():
+                        normalized['rate_limit'] = rate_limit_info
                 except Exception as usage_err:
                     logging.error("Failed to track Gemini usage: %s", str(usage_err))
             else:
@@ -401,6 +408,8 @@ def analyze():
                 from middleware.gemini_rate_limit import update_anonymous_gemini_cooldown
                 try:
                     update_anonymous_gemini_cooldown()
+                    # Add rate limit info for anonymous users
+                    normalized['rate_limit'] = rate_limit_info
                 except Exception as cooldown_err:
                     logging.error("Failed to update anonymous cooldown: %s", str(cooldown_err))
         else:
@@ -457,6 +466,7 @@ def analyze_url():
             }), 400
         
         # Check rate limits based on model and authentication
+        rate_limit_info = {}
         if model_type == ModelType.GEMINI:
             # Gemini-specific rate limiting
             from middleware.gemini_rate_limit import (
@@ -466,12 +476,15 @@ def analyze_url():
             )
             
             # Check both global and user limits
-            allowed, error_response = check_gemini_rate_limits(
+            allowed, response_data = check_gemini_rate_limits(
                 current_user if current_user.is_authenticated else None
             )
             
             if not allowed:
-                return jsonify(error_response), 429
+                return jsonify(response_data), 429
+            
+            # Store rate limit info for response
+            rate_limit_info = response_data
         else:
             # HuggingFace model - use existing rate limits
             if current_user.is_authenticated:
@@ -564,50 +577,162 @@ def analyze_url():
                 "hint": f"Model service error: {str(e)}"
             }), 502
 
-        # Analyze post
+        # Analyze post and comments
         logging.info(f"Analyzing post content with {model_type.value} model")
         post_text = f"{scraped_content.post.title} {scraped_content.post.content}".strip()
-        try:
-            post_analysis = model_service.predict(post_text)
-            logging.info(f"Post analysis completed: {post_analysis.get('is_malicious')}")
-        except Exception as e:
-            logging.error(f"Post analysis failed: {str(e)}")
-            post_analysis = {
-                "error": "Analysis failed",
-                "is_malicious": False,
-                "confidence": "0%",
-                "model_type": model_service.get_model_name()
-            }
-
-        # Analyze comments
-        logging.info(f"Analyzing {len(scraped_content.comments)} comments")
         comments_analysis = []
         malicious_count = 0
         safe_count = 0
+        
+        # Track analysis status for transparency
+        analysis_method = 'batch'
+        rate_limit_hit = False
+        total_items = len(scraped_content.comments) + 1  # +1 for post
+        items_analyzed = 0
 
-        for comment in scraped_content.comments:
+        # Use batch analysis for Gemini (1 API call for post + all comments)
+        if model_type == ModelType.GEMINI:
             try:
-                analysis = model_service.predict(comment.content)
-
-                comment_data = comment.to_dict()
-                comment_data['analysis'] = analysis
-                comments_analysis.append(comment_data)
-
-                if analysis.get('is_malicious', False):
-                    malicious_count += 1
-                else:
-                    safe_count += 1
-
+                # Extract comment texts
+                comment_texts = [c.content for c in scraped_content.comments]
+                
+                # Single batch API call
+                batch_result = model_service.predict_batch(post_text, comment_texts)
+                
+                post_analysis = batch_result['post_analysis']
+                logging.info(f"Batch analysis completed: post is_malicious={post_analysis.get('is_malicious')}")
+                
+                # Map comment analyses back to comment objects
+                for idx, comment in enumerate(scraped_content.comments):
+                    comment_data = comment.to_dict()
+                    comment_data['analysis'] = batch_result['comments_analysis'][idx]
+                    comments_analysis.append(comment_data)
+                    
+                    if comment_data['analysis'].get('is_malicious', False):
+                        malicious_count += 1
+                    else:
+                        safe_count += 1
+                
+                # Update status tracking
+                items_analyzed = total_items  # All items analyzed successfully
+                analysis_method = 'batch'
+                
             except Exception as e:
-                logging.error(f"Comment analysis failed: {str(e)}")
-                comment_data = comment.to_dict()
-                comment_data['analysis'] = {
+                error_str = str(e)
+                logging.error(f"Gemini batch analysis failed: {error_str}")
+                
+                # Check if it's a safety filter block
+                if "safety filter" in error_str.lower() or "blocked" in error_str.lower():
+                    return jsonify({
+                        "error": "Content Blocked by Safety Filters",
+                        "hint": "The content was flagged by Gemini's safety filters and cannot be analyzed.",
+                        "suggestion": "This content may contain extremely toxic or harmful material. Try using the HuggingFace model for analysis, or review the content manually.",
+                        "details": error_str
+                    }), 400
+                
+                # Fallback: Try individual API calls if batch fails
+                logging.warning("Falling back to individual API calls...")
+                analysis_method = 'fallback'
+                
+                try:
+                    # Analyze post individually
+                    post_analysis = model_service.predict(post_text)
+                    logging.info(f"Post analysis completed (fallback): {post_analysis.get('is_malicious')}")
+                    items_analyzed = 1  # Post analyzed
+                    
+                    # Track this API call
+                    increment_gemini_global_usage()
+                    if current_user.is_authenticated:
+                        increment_user_gemini_usage(current_user)
+                    else:
+                        from middleware.gemini_rate_limit import update_anonymous_gemini_cooldown
+                        update_anonymous_gemini_cooldown()
+                    
+                    # Analyze each comment individually
+                    for idx, comment in enumerate(scraped_content.comments):
+                        # Check rate limits before each comment
+                        allowed, _ = check_gemini_rate_limits(
+                            current_user if current_user.is_authenticated else None
+                        )
+                        
+                        if not allowed:
+                            logging.warning(f"Rate limit hit at comment {idx}, stopping analysis")
+                            rate_limit_hit = True
+                            break
+                        
+                        try:
+                            comment_analysis = model_service.predict(comment.content)
+                            
+                            # Track this API call
+                            increment_gemini_global_usage()
+                            if current_user.is_authenticated:
+                                increment_user_gemini_usage(current_user)
+                            else:
+                                update_anonymous_gemini_cooldown()
+                            
+                            comment_data = comment.to_dict()
+                            comment_data['analysis'] = comment_analysis
+                            comments_analysis.append(comment_data)
+                            items_analyzed += 1  # Increment for each successful comment
+                            
+                            if comment_analysis.get('is_malicious', False):
+                                malicious_count += 1
+                            else:
+                                safe_count += 1
+                                
+                        except Exception as comment_error:
+                            logging.error(f"Comment {idx} analysis failed: {str(comment_error)}")
+                            # Continue with other comments
+                            
+                    logging.info(f"Fallback analysis completed: {len(comments_analysis)} comments analyzed")
+                    
+                except Exception as fallback_error:
+                    logging.error(f"Fallback analysis also failed: {str(fallback_error)}")
+                    return jsonify({
+                        "error": "Analysis failed",
+                        "hint": f"Both batch and individual analysis failed: {str(fallback_error)}",
+                        "suggestion": "Try using the HuggingFace model instead"
+                    }), 500
+        
+        else:
+            # HuggingFace model - analyze individually (separate calls)
+            try:
+                post_analysis = model_service.predict(post_text)
+                logging.info(f"Post analysis completed: {post_analysis.get('is_malicious')}")
+            except Exception as e:
+                logging.error(f"Post analysis failed: {str(e)}")
+                post_analysis = {
                     "error": "Analysis failed",
                     "is_malicious": False,
-                    "confidence": "0%"
+                    "confidence": "0%",
+                    "model_type": model_service.get_model_name()
                 }
-                comments_analysis.append(comment_data)
-                safe_count += 1
+
+            # Analyze comments individually
+            logging.info(f"Analyzing {len(scraped_content.comments)} comments")
+            for comment in scraped_content.comments:
+                try:
+                    analysis = model_service.predict(comment.content)
+
+                    comment_data = comment.to_dict()
+                    comment_data['analysis'] = analysis
+                    comments_analysis.append(comment_data)
+
+                    if analysis.get('is_malicious', False):
+                        malicious_count += 1
+                    else:
+                        safe_count += 1
+
+                except Exception as e:
+                    logging.error(f"Comment analysis failed: {str(e)}")
+                    comment_data = comment.to_dict()
+                    comment_data['analysis'] = {
+                        "error": "Analysis failed",
+                        "is_malicious": False,
+                        "confidence": "0%"
+                    }
+                    comments_analysis.append(comment_data)
+                    safe_count += 1
 
         # Track post analysis result
         if post_analysis.get('is_malicious', False):
@@ -615,6 +740,17 @@ def analyze_url():
         else:
             safe_count += 1
 
+        # Build status message
+        partial_results = items_analyzed < total_items
+        if analysis_method == 'batch':
+            status_message = f"Batch analysis completed successfully (1 API call)"
+        elif rate_limit_hit:
+            status_message = f"Rate limit reached. Analyzed {items_analyzed} of {total_items} items"
+        elif partial_results:
+            status_message = f"Partial analysis completed. Analyzed {items_analyzed} of {total_items} items"
+        else:
+            status_message = f"Analysis completed using individual API calls ({items_analyzed} calls)"
+        
         # Build response
         response = {
             "url": url,
@@ -633,7 +769,15 @@ def analyze_url():
                 "total_comments": scraped_content.metadata.get('total_comments', 0),
                 "extracted_comments": scraped_content.metadata.get('extracted_comments', 0)
             },
-            "metadata": scraped_content.metadata
+            "metadata": scraped_content.metadata,
+            "analysis_status": {
+                "method": analysis_method,
+                "items_analyzed": items_analyzed,
+                "items_total": total_items,
+                "rate_limit_hit": rate_limit_hit,
+                "partial_results": partial_results,
+                "message": status_message
+            }
         }
 
         # Cache the result
@@ -652,6 +796,8 @@ def analyze_url():
                         'gemini_daily_limit': current_user.gemini_daily_limit,
                         'remaining_gemini_calls': current_user.get_remaining_gemini_calls()
                     }
+                    # Add rate limit info
+                    response['rate_limit'] = rate_limit_info
                 except Exception as usage_err:
                     logging.error("Failed to track Gemini usage: %s", str(usage_err))
             else:
@@ -659,6 +805,8 @@ def analyze_url():
                 from middleware.gemini_rate_limit import update_anonymous_gemini_cooldown
                 try:
                     update_anonymous_gemini_cooldown()
+                    # Add rate limit info for anonymous users
+                    response['rate_limit'] = rate_limit_info
                 except Exception as cooldown_err:
                     logging.error("Failed to update anonymous cooldown: %s", str(cooldown_err))
         else:

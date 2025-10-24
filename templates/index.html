@@ -17,6 +17,243 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-neumorphic.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/explainability.css') }}">
+    
+    <!-- Rate Limit CSS - Inline -->
+    <style>
+    .rate-limit-display {
+        margin: 15px 0;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .cooldown-timer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: #f59e0b;
+        background-color: #fef3c7;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #fbbf24;
+    }
+
+    .cooldown-timer i {
+        font-size: 1.2rem;
+    }
+
+    .cooldown-timer span {
+        text-align: center;
+    }
+
+    .cooldown-timer strong {
+        font-weight: 600;
+        color: #d97706;
+    }
+
+    .cooldown-timer small {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 4px;
+    }
+
+    .rate-limit-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #3b82f6;
+        background-color: #dbeafe;
+        padding: 10px 14px;
+        border-radius: 6px;
+        border: 1px solid #93c5fd;
+    }
+
+    .rate-limit-info i {
+        font-size: 1rem;
+    }
+
+    .rate-limit-info span {
+        font-size: 0.85rem;
+    }
+
+    .dark .cooldown-timer {
+        background-color: rgba(245, 158, 11, 0.1);
+        border-color: rgba(251, 191, 36, 0.3);
+        color: #fbbf24;
+    }
+
+    .dark .cooldown-timer strong {
+        color: #fcd34d;
+    }
+
+    .dark .rate-limit-info {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-color: rgba(147, 197, 253, 0.3);
+        color: #93c5fd;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        justify-content: center;
+    }
+
+    .error-actions .btn {
+        padding: 8px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .error-actions .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .error-actions .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    .error-actions .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+
+    .error-actions .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+
+    @media (max-width: 768px) {
+        .rate-limit-display {
+            font-size: 0.85rem;
+        }
+        
+        .cooldown-timer {
+            padding: 10px;
+        }
+        
+        .error-actions {
+            flex-direction: column;
+        }
+        
+        .error-actions .btn {
+            width: 100%;
+        }
+    }
+    
+    /* Analysis Status Banner Styles */
+    .analysis-status-banner {
+        margin: 20px 0;
+        padding: 16px 20px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .analysis-status-banner.success {
+        background-color: #d1fae5;
+        border: 1px solid #6ee7b7;
+        color: #065f46;
+    }
+    
+    .analysis-status-banner.warning {
+        background-color: #fef3c7;
+        border: 1px solid #fbbf24;
+        color: #92400e;
+    }
+    
+    .analysis-status-banner.error {
+        background-color: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+    }
+    
+    .dark .analysis-status-banner.success {
+        background-color: rgba(16, 185, 129, 0.1);
+        border-color: rgba(16, 185, 129, 0.3);
+        color: #6ee7b7;
+    }
+    
+    .dark .analysis-status-banner.warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.3);
+        color: #fbbf24;
+    }
+    
+    .dark .analysis-status-banner.error {
+        background-color: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+    }
+    
+    .analysis-status-banner .icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .analysis-status-banner .content {
+        flex: 1;
+    }
+    
+    .analysis-status-banner .title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+    
+    .analysis-status-banner .message {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .analysis-status-banner .badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .analysis-status-banner .badge.batch {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .analysis-status-banner .badge.fallback {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .dark .analysis-status-banner .badge.batch {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+    }
+    
+    .dark .analysis-status-banner .badge.fallback {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+    }
+    </style>
+    
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <!-- Shoelace (Web Components) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/themes/light.css" />
@@ -561,6 +798,9 @@ puts result</code></pre>
                             <span class="prob-value" id="maliciousValue">0%</span>
                         </div>
                     </div>
+                    
+                    <!-- Explainability Section -->
+                    <div id="explainabilityContainer" class="explainability-container"></div>
                 </div>
 
                 <!-- Detailed Analysis Toggle & Section -->
@@ -598,6 +838,9 @@ puts result</code></pre>
             <!-- URL Analysis Results Section -->
             <section class="url-results-section" id="urlResultsSection" style="display: none;" aria-labelledby="url-results-heading" role="region" aria-live="polite" data-aos="fade-up">
                 <h2 id="url-results-heading">URL Analysis Results</h2>
+
+                <!-- Analysis Status Banner -->
+                <div id="analysisStatusBanner" style="display: none;"></div>
 
                 <!-- Modern Progress Animation with Motion.js -->
                 <div class="progress-container" id="progressContainer" style="display: none;">
@@ -850,6 +1093,213 @@ puts result</code></pre>
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <script src="{{ url_for('static', filename='js/explainability-ui.js') }}"></script>
+    
+    <!-- Rate Limit Handler - Inline to avoid caching issues -->
+    <script>
+    class RateLimitHandler {
+        constructor() {
+            this.cooldownEndTime = null;
+            this.timerInterval = null;
+            this.analyzeBtn = document.querySelector('.analyze-btn');
+            this.rateLimitDisplay = null;
+            this.createRateLimitDisplay();
+        }
+
+        createRateLimitDisplay() {
+            const form = document.getElementById('analysisForm');
+            if (!form) return;
+
+            this.rateLimitDisplay = document.createElement('div');
+            this.rateLimitDisplay.id = 'rateLimitDisplay';
+            this.rateLimitDisplay.className = 'rate-limit-display';
+            this.rateLimitDisplay.style.display = 'none';
+            
+            const buttonContainer = this.analyzeBtn?.parentElement;
+            if (buttonContainer && this.analyzeBtn) {
+                buttonContainer.insertBefore(this.rateLimitDisplay, this.analyzeBtn);
+            }
+        }
+
+        handleRateLimitError(errorData) {
+            if (errorData.seconds_remaining) {
+                this.startCooldown(errorData.seconds_remaining);
+                this.showError(errorData.hint || errorData.error, errorData);
+            }
+        }
+
+        startCooldown(seconds) {
+            this.cooldownEndTime = Date.now() + (seconds * 1000);
+            
+            if (this.analyzeBtn) {
+                this.analyzeBtn.disabled = true;
+            }
+            
+            this.updateTimer();
+            this.timerInterval = setInterval(() => this.updateTimer(), 1000);
+        }
+
+        updateTimer() {
+            if (!this.cooldownEndTime) return;
+
+            const now = Date.now();
+            const remaining = Math.max(0, Math.ceil((this.cooldownEndTime - now) / 1000));
+
+            if (remaining <= 0) {
+                this.endCooldown();
+                return;
+            }
+
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+
+            if (this.rateLimitDisplay) {
+                this.rateLimitDisplay.style.display = 'block';
+                this.rateLimitDisplay.innerHTML = `
+                    <div class="cooldown-timer">
+                        <i class="fas fa-clock"></i>
+                        <span>Gemini API cooldown: <strong>${timeStr}</strong> remaining</span>
+                        <small>Sign in to remove cooldowns</small>
+                    </div>
+                `;
+            }
+
+            if (this.analyzeBtn) {
+                this.analyzeBtn.innerHTML = `
+                    <i class="fas fa-clock"></i>
+                    <span>Cooldown: ${timeStr}</span>
+                `;
+            }
+        }
+
+        endCooldown() {
+            if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+            this.cooldownEndTime = null;
+
+            if (this.rateLimitDisplay) {
+                this.rateLimitDisplay.style.display = 'none';
+            }
+
+            if (this.analyzeBtn) {
+                this.analyzeBtn.disabled = false;
+                this.analyzeBtn.innerHTML = `
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Analyze Content</span>
+                `;
+            }
+        }
+
+        showError(message, errorData) {
+            const errorSection = document.getElementById('errorSection');
+            if (!errorSection) return;
+
+            errorSection.style.display = 'block';
+            errorSection.innerHTML = `
+                <div class="error-content">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Rate Limit Active</h3>
+                    <p>${message}</p>
+                    ${errorData.actions ? `
+                        <div class="error-actions">
+                            <a href="${errorData.actions.login}" class="btn btn-primary">Sign In</a>
+                            <a href="${errorData.actions.signup}" class="btn btn-secondary">Sign Up</a>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        displayRateLimitInfo(rateLimitData) {
+            if (!rateLimitData) return;
+
+            const info = [];
+            
+            if (rateLimitData.user_remaining !== undefined) {
+                info.push(`${rateLimitData.user_remaining}/${rateLimitData.user_limit} calls remaining today`);
+            }
+            
+            if (rateLimitData.global_remaining !== undefined) {
+                info.push(`${rateLimitData.global_remaining}/${rateLimitData.global_limit} global calls remaining`);
+            }
+
+            if (info.length > 0 && this.rateLimitDisplay) {
+                this.rateLimitDisplay.style.display = 'block';
+                this.rateLimitDisplay.innerHTML = `
+                    <div class="rate-limit-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>${info.join(' • ')}</span>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    window.RateLimitHandler = RateLimitHandler;
+    console.log('✅ RateLimitHandler loaded inline');
+    </script>
+    
+    <!-- Analysis Status Display -->
+    <script>
+    function displayAnalysisStatus(analysisStatus) {
+        if (!analysisStatus) return;
+        
+        const banner = document.getElementById('analysisStatusBanner');
+        if (!banner) return;
+        
+        // Determine banner type
+        let bannerType = 'success';
+        let icon = 'fa-check-circle';
+        let title = 'Analysis Complete';
+        
+        if (analysisStatus.rate_limit_hit) {
+            bannerType = 'error';
+            icon = 'fa-exclamation-triangle';
+            title = 'Rate Limit Reached';
+        } else if (analysisStatus.partial_results) {
+            bannerType = 'warning';
+            icon = 'fa-exclamation-circle';
+            title = 'Partial Analysis Complete';
+        } else if (analysisStatus.method === 'fallback') {
+            bannerType = 'warning';
+            icon = 'fa-info-circle';
+            title = 'Analysis Complete (Fallback Mode)';
+        }
+        
+        // Build banner HTML
+        banner.className = `analysis-status-banner ${bannerType}`;
+        banner.innerHTML = `
+            <div class="icon">
+                <i class="fas ${icon}"></i>
+            </div>
+            <div class="content">
+                <div class="title">${title}</div>
+                <div class="message">${analysisStatus.message}</div>
+            </div>
+            <div class="badge ${analysisStatus.method}">
+                ${analysisStatus.method === 'batch' ? 'Batch' : 'Individual'} Analysis
+            </div>
+        `;
+        
+        banner.style.display = 'flex';
+        
+        // Add additional info if rate limit hit
+        if (analysisStatus.rate_limit_hit) {
+            const handler = window.rateLimitHandler || getRateLimitHandler();
+            if (handler && handler.rateLimitDisplay) {
+                // Rate limit display will show cooldown timer
+                console.log('Rate limit hit - cooldown timer should be visible');
+            }
+        }
+    }
+    
+    window.displayAnalysisStatus = displayAnalysisStatus;
+    console.log('✅ Analysis status display loaded');
+    </script>
+    
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modern-animations.js') }}"></script>
 </body>

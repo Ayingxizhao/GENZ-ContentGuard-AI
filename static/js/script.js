@@ -1,6 +1,23 @@
     const skeletonCard = document.getElementById('skeletonCard');
     const resultCard = document.getElementById('resultCard');
+
+// Helper function to get or create rate limit handler
+function getRateLimitHandler() {
+    if (!window.rateLimitHandler && typeof RateLimitHandler !== 'undefined') {
+        console.log('Creating rateLimitHandler on-demand...');
+        window.rateLimitHandler = new RateLimitHandler();
+    }
+    return window.rateLimitHandler;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize rate limit handler globally
+    if (typeof RateLimitHandler !== 'undefined') {
+        window.rateLimitHandler = new RateLimitHandler();
+        console.log('✅ rateLimitHandler initialized:', window.rateLimitHandler);
+    } else {
+        console.error('❌ RateLimitHandler class not found!');
+    }
     // Sticky nav blur on scroll
     const navEl = document.querySelector('.nav');
     function updateNavOnScroll() {
@@ -389,7 +406,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (!response.ok) {
+                // Check if it's a rate limit error
+                if (response.status === 429 && data.seconds_remaining) {
+                    const handler = getRateLimitHandler();
+                    if (handler) {
+                        handler.handleRateLimitError(data);
+                    } else {
+                        console.error('rateLimitHandler not available!');
+                        showError(data.hint || data.error);
+                    }
+                    return;
+                }
                 throw new Error(data.error || 'Analysis failed');
+            }
+            
+            // Display rate limit info if available
+            if (data.rate_limit) {
+                const handler = getRateLimitHandler();
+                if (handler) {
+                    handler.displayRateLimitInfo(data.rate_limit);
+                }
             }
             
             // Show results
@@ -556,6 +592,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (isSl) riskBadge.variant = 'neutral';
                 }
             } catch (e) { /* noop */ }
+        }
+        
+        // Display explainability if available
+        if (data.explainability && typeof ExplainabilityUI !== 'undefined') {
+            const explainabilityContainer = document.getElementById('explainabilityContainer');
+            if (explainabilityContainer) {
+                const originalText = (titleInput.value + ' ' + contentTextarea.value).trim();
+                ExplainabilityUI.renderExplainabilityPanel(
+                    data.explainability,
+                    originalText,
+                    'explainabilityContainer'
+                );
+            }
         }
     }
 
@@ -1459,6 +1508,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showURLResults(data) {
         if (!urlResultsSection) return;
+
+        // Display analysis status if available
+        if (data.analysis_status && typeof displayAnalysisStatus === 'function') {
+            displayAnalysisStatus(data.analysis_status);
+        }
 
         // Complete progress to 100%
         const commentsStatus = document.getElementById('commentsStatus');

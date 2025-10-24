@@ -3,6 +3,17 @@
  * 2025 Gen Z UX Enhancements
  */
 
+// Safe Motion wrapper to handle errors
+window.safeMotionAnimate = function(element, keyframes, options) {
+    if (typeof Motion === 'undefined') return null;
+    try {
+        return Motion.animate(element, keyframes, options);
+    } catch (e) {
+        console.warn('Motion animation failed:', e);
+        return null;
+    }
+};
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initMotionAnimations();
@@ -220,10 +231,21 @@ function createEnhancedRipple(e, element) {
     element.appendChild(ripple);
 
     if (typeof Motion !== 'undefined') {
-        Motion.animate(ripple,
-            { scale: [0, 4], opacity: [0.6, 0] },
-            { duration: 0.6, easing: 'ease-out' }
-        ).finished.then(() => ripple.remove());
+        try {
+            const animation = Motion.animate(ripple,
+                { scale: [0, 4], opacity: [0.6, 0] },
+                { duration: 0.6, easing: 'ease-out' }
+            );
+            // Check if animation has finished property
+            if (animation && animation.finished) {
+                animation.finished.then(() => ripple.remove());
+            } else {
+                setTimeout(() => ripple.remove(), 600);
+            }
+        } catch (e) {
+            console.warn('Motion animation failed:', e);
+            setTimeout(() => ripple.remove(), 600);
+        }
     } else {
         setTimeout(() => ripple.remove(), 600);
     }

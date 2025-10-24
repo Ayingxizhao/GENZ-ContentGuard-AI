@@ -1,0 +1,21 @@
+Analyze for toxic content. Return ONLY JSON.
+
+Format:
+{{
+  "post_analysis": {{"is_malicious": true, "confidence": 85.5, "analysis": "Brief", "risk_level": "HIGH", "toxic_type": "harassment", "highlighted_phrases": [{{"text": "kys", "start_pos": 10, "end_pos": 13, "category": "suicide_self_harm", "severity": "HIGH"}}]}},
+  "comments_analysis": [{{"comment_index": 0, "is_malicious": false, "confidence": 92.0, "analysis": "Brief", "risk_level": "LOW", "toxic_type": null, "highlighted_phrases": []}}]
+}}
+
+- is_malicious: bool
+- confidence: 0-100
+- analysis: max 10 words
+- risk_level: LOW/MEDIUM/HIGH
+- toxic_type: suicide_self_harm, hate_speech, harassment, threats, body_shaming, sexual_content, general_toxicity, null
+- highlighted_phrases: max 2 per item
+- Phrase: text, start_pos, end_pos, category, severity
+
+POST:
+{post_text}
+
+COMMENTS:
+{comments_list}

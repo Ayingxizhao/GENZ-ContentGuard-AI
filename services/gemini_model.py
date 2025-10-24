@@ -7,7 +7,15 @@ import json
 import logging
 from typing import Dict, Any
 from dotenv import load_dotenv
+import google.generativeai as genai
 from .model_service import BaseModelService
+from utils.text_utils import (
+    estimate_tokens, 
+    smart_truncate, 
+    progressive_truncate,
+    adjust_phrase_positions,
+    get_truncation_summary
+)
 
 load_dotenv()
 
@@ -36,7 +44,7 @@ def get_gemini_model():
                 "temperature": 0.7,
                 "top_p": 0.95,
                 "top_k": 40,
-                "max_output_tokens": 2048,  # Increased for explainability data
+                "max_output_tokens": 8192,  # Increased for batch analysis with explainability
                 "response_mime_type": "application/json",
             }
             
@@ -67,11 +75,36 @@ def load_prompt_template() -> str:
 Text: {text}"""
 
 
+def load_batch_prompt_template() -> str:
+    """Load batch prompt template for analyzing post + comments"""
+    prompt_path = os.path.join(os.path.dirname(__file__), 'gemini_batch_prompt.txt')
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logging.error(f"Failed to load batch prompt template: {str(e)}")
+        # Fallback batch prompt
+        return """Analyze this post and its comments for malicious content.
+
+Return JSON with:
+{{
+  "post_analysis": {{"is_malicious": bool, "confidence": 0-100, "analysis": str, "risk_level": str, "toxic_type": str or null, "highlighted_phrases": []}},
+  "comments_analysis": [{{"comment_index": int, "is_malicious": bool, "confidence": 0-100, "analysis": str, "risk_level": str, "toxic_type": str or null, "highlighted_phrases": []}}]
+}}
+
+POST:
+{post_text}
+
+COMMENTS:
+{comments_list}"""
+
+
 class GeminiModelService(BaseModelService):
     """Google Gemini model service with explainability"""
     
     def __init__(self):
         self.prompt_template = load_prompt_template()
+        self.batch_prompt_template = load_batch_prompt_template()
     
     def predict(self, text: str, enable_explainability: bool = True) -> Dict[str, Any]:
         """
@@ -93,12 +126,25 @@ class GeminiModelService(BaseModelService):
             # Generate response
             response = model.generate_content(prompt)
             
-            # Check if response was blocked or had an error
+            # Check if response was blocked by safety filters
             if not response.text:
-                error_msg = "Gemini returned empty response"
+                error_msg = "Gemini response blocked"
+                
+                # Check finish reason
+                if hasattr(response, 'candidates') and response.candidates:
+                    finish_reason = response.candidates[0].finish_reason
+                    if finish_reason == 2:  # SAFETY
+                        error_msg = "Content blocked by Gemini safety filters. The text contains content that violates safety guidelines."
+                    elif finish_reason == 3:  # RECITATION
+                        error_msg = "Content blocked due to recitation concerns."
+                    elif finish_reason == 4:  # OTHER
+                        error_msg = "Content blocked for other reasons."
+                
+                # Add prompt feedback if available
                 if hasattr(response, 'prompt_feedback'):
-                    error_msg += f". Prompt feedback: {response.prompt_feedback}"
-                logging.error(error_msg)
+                    error_msg += f" Feedback: {response.prompt_feedback}"
+                
+                logging.warning(error_msg)
                 raise RuntimeError(error_msg)
             
             # Parse JSON response
@@ -236,3 +282,275 @@ class GeminiModelService(BaseModelService):
     def get_model_name(self) -> str:
         """Return model display name"""
         return "Gemini 2.5 Flash (Finetuned)"
+    
+    def _predict_batch_with_retry(self, post_text: str, comments: list, attempt: int = 0) -> Dict[str, Any]:
+        """
+        Internal method that tries batch prediction with progressive reduction on failure.
+        
+        Args:
+            post_text: Post content
+            comments: List of comments
+            attempt: Retry attempt number (0-3)
+            
+        Returns:
+            Batch analysis result
+            
+        Raises:
+            Exception if all attempts fail
+        """
+        try:
+            return self._predict_batch_internal(post_text, comments)
+        except Exception as e:
+            error_str = str(e).lower()
+            
+            # Check if it's a token/size related error
+            is_size_error = any(keyword in error_str for keyword in [
+                'token', 'length', 'too long', 'too large', 'context', 'limit'
+            ])
+            
+            # If it's a size error and we haven't exceeded max attempts, try again with reduction
+            if is_size_error and attempt < 3:
+                logging.warning(f"Batch prediction failed (attempt {attempt}), trying with reduced content...")
+                
+                # Progressive reduction: 75%, 50%, 25%
+                reduction_levels = [0.75, 0.5, 0.25]
+                reduction = reduction_levels[min(attempt, len(reduction_levels) - 1)]
+                
+                # Reduce post
+                reduced_post, _ = progressive_truncate(post_text, 500, attempt + 1)
+                
+                # Reduce comments
+                reduced_comments = []
+                for comment in comments:
+                    reduced_comment, _ = progressive_truncate(comment, 125, attempt + 1)
+                    reduced_comments.append(reduced_comment)
+                
+                logging.info(f"Retrying with {reduction * 100}% of original content")
+                return self._predict_batch_with_retry(reduced_post, reduced_comments, attempt + 1)
+            else:
+                # Not a size error, or max attempts reached
+                raise
+    
+    def predict_batch(self, post_text: str, comments: list) -> Dict[str, Any]:
+        """
+        Analyze post and multiple comments in a single API call with automatic retry.
+        
+        Args:
+            post_text: The main post content (title + body)
+            comments: List of comment text strings
+            
+        Returns:
+            Dictionary with post_analysis and comments_analysis arrays
+        """
+        return self._predict_batch_with_retry(post_text, comments, attempt=0)
+    
+    def _predict_batch_internal(self, post_text: str, comments: list) -> Dict[str, Any]:
+        """
+        Analyze post and multiple comments in a single API call
+        
+        Args:
+            post_text: The main post content (title + body)
+            comments: List of comment text strings
+            
+        Returns:
+            Dictionary with post_analysis and comments_analysis arrays
+        """
+        try:
+            model = get_gemini_model()
+            
+            # Smart truncation for post (max 500 tokens ≈ 2000 chars)
+            MAX_POST_TOKENS = 500
+            original_post_length = len(post_text)
+            original_post_tokens = estimate_tokens(post_text)
+            
+            post_text, post_truncated = smart_truncate(post_text, MAX_POST_TOKENS, preserve_sentences=True)
+            
+            if post_truncated:
+                truncated_tokens = estimate_tokens(post_text)
+                summary = get_truncation_summary(
+                    original_post_length, len(post_text),
+                    original_post_tokens, truncated_tokens
+                )
+                logging.warning(f"Post {summary}")
+            
+            # Smart truncation for comments (max 125 tokens ≈ 500 chars each)
+            MAX_COMMENT_TOKENS = 125
+            truncated_comments = []
+            for idx, comment in enumerate(comments):
+                original_length = len(comment)
+                original_tokens = estimate_tokens(comment)
+                
+                truncated_comment, was_truncated = smart_truncate(
+                    comment, MAX_COMMENT_TOKENS, preserve_sentences=True
+                )
+                truncated_comments.append(truncated_comment)
+                
+                if was_truncated:
+                    truncated_tokens = estimate_tokens(truncated_comment)
+                    summary = get_truncation_summary(
+                        original_length, len(truncated_comment),
+                        original_tokens, truncated_tokens
+                    )
+                    logging.warning(f"Comment {idx} {summary}")
+            
+            # Estimate total tokens using accurate token counting
+            post_tokens = estimate_tokens(post_text)
+            comment_tokens = sum(estimate_tokens(c) for c in truncated_comments)
+            prompt_tokens = estimate_tokens(self.batch_prompt_template)
+            
+            # Estimate output tokens (analysis + explainability for each item)
+            # Each item needs ~150 tokens for response (analysis + 2 phrases)
+            estimated_output_tokens = (len(truncated_comments) + 1) * 150
+            
+            total_input_tokens = post_tokens + comment_tokens + prompt_tokens
+            
+            MAX_INPUT_TOKENS = 12000  # Reduced to leave room for output
+            MAX_OUTPUT_TOKENS = 8192  # Gemini's max output
+            
+            # Check if output will exceed limit
+            if estimated_output_tokens > MAX_OUTPUT_TOKENS:
+                # Reduce comments to fit output limit
+                max_items = (MAX_OUTPUT_TOKENS // 150) - 1  # -1 for post
+                if max_items < len(truncated_comments):
+                    logging.warning(
+                        f"Reducing comments from {len(truncated_comments)} to {max_items} "
+                        f"to fit output token limit ({estimated_output_tokens} > {MAX_OUTPUT_TOKENS})"
+                    )
+                    truncated_comments = truncated_comments[:max_items]
+                    comment_tokens = sum(estimate_tokens(c) for c in truncated_comments)
+                    total_input_tokens = post_tokens + comment_tokens + prompt_tokens
+            
+            # Check if input exceeds limit
+            if total_input_tokens > MAX_INPUT_TOKENS:
+                # Calculate how many comments we can fit
+                available_tokens = MAX_INPUT_TOKENS - post_tokens - prompt_tokens - 500
+                
+                if truncated_comments:
+                    avg_comment_tokens = comment_tokens / len(truncated_comments)
+                    max_comments = max(1, int(available_tokens / avg_comment_tokens))
+                    
+                    if max_comments < len(truncated_comments):
+                        logging.warning(
+                            f"Reducing comments from {len(truncated_comments)} to {max_comments} "
+                            f"due to input token limit ({total_input_tokens} > {MAX_INPUT_TOKENS})"
+                        )
+                        truncated_comments = truncated_comments[:max_comments]
+            
+            # Format comments as numbered list
+            comments_list = ""
+            for idx, comment in enumerate(truncated_comments):
+                comments_list += f"\n[COMMENT {idx}]\n{comment}\n"
+            
+            # Format batch prompt
+            prompt = self.batch_prompt_template.format(
+                post_text=post_text,
+                comments_list=comments_list
+            )
+            
+            logging.info(f"Batch analyzing 1 post + {len(comments)} comments")
+            
+            # Generate response
+            response = model.generate_content(prompt)
+            
+            # Check if response was blocked by safety filters
+            if not response.text:
+                error_msg = "Gemini response blocked"
+                
+                # Check finish reason
+                if hasattr(response, 'candidates') and response.candidates:
+                    finish_reason = response.candidates[0].finish_reason
+                    if finish_reason == 2:  # SAFETY
+                        error_msg = "Content blocked by Gemini safety filters. The post or comments contain content that violates safety guidelines."
+                    elif finish_reason == 3:  # RECITATION
+                        error_msg = "Content blocked due to recitation concerns."
+                    elif finish_reason == 4:  # OTHER
+                        error_msg = "Content blocked for other reasons."
+                
+                # Add prompt feedback if available
+                if hasattr(response, 'prompt_feedback'):
+                    error_msg += f" Feedback: {response.prompt_feedback}"
+                
+                logging.warning(error_msg)
+                raise RuntimeError(error_msg)
+            
+            # Parse JSON response
+            response_text = response.text.strip()
+            
+            # Log raw response for debugging
+            logging.info(f"Raw Gemini batch response: {response_text[:300]}...")
+            
+            # Extract JSON (same logic as predict)
+            if '```json' in response_text:
+                response_text = response_text.split('```json')[1].split('```')[0].strip()
+            elif '```' in response_text:
+                response_text = response_text.split('```')[1].split('```')[0].strip()
+            
+            start_idx = response_text.find('{')
+            end_idx = response_text.rfind('}')
+            
+            if start_idx == -1 or end_idx == -1:
+                logging.error(f"No JSON object found in batch response: {response_text}")
+                raise json.JSONDecodeError("No JSON object found", response_text, 0)
+            
+            response_text = response_text[start_idx:end_idx+1]
+            
+            # Try to parse JSON with better error handling
+            try:
+                result = json.loads(response_text)
+            except json.JSONDecodeError as json_err:
+                # Log the problematic JSON for debugging
+                logging.error(f"JSON parse error at position {json_err.pos}")
+                logging.error(f"Problematic JSON snippet: {response_text[max(0, json_err.pos-50):json_err.pos+50]}")
+                logging.error(f"Attempted to parse: {response_text[:1000]}")
+                
+                # Check if response was truncated (incomplete JSON)
+                if "highlighted_phrases" in response_text and not response_text.rstrip().endswith('}'):
+                    logging.error("Response appears truncated - likely hit output token limit")
+                    raise RuntimeError("Gemini response truncated - output token limit exceeded")
+                
+                # Try to fix common JSON issues
+                # 1. Remove trailing commas
+                response_text = response_text.replace(',]', ']').replace(',}', '}')
+                # 2. Try parsing again
+                try:
+                    result = json.loads(response_text)
+                    logging.info("JSON fixed by removing trailing commas")
+                except:
+                    # If still fails, log and raise original error
+                    logging.error(f"Failed to parse even after fixes")
+                    raise json_err
+            
+            # Validate structure
+            if 'post_analysis' not in result or 'comments_analysis' not in result:
+                logging.error(f"Invalid batch response structure: {result.keys()}")
+                raise ValueError("Batch response missing required fields")
+            
+            # Normalize post analysis
+            post_analysis = self._normalize_gemini_result(
+                result['post_analysis'], 
+                enable_explainability=True
+            )
+            
+            # Normalize each comment analysis
+            comments_analysis = []
+            for comment_result in result['comments_analysis']:
+                normalized_comment = self._normalize_gemini_result(
+                    comment_result,
+                    enable_explainability=True
+                )
+                comments_analysis.append(normalized_comment)
+            
+            logging.info(f"Batch analysis completed: 1 post + {len(comments_analysis)} comments")
+            
+            return {
+                'post_analysis': post_analysis,
+                'comments_analysis': comments_analysis
+            }
+            
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON parse error in batch analysis: {str(e)}")
+            logging.error(f"Attempted to parse: {response_text[:500] if 'response_text' in locals() else 'N/A'}")
+            raise RuntimeError(f"Failed to parse Gemini batch response: {str(e)}")
+        except Exception as e:
+            logging.error(f"Gemini batch prediction failed: {str(e)}")
+            raise RuntimeError(f"Gemini batch API call failed: {str(e)}")

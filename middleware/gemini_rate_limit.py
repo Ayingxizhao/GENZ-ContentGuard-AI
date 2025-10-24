@@ -16,8 +16,11 @@ GEMINI_COOLDOWN_SECONDS = 180  # 3 minutes cooldown between calls
 GEMINI_GLOBAL_KEY = "gemini_global_usage"
 
 # In-memory storage for anonymous user cooldown tracking
-# Structure: {ip_address: last_call_timestamp}
+# Structure: {ip_address: {'last_call': timestamp, 'call_count': int, 'window_start': timestamp}}
 _anonymous_gemini_cooldowns = {}
+
+# Burst allowance for anonymous users
+ANONYMOUS_BURST_CALLS = 2  # Allow 2 calls before enforcing cooldown
 
 
 def get_gemini_cache():
@@ -134,23 +137,47 @@ def _get_client_ip():
 def check_anonymous_gemini_cooldown() -> Tuple[bool, Optional[int]]:
     """
     Check cooldown for anonymous users (tracked by IP)
+    Allows ANONYMOUS_BURST_CALLS before enforcing cooldown
     
     Returns:
         Tuple of (allowed, seconds_remaining)
     """
     ip = _get_client_ip()
+    now = datetime.utcnow()
     
     if ip not in _anonymous_gemini_cooldowns:
-        # No previous call from this IP
+        # No previous call from this IP - initialize
+        _anonymous_gemini_cooldowns[ip] = {
+            'last_call': now,
+            'call_count': 0,
+            'window_start': now
+        }
         return True, None
     
-    last_call = _anonymous_gemini_cooldowns[ip]
-    now = datetime.utcnow()
-    time_since_last_call = (now - last_call).total_seconds()
+    cooldown_data = _anonymous_gemini_cooldowns[ip]
+    last_call = cooldown_data['last_call']
+    call_count = cooldown_data.get('call_count', 0)
+    window_start = cooldown_data.get('window_start', last_call)
     
-    if time_since_last_call < GEMINI_COOLDOWN_SECONDS:
-        # Still in cooldown period
-        seconds_remaining = int(GEMINI_COOLDOWN_SECONDS - time_since_last_call)
+    time_since_last_call = (now - last_call).total_seconds()
+    time_since_window_start = (now - window_start).total_seconds()
+    
+    # Reset window if cooldown period has passed
+    if time_since_window_start >= GEMINI_COOLDOWN_SECONDS:
+        _anonymous_gemini_cooldowns[ip] = {
+            'last_call': now,
+            'call_count': 0,
+            'window_start': now
+        }
+        return True, None
+    
+    # Allow burst calls
+    if call_count < ANONYMOUS_BURST_CALLS:
+        return True, None
+    
+    # Enforce cooldown after burst
+    if time_since_window_start < GEMINI_COOLDOWN_SECONDS:
+        seconds_remaining = int(GEMINI_COOLDOWN_SECONDS - time_since_window_start)
         return False, seconds_remaining
     
     # Cooldown period passed
@@ -158,10 +185,22 @@ def check_anonymous_gemini_cooldown() -> Tuple[bool, Optional[int]]:
 
 
 def update_anonymous_gemini_cooldown() -> None:
-    """Update last call timestamp for anonymous user"""
+    """Update last call timestamp and increment call count for anonymous user"""
     ip = _get_client_ip()
-    _anonymous_gemini_cooldowns[ip] = datetime.utcnow()
-    logging.info(f"Updated Gemini cooldown for IP: {ip}")
+    now = datetime.utcnow()
+    
+    if ip not in _anonymous_gemini_cooldowns:
+        _anonymous_gemini_cooldowns[ip] = {
+            'last_call': now,
+            'call_count': 1,
+            'window_start': now
+        }
+    else:
+        cooldown_data = _anonymous_gemini_cooldowns[ip]
+        cooldown_data['last_call'] = now
+        cooldown_data['call_count'] = cooldown_data.get('call_count', 0) + 1
+    
+    logging.info(f"Updated Gemini cooldown for IP: {ip}, calls: {_anonymous_gemini_cooldowns[ip]['call_count']}")
 
 
 def check_user_gemini_cooldown(user) -> Tuple[bool, Optional[int]]:
@@ -236,26 +275,28 @@ def check_gemini_rate_limits(user=None) -> Tuple[bool, dict]:
     Returns:
         Tuple of (allowed, error_response_dict)
     """
-    # Check cooldown first (applies to all users - authenticated and anonymous)
-    if user:
-        # Authenticated user - check user-specific cooldown
-        cooldown_allowed, seconds_remaining = check_user_gemini_cooldown(user)
-    else:
-        # Anonymous user - check IP-based cooldown
+    # Check cooldown - only for anonymous users
+    # Authenticated users rely on daily limits (10/day) instead of cooldown
+    if not user:
+        # Anonymous user - check IP-based cooldown with burst allowance
         cooldown_allowed, seconds_remaining = check_anonymous_gemini_cooldown()
-    
-    if not cooldown_allowed:
-        minutes_remaining = seconds_remaining // 60
-        seconds_part = seconds_remaining % 60
-        wait_time = f"{minutes_remaining}m {seconds_part}s" if minutes_remaining > 0 else f"{seconds_part}s"
         
-        return False, {
-            'error': 'Gemini API cooldown active',
-            'cooldown_seconds': GEMINI_COOLDOWN_SECONDS,
-            'seconds_remaining': seconds_remaining,
-            'wait_time': wait_time,
-            'hint': f'Please wait {wait_time} before making another Gemini API request. This cooldown helps manage API costs.'
-        }
+        if not cooldown_allowed:
+            minutes_remaining = seconds_remaining // 60
+            seconds_part = seconds_remaining % 60
+            wait_time = f"{minutes_remaining}m {seconds_part}s" if minutes_remaining > 0 else f"{seconds_part}s"
+            
+            return False, {
+                'error': 'Gemini API cooldown active',
+                'cooldown_seconds': GEMINI_COOLDOWN_SECONDS,
+                'seconds_remaining': seconds_remaining,
+                'wait_time': wait_time,
+                'hint': f'Please wait {wait_time} before making another Gemini API request. Sign in to remove cooldowns and get 10 requests per day.',
+                'actions': {
+                    'login': '/auth/login',
+                    'signup': '/auth/signup'
+                }
+            }
     
     # Check global limit
     global_allowed, global_remaining, global_limit, reset_time = check_gemini_global_limit()
@@ -282,5 +323,15 @@ def check_gemini_rate_limits(user=None) -> Tuple[bool, dict]:
                 'hint': f'You have used all {user_limit} Gemini requests for today. Try the ContentGuard Model or wait until tomorrow.'
             }
     
-    # All limits OK
-    return True, {}
+    # All limits OK - return rate limit info
+    rate_limit_info = {
+        'global_remaining': global_remaining,
+        'global_limit': global_limit
+    }
+    
+    if user:
+        user_allowed, user_remaining, user_limit = check_user_gemini_limit(user)
+        rate_limit_info['user_remaining'] = user_remaining
+        rate_limit_info['user_limit'] = user_limit
+    
+    return True, rate_limit_info
