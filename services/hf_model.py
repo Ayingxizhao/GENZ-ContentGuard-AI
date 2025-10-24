@@ -1,5 +1,5 @@
 """
-Hugging Face model service implementation
+Hugging Face model service implementation with regex-based explainability
 Refactored from app.py to provide modular interface
 """
 import os
@@ -10,6 +10,7 @@ from typing import Dict, Any
 from gradio_client import Client
 from dotenv import load_dotenv
 from .model_service import BaseModelService
+from .explainability_service import get_explainability_service
 
 load_dotenv()
 
@@ -109,7 +110,7 @@ def _normalize_result(space_result: Any) -> Dict[str, Any]:
         
         return normalized
 
-    # Fallback normalization for other formats
+    # Common alternative: label/score or probabilities list
     analysis_text = None
     is_mal = None
     conf_pct = None
@@ -118,32 +119,32 @@ def _normalize_result(space_result: Any) -> Dict[str, Any]:
     if isinstance(space_result, dict):
         label = space_result.get('label') or space_result.get('prediction')
         score = space_result.get('score') or space_result.get('confidence')
+        # Probabilities could be nested
         probs_raw = space_result.get('probabilities') or space_result.get('probs')
-        
         if isinstance(probs_raw, dict) and 'safe' in probs_raw and 'malicious' in probs_raw:
             probs = {
                 'safe': f"{float(probs_raw['safe']) * 100:.2f}%" if isinstance(probs_raw['safe'], (int, float)) else str(probs_raw['safe']),
                 'malicious': f"{float(probs_raw['malicious']) * 100:.2f}%" if isinstance(probs_raw['malicious'], (int, float)) else str(probs_raw['malicious']),
             }
+            # Confidence = max prob
             try:
                 conf_val = max(float(str(probs_raw['safe'])), float(str(probs_raw['malicious'])))
                 conf_pct = f"{conf_val * 100:.2f}%"
             except Exception:
                 conf_pct = None
             is_mal = float(str(probs_raw.get('malicious', 0))) >= float(str(probs_raw.get('safe', 0)))
-        
         if label is not None:
             is_mal = (str(label).lower() in ['malicious', 'toxic', 'unsafe', '1', 'true'])
             analysis_text = 'Malicious content detected' if is_mal else 'Content appears safe'
-        
         if score is not None and conf_pct is None:
             try:
                 conf_pct = f"{float(score) * 100:.2f}%"
             except Exception:
                 conf_pct = str(score)
 
-    # List format: [{'label': 'malicious', 'score': 0.87}, ...]
+    # Another common format: list like [{'label': 'malicious', 'score': 0.87}, ...]
     if isinstance(space_result, list) and space_result and isinstance(space_result[0], dict) and 'label' in space_result[0] and 'score' in space_result[0]:
+        # Find safe/malicious entries if present
         entries = {d['label'].lower(): float(d['score']) for d in space_result if 'label' in d and 'score' in d}
         p_safe = entries.get('safe')
         p_mal = entries.get('malicious')
@@ -153,8 +154,9 @@ def _normalize_result(space_result: Any) -> Dict[str, Any]:
             conf_pct = f"{(p_mal if is_mal else p_safe) * 100:.2f}%"
             analysis_text = 'Malicious content detected' if is_mal else 'Content appears safe'
 
-    # Final fallbacks
+    # Fallbacks
     if probs is None:
+        # If nothing to compute, set neutral 50/50
         probs = {'safe': '50.00%', 'malicious': '50.00%'}
     if is_mal is None:
         is_mal = False
@@ -173,23 +175,44 @@ def _normalize_result(space_result: Any) -> Dict[str, Any]:
 
 
 class HuggingFaceModelService(BaseModelService):
-    """Hugging Face Space model service"""
+    """Hugging Face Space model service with regex-based explainability"""
     
-    def predict(self, text: str) -> Dict[str, Any]:
+    def __init__(self):
+        """Initialize HF model service with explainability"""
+        self.explainability_service = get_explainability_service()
+    
+    def predict(self, text: str, enable_explainability: bool = True) -> Dict[str, Any]:
         """
-        Analyze text using HF Space
+        Analyze text using HF Space with regex-based explainability
         
         Args:
             text: Content to analyze
+            enable_explainability: Whether to include explainability data
             
         Returns:
-            Normalized analysis result
+            Normalized analysis result with explainability
         """
         try:
+            # Get base prediction from HF model
             client = get_hf_client()
             result = client.predict(text, api_name="/predict")
             normalized = _normalize_result(result)
+            
+            # Add regex-based explainability if enabled
+            if enable_explainability:
+                explainability_data = self.explainability_service.analyze_text(
+                    text, 
+                    is_malicious=normalized.get('is_malicious', False)
+                )
+                normalized['explainability'] = explainability_data
+                
+                logging.info(
+                    f"HF model with explainability: {explainability_data.get('total_matches', 0)} "
+                    f"toxic phrases detected"
+                )
+            
             return normalized
+            
         except Exception as e:
             logging.error(f"HF model prediction failed: {str(e)}")
             raise RuntimeError(f"HF Space call failed: {str(e)}")
