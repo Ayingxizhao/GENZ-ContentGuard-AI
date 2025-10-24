@@ -19,6 +19,21 @@ Detect harmful content, hate speech, harassment, and threats in real-time. Built
 
 ---
 
+## ✨ New: Explainability Feature
+
+ContentGuard now provides **detailed explanations** of why content was flagged, highlighting specific toxic phrases with their positions, categories, and severity levels.
+
+**[📖 View Explainability Documentation](docs/EXPLAINABILITY.md)**
+
+### Key Features:
+- 🎯 **Phrase-level Detection**: Identifies exact toxic phrases in text
+- 📍 **Position Tracking**: Shows where each toxic phrase appears
+- 🏷️ **Category Classification**: 7 distinct toxic content categories
+- ⚠️ **Severity Levels**: HIGH/MEDIUM/LOW severity ratings
+- 🎨 **Visual Highlighting**: Color-coded inline highlights in UI
+
+---
+
 ## Quick Start
 
 ### Option 1: Web Interface
@@ -26,7 +41,7 @@ Detect harmful content, hate speech, harassment, and threats in real-time. Built
 1. Visit [https://plankton-app-xj6ib.ondigitalocean.app](https://plankton-app-xj6ib.ondigitalocean.app)
 2. Enter text to analyze (title + content)
 3. Click **"Analyze Content"**
-4. View risk assessment and detailed breakdown
+4. View risk assessment and detailed breakdown with highlighted toxic phrases
 
 ### Option 2: API Integration
 
@@ -47,6 +62,12 @@ result = response.json()
 print(f"Model: {result['model_type']}")
 print(f"Is Malicious: {result['is_malicious']}")
 print(f"Confidence: {result['confidence']}")
+
+# Access explainability data
+if 'explainability' in result:
+    for phrase in result['explainability']['highlighted_phrases']:
+        print(f"Toxic phrase: '{phrase['text']}' at position {phrase['start_pos']}")
+        print(f"Category: {phrase['category']}, Severity: {phrase['severity']}")
 ```
 
 #### JavaScript
@@ -64,6 +85,11 @@ const response = await fetch('https://plankton-app-xj6ib.ondigitalocean.app/anal
 const result = await response.json();
 console.log(`Model: ${result.model_type}`);
 console.log(`Is Malicious: ${result.is_malicious}`);
+
+// Display explainability data
+if (result.explainability) {
+  console.log(`Total toxic phrases: ${result.explainability.total_matches}`);
+}
 ```
 
 #### cURL
@@ -98,6 +124,7 @@ ContentGuard supports OAuth login via **Google** and **GitHub**:
 | Rate Limit | Limited | Higher |
 | Usage Tracking | ❌ | ✅ |
 | API Access | ❌ | ✅ |
+| Explainability | ✅ | ✅ |
 
 ---
 
@@ -108,12 +135,14 @@ ContentGuard now supports **two AI models** for content analysis:
 ### 1. Gemini 2.5 Flash (Finetuned) - **Default**
 - **Enhanced accuracy** with Google's latest AI
 - **Specialized for Gen Z language** through custom finetuning
+- **AI-powered explainability** via prompt engineering
 - **Rate Limit**: 10 requests/day per user, 40 total/day globally
 - **Best for**: Critical content moderation requiring highest accuracy
 
 ### 2. ContentGuard Model (Free)
 - **Unlimited usage** for registered users (200/day)
 - **Fast processing** with consistent results
+- **Regex-based explainability** with pattern matching
 - **Rate Limit**: 100/day anonymous, 200/day registered
 - **Best for**: High-volume content screening
 
@@ -163,6 +192,27 @@ POST https://plankton-app-xj6ib.ondigitalocean.app/analyze
   "keyword_analysis": {
     "malicious_keywords": ["keyword1", "keyword2"],
     "safe_keywords": ["keyword3", "keyword4"]
+  },
+  "explainability": {
+    "highlighted_phrases": [
+      {
+        "text": "toxic phrase",
+        "start_pos": 45,
+        "end_pos": 57,
+        "category": "harassment",
+        "severity": "MEDIUM",
+        "explanation": "Contains harassment or bullying language"
+      }
+    ],
+    "categories_detected": {
+      "harassment": 1
+    },
+    "severity_breakdown": {
+      "HIGH": 0,
+      "MEDIUM": 1,
+      "LOW": 0
+    },
+    "total_matches": 1
   }
 }
 ```
@@ -180,6 +230,11 @@ POST https://plankton-app-xj6ib.ondigitalocean.app/analyze
   "keyword_analysis": {
     "malicious_keywords": [],
     "safe_keywords": ["support", "help", "community"]
+  },
+  "explainability": {
+    "highlighted_phrases": [],
+    "categories_detected": {},
+    "total_matches": 0
   }
 }
 ```
@@ -195,6 +250,27 @@ POST https://plankton-app-xj6ib.ondigitalocean.app/analyze
   "keyword_analysis": {
     "malicious_keywords": ["threat", "harass"],
     "safe_keywords": []
+  },
+  "explainability": {
+    "highlighted_phrases": [
+      {
+        "text": "kys",
+        "start_pos": 10,
+        "end_pos": 13,
+        "category": "suicide_self_harm",
+        "severity": "HIGH",
+        "explanation": "Contains suicide encouragement or self-harm language"
+      }
+    ],
+    "categories_detected": {
+      "suicide_self_harm": 1
+    },
+    "severity_breakdown": {
+      "HIGH": 1,
+      "MEDIUM": 0,
+      "LOW": 0
+    },
+    "total_matches": 1
   }
 }
 ```
@@ -233,31 +309,42 @@ POST https://plankton-app-xj6ib.ondigitalocean.app/analyze
 - **Confidence scoring** - Probability-based risk levels
 - **Keyword extraction** - Identifies specific harmful terms
 - **Emoji processing** - Handles modern communication
+- **Explainability** - Shows exactly why content was flagged
 
 ### 📊 Reporting
 - Clear risk level classification (HIGH/MEDIUM/LOW)
 - Specific keyword breakdowns
 - Actionable recommendations
 - Visual indicators for quick scanning
+- Highlighted toxic phrases with positions
+- Category and severity breakdowns
 
 ---
 
 ## 💡 Use Cases
 
 **Social Media Platforms**
-Automatically moderate user posts and comments at scale
+Automatically moderate user posts and comments at scale with detailed explanations
 
 **Online Communities**
-Protect members from harassment before it spreads
+Protect members from harassment before it spreads, showing moderators exactly what was flagged
 
 **Educational Platforms**
-Maintain safe learning environments for students
+Maintain safe learning environments for students with transparent moderation
 
 **Gaming Communities**
-Detect toxic behavior in chat and forums
+Detect toxic behavior in chat and forums with phrase-level precision
 
 **Customer Support**
-Flag harmful messages for human review
+Flag harmful messages for human review with context and explanations
+
+---
+
+## 📚 Documentation
+
+- **[Explainability Feature Guide](docs/EXPLAINABILITY.md)** - Detailed documentation on toxic phrase highlighting
+- **[API Reference](#api-reference)** - Complete API documentation
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 
 ---
 
@@ -265,6 +352,9 @@ Flag harmful messages for human review
 
 **Q: How accurate is the detection?**
 A: Our model provides confidence scores with each analysis. Typical confidence ranges from 85-95% for clear cases.
+
+**Q: What is the explainability feature?**
+A: It highlights specific toxic phrases in your text, showing their exact positions, categories (e.g., harassment, hate speech), and severity levels (HIGH/MEDIUM/LOW). This helps you understand exactly why content was flagged.
 
 **Q: Does it support languages other than English?**
 A: Currently optimized for English and internet slang. Multi-language support coming soon.
@@ -276,7 +366,7 @@ A: The current version uses pre-trained categories. Custom models available for 
 A: We do not store analyzed content. Only usage metrics are tracked for registered users.
 
 **Q: What happens if content is flagged?**
-A: The API returns risk assessment data. Your application decides what action to take (flag, review, remove, etc.).
+A: The API returns risk assessment data with explainability. Your application decides what action to take (flag, review, remove, etc.).
 
 **Q: Can I test it without signing up?**
 A: Yes! Use the web interface or API with limited rate limits as an anonymous user.
