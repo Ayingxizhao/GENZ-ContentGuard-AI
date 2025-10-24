@@ -1,0 +1,240 @@
+/**
+ * Explainability Feature Styles
+ * Color-coded highlighting for toxic phrases
+ */
+
+/* Highlighted text container */
+.highlighted-text-container {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    line-height: 1.8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.highlighted-text {
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* Toxic phrase highlights */
+.toxic-highlight {
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: help;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.toxic-highlight:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Severity-based colors */
+.highlight-high {
+    background-color: #fee;
+    border-bottom: 2px solid #dc3545;
+    color: #721c24;
+}
+
+.highlight-high:hover {
+    background-color: #fdd;
+}
+
+.highlight-medium {
+    background-color: #fff3cd;
+    border-bottom: 2px solid #ffc107;
+    color: #856404;
+}
+
+.highlight-medium:hover {
+    background-color: #ffe69c;
+}
+
+.highlight-low {
+    background-color: #e7e7ff;
+    border-bottom: 2px solid #6c757d;
+    color: #383d41;
+}
+
+.highlight-low:hover {
+    background-color: #d7d7ff;
+}
+
+/* Category breakdown */
+.category-breakdown {
+    padding: 10px;
+}
+
+.category-item {
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.category-item:hover {
+    background-color: #e9ecef;
+}
+
+.category-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.category-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Severity breakdown */
+.severity-breakdown {
+    padding: 10px;
+}
+
+.severity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.severity-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.severity-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.severity-dot.severity-high {
+    background-color: #dc3545;
+}
+
+.severity-dot.severity-medium {
+    background-color: #ffc107;
+}
+
+.severity-dot.severity-low {
+    background-color: #6c757d;
+}
+
+/* Explainability panel */
+.explainability-panel {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.explainability-panel h5 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.explainability-panel h6 {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .explainability-panel .row {
+        flex-direction: column;
+    }
+    
+    .explainability-panel .col-md-6 {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
+
+/* Tooltip enhancement (if using Bootstrap tooltips) */
+.toxic-highlight[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background-color: #333;
+    color: #fff;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Legend */
+.explainability-legend {
+    display: flex;
+    gap: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* Animation for new highlights */
+@keyframes highlightPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.toxic-highlight.new {
+    animation: highlightPulse 1s ease-in-out 2;
+}
+
+/* Print styles */
+@media print {
+    .toxic-highlight {
+        border: 1px solid #000;
+        background-color: #fff !important;
+    }
+    
+    .highlight-high {
+        border-color: #000;
+        font-weight: bold;
+    }
+}
