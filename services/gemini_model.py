@@ -1,6 +1,6 @@
 """
 Google Gemini model service implementation
-Uses Gemini 2.5 Flash (finetuned) for content analysis
+Uses Gemini 2.5 Flash (finetuned) for content analysis with explainability
 """
 import os
 import json
@@ -36,7 +36,7 @@ def get_gemini_model():
                 "temperature": 0.7,
                 "top_p": 0.95,
                 "top_k": 40,
-                "max_output_tokens": 1024,
+                "max_output_tokens": 2048,  # Increased for explainability data
                 "response_mime_type": "application/json",
             }
             
@@ -62,26 +62,27 @@ def load_prompt_template() -> str:
     except Exception as e:
         logging.error(f"Failed to load prompt template: {str(e)}")
         # Fallback minimal prompt
-        return """Analyze this text for malicious content. Return JSON with: is_malicious (bool), confidence (0-100), analysis (string), risk_level (LOW/MEDIUM/HIGH), toxic_type (string or null).
+        return """Analyze this text for malicious content. Return JSON with: is_malicious (bool), confidence (0-100), analysis (string), risk_level (LOW/MEDIUM/HIGH), toxic_type (string or null), highlighted_phrases (array).
 
 Text: {text}"""
 
 
 class GeminiModelService(BaseModelService):
-    """Google Gemini model service"""
+    """Google Gemini model service with explainability"""
     
     def __init__(self):
         self.prompt_template = load_prompt_template()
     
-    def predict(self, text: str) -> Dict[str, Any]:
+    def predict(self, text: str, enable_explainability: bool = True) -> Dict[str, Any]:
         """
-        Analyze text using Gemini API
+        Analyze text using Gemini API with explainability
         
         Args:
             text: Content to analyze
+            enable_explainability: Whether to include explainability data
             
         Returns:
-            Normalized analysis result
+            Normalized analysis result with explainability
         """
         try:
             model = get_gemini_model()
@@ -104,7 +105,7 @@ class GeminiModelService(BaseModelService):
             response_text = response.text.strip()
             
             # Log raw response for debugging
-            logging.info(f"Raw Gemini response: {response_text}")
+            logging.info(f"Raw Gemini response: {response_text[:200]}...")
             
             # Try multiple extraction strategies
             # 1. Check for markdown code blocks
@@ -131,7 +132,7 @@ class GeminiModelService(BaseModelService):
             result = json.loads(response_text)
             
             # Normalize to standard schema
-            normalized = self._normalize_gemini_result(result)
+            normalized = self._normalize_gemini_result(result, enable_explainability)
             return normalized
             
         except json.JSONDecodeError as e:
@@ -143,15 +144,16 @@ class GeminiModelService(BaseModelService):
             logging.error(f"Response text (if available): {response_text[:500] if 'response_text' in locals() else 'N/A'}")
             raise RuntimeError(f"Gemini API call failed: {str(e)}")
     
-    def _normalize_gemini_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_gemini_result(self, result: Dict[str, Any], enable_explainability: bool = True) -> Dict[str, Any]:
         """
-        Normalize Gemini output to standard schema
+        Normalize Gemini output to standard schema with explainability
         
         Args:
             result: Raw Gemini response
+            enable_explainability: Whether to include explainability data
             
         Returns:
-            Normalized result matching HF schema
+            Normalized result matching HF schema with explainability
         """
         try:
             is_mal = bool(result.get('is_malicious', False))
@@ -193,6 +195,27 @@ class GeminiModelService(BaseModelService):
             
             if details:
                 normalized['detailed_analysis'] = details
+            
+            # Add explainability data if enabled and available
+            if enable_explainability and 'highlighted_phrases' in result:
+                highlighted_phrases = result['highlighted_phrases']
+                
+                # Build category summary
+                category_summary = {}
+                severity_breakdown = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+                
+                for phrase in highlighted_phrases:
+                    category = phrase.get('category', 'general_toxicity')
+                    severity = phrase.get('severity', 'LOW')
+                    category_summary[category] = category_summary.get(category, 0) + 1
+                    severity_breakdown[severity] = severity_breakdown.get(severity, 0) + 1
+                
+                normalized['explainability'] = {
+                    'highlighted_phrases': highlighted_phrases,
+                    'categories_detected': category_summary,
+                    'severity_breakdown': severity_breakdown,
+                    'total_matches': len(highlighted_phrases)
+                }
             
             return normalized
             
