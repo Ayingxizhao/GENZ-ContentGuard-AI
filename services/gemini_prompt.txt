@@ -15,7 +15,17 @@ Required JSON structure:
   "confidence": 85.5,
   "analysis": "Brief explanation of your decision",
   "risk_level": "HIGH",
-  "toxic_type": "harassment"
+  "toxic_type": "harassment",
+  "highlighted_phrases": [
+    {{
+      "text": "kys",
+      "start_pos": 45,
+      "end_pos": 48,
+      "category": "suicide_self_harm",
+      "severity": "HIGH",
+      "explanation": "Direct suicide encouragement"
+    }}
+  ]
 }}
 
 Rules:
@@ -24,8 +34,16 @@ Rules:
 - analysis: string with brief explanation
 - risk_level: string, one of "LOW", "MEDIUM", or "HIGH"
 - toxic_type: string describing toxicity type, or null if not malicious
+- highlighted_phrases: array of objects identifying specific toxic phrases in the text
+  - text: the exact toxic phrase found
+  - start_pos: character position where phrase starts (0-indexed)
+  - end_pos: character position where phrase ends
+  - category: one of "suicide_self_harm", "hate_speech", "harassment", "threats", "body_shaming", "sexual_content", "general_toxicity"
+  - severity: one of "HIGH", "MEDIUM", "LOW"
+  - explanation: brief reason why this phrase is problematic
 - Be sensitive to Gen Z slang and modern language patterns
 - Consider context and intent, not just keywords
+- Identify ALL toxic phrases with their exact positions in the text
 - Output ONLY the JSON object, nothing else
 
 Text to analyze:
