@@ -261,6 +261,8 @@ def increment_user_gemini_usage(user) -> None:
     user.last_gemini_call = now
     
     db.session.commit()
+    # Refresh to ensure we have the latest values
+    db.session.refresh(user)
     
     logging.info(f"User {user.id} Gemini usage: {user.gemini_calls_today}/{GEMINI_USER_DAILY_LIMIT}")
 

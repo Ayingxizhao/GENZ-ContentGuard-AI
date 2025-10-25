@@ -42,6 +42,10 @@ def load_user(user_id):
 # Register auth blueprint
 app.register_blueprint(auth_bp)
 
+# Register usage stats blueprint
+from routes.usage import usage_bp
+app.register_blueprint(usage_bp)
+
 # Initialize access logging middleware
 from middleware.access_logger import init_access_logging
 init_access_logging(app)

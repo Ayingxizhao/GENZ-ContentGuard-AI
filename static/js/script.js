@@ -1081,14 +1081,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // User is logged in
                 showUserProfile(data.user);
                 updateDrawerAuth(data.user);
+                // Start polling for usage stats
+                startUsageStatsPolling();
             } else {
                 // User is not logged in
                 showLoginButton();
                 updateDrawerAuth(null);
+                // Stop polling if it was running
+                stopUsageStatsPolling();
             }
         } catch (error) {
             console.error('Failed to check auth status:', error);
             showLoginButton();
+            stopUsageStatsPolling();
         }
     }
 
@@ -1099,6 +1104,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (userDropdown) {
             userDropdown.style.display = 'none';
         }
+        // Show and update anonymous usage banner
+        showAnonymousUsageBanner();
+        fetchAndUpdateAnonymousUsage();
     }
 
     function showUserProfile(user) {
@@ -1124,11 +1132,302 @@ document.addEventListener('DOMContentLoaded', function() {
         if (userName) {
             userName.textContent = user.name || user.email.split('@')[0];
         }
-        if (usageCount) {
-            usageCount.textContent = user.api_calls_today || 0;
+        
+        // Hide anonymous banner when logged in
+        hideAnonymousUsageBanner();
+        // Stop any running anonymous timers
+        stopGeminiCooldownTimer();
+        
+        // Fetch and display detailed usage stats
+        fetchAndUpdateUsageStats();
+    }
+    
+    // Fetch detailed usage stats from API
+    async function fetchAndUpdateUsageStats() {
+        try {
+            const response = await fetch('/api/usage');
+            const data = await response.json();
+            
+            if (data.authenticated && data.stats) {
+                updateDetailedUsageDisplay(data.stats);
+            }
+        } catch (error) {
+            console.error('Failed to fetch usage stats:', error);
         }
-        if (usageLimit) {
-            usageLimit.textContent = user.daily_limit || 200;
+    }
+    
+    // Update the detailed usage panel with stats
+    function updateDetailedUsageDisplay(stats) {
+        // Update HuggingFace stats
+        const hfUsageCount = document.getElementById('hfUsageCount');
+        const hfUsageLimit = document.getElementById('hfUsageLimit');
+        const hfUsagePercentage = document.getElementById('hfUsagePercentage');
+        const hfProgressFill = document.getElementById('hfProgressFill');
+        const hfRemaining = document.getElementById('hfRemaining');
+        
+        if (stats.huggingface) {
+            const hf = stats.huggingface;
+            if (hfUsageCount) hfUsageCount.textContent = hf.calls_today;
+            if (hfUsageLimit) hfUsageLimit.textContent = hf.daily_limit;
+            if (hfUsagePercentage) hfUsagePercentage.textContent = `${hf.percentage_used}%`;
+            if (hfRemaining) hfRemaining.textContent = hf.remaining;
+            
+            if (hfProgressFill) {
+                hfProgressFill.style.width = `${hf.percentage_used}%`;
+                // Update color based on usage
+                hfProgressFill.className = 'usage-progress-fill';
+                if (hf.percentage_used >= 90) {
+                    hfProgressFill.classList.add('danger');
+                } else if (hf.percentage_used >= 70) {
+                    hfProgressFill.classList.add('warning');
+                }
+            }
+        }
+        
+        // Update Gemini stats
+        const geminiUsageCount = document.getElementById('geminiUsageCount');
+        const geminiUsageLimit = document.getElementById('geminiUsageLimit');
+        const geminiUsagePercentage = document.getElementById('geminiUsagePercentage');
+        const geminiProgressFill = document.getElementById('geminiProgressFill');
+        const geminiRemaining = document.getElementById('geminiRemaining');
+        
+        if (stats.gemini) {
+            const gemini = stats.gemini;
+            if (geminiUsageCount) geminiUsageCount.textContent = gemini.calls_today;
+            if (geminiUsageLimit) geminiUsageLimit.textContent = gemini.daily_limit;
+            if (geminiUsagePercentage) geminiUsagePercentage.textContent = `${gemini.percentage_used}%`;
+            if (geminiRemaining) geminiRemaining.textContent = gemini.remaining;
+            
+            if (geminiProgressFill) {
+                geminiProgressFill.style.width = `${gemini.percentage_used}%`;
+                // Update color based on usage
+                geminiProgressFill.className = 'usage-progress-fill';
+                if (gemini.percentage_used >= 90) {
+                    geminiProgressFill.classList.add('danger');
+                } else if (gemini.percentage_used >= 70) {
+                    geminiProgressFill.classList.add('warning');
+                }
+            }
+        }
+        
+        // Update reset timer
+        if (stats.seconds_until_reset) {
+            updateResetTimer(stats.seconds_until_reset);
+        }
+        
+        // Update total lifetime usage
+        const totalLifetimeUsage = document.getElementById('totalLifetimeUsage');
+        if (totalLifetimeUsage && stats.huggingface && stats.gemini) {
+            const total = stats.huggingface.total_calls + stats.gemini.total_calls;
+            totalLifetimeUsage.textContent = total.toLocaleString();
+        }
+    }
+    
+    // Update reset timer display
+    function updateResetTimer(secondsRemaining) {
+        const resetTimer = document.getElementById('resetTimer');
+        if (!resetTimer) return;
+        
+        const hours = Math.floor(secondsRemaining / 3600);
+        const minutes = Math.floor((secondsRemaining % 3600) / 60);
+        const seconds = secondsRemaining % 60;
+        
+        const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        resetTimer.textContent = `Resets in ${timeStr}`;
+    }
+    
+    // Start periodic polling for usage stats (every 30 seconds)
+    let usageStatsInterval = null;
+    function startUsageStatsPolling() {
+        // Clear any existing interval
+        if (usageStatsInterval) {
+            clearInterval(usageStatsInterval);
+        }
+        
+        // Poll every 30 seconds
+        usageStatsInterval = setInterval(() => {
+            fetchAndUpdateUsageStats();
+        }, 30000);
+    }
+    
+    // Stop polling when user logs out
+    function stopUsageStatsPolling() {
+        if (usageStatsInterval) {
+            clearInterval(usageStatsInterval);
+            usageStatsInterval = null;
+        }
+    }
+    
+    // =============================
+    // Anonymous User Usage Tracking
+    // =============================
+    const anonymousUsageBanner = document.getElementById('anonymousUsageBanner');
+    const closeBannerBtn = document.getElementById('closeBannerBtn');
+    
+    // Show anonymous usage banner
+    function showAnonymousUsageBanner() {
+        // Check if user has closed the banner before (localStorage)
+        const bannerClosed = localStorage.getItem('anonBannerClosed');
+        if (!bannerClosed && anonymousUsageBanner) {
+            anonymousUsageBanner.style.display = 'block';
+        }
+    }
+    
+    // Hide anonymous usage banner
+    function hideAnonymousUsageBanner() {
+        if (anonymousUsageBanner) {
+            anonymousUsageBanner.style.display = 'none';
+        }
+    }
+    
+    // Close banner button handler
+    if (closeBannerBtn) {
+        closeBannerBtn.addEventListener('click', () => {
+            hideAnonymousUsageBanner();
+            // Stop any running timers
+            stopGeminiCooldownTimer();
+            // Remember user preference
+            localStorage.setItem('anonBannerClosed', 'true');
+        });
+    }
+    
+    // Fetch and update anonymous usage stats
+    async function fetchAndUpdateAnonymousUsage() {
+        try {
+            const response = await fetch('/api/usage');
+            const data = await response.json();
+            
+            console.log('[Anonymous Usage] API Response:', data);
+            
+            if (!data.authenticated && data.stats) {
+                console.log('[Anonymous Usage] Updating display with stats:', data.stats);
+                updateAnonymousUsageDisplay(data.stats);
+            } else {
+                console.log('[Anonymous Usage] User is authenticated, skipping anonymous display');
+            }
+        } catch (error) {
+            console.error('[Anonymous Usage] Failed to fetch:', error);
+        }
+    }
+    
+    // Gemini cooldown timer management
+    let geminiCooldownInterval = null;
+    let geminiCooldownEndTime = null;
+    
+    // Start Gemini cooldown countdown timer
+    function startGeminiCooldownTimer(secondsRemaining) {
+        // Stop any existing timer
+        stopGeminiCooldownTimer();
+        
+        // Calculate end time
+        geminiCooldownEndTime = Date.now() + (secondsRemaining * 1000);
+        
+        // Update immediately
+        updateGeminiCooldownDisplay();
+        
+        // Update every second
+        geminiCooldownInterval = setInterval(() => {
+            updateGeminiCooldownDisplay();
+        }, 1000);
+        
+        console.log('[Gemini Cooldown] Timer started, ends in', secondsRemaining, 'seconds');
+    }
+    
+    // Stop Gemini cooldown timer
+    function stopGeminiCooldownTimer() {
+        if (geminiCooldownInterval) {
+            clearInterval(geminiCooldownInterval);
+            geminiCooldownInterval = null;
+            geminiCooldownEndTime = null;
+            console.log('[Gemini Cooldown] Timer stopped');
+        }
+    }
+    
+    // Update Gemini cooldown display
+    function updateGeminiCooldownDisplay() {
+        const anonCooldownTime = document.getElementById('anonCooldownTime');
+        
+        if (!geminiCooldownEndTime || !anonCooldownTime) {
+            return;
+        }
+        
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((geminiCooldownEndTime - now) / 1000));
+        
+        if (remaining <= 0) {
+            // Cooldown expired
+            stopGeminiCooldownTimer();
+            // Refresh usage to show "available" state
+            fetchAndUpdateAnonymousUsage();
+            return;
+        }
+        
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        anonCooldownTime.textContent = `${minutes}m ${seconds}s`;
+    }
+    
+    // Update anonymous usage display
+    function updateAnonymousUsageDisplay(stats) {
+        console.log('[Anonymous Usage] Updating display...');
+        
+        // Update HuggingFace stats
+        const anonHfUsed = document.getElementById('anonHfUsed');
+        const anonHfLimit = document.getElementById('anonHfLimit');
+        const anonHfRemaining = document.getElementById('anonHfRemaining');
+        const anonHfProgressFill = document.getElementById('anonHfProgressFill');
+        
+        if (stats.huggingface) {
+            const hf = stats.huggingface;
+            console.log('[Anonymous Usage] HF Stats:', hf);
+            
+            if (anonHfUsed) anonHfUsed.textContent = hf.calls_today;
+            if (anonHfLimit) anonHfLimit.textContent = hf.daily_limit;
+            if (anonHfRemaining) anonHfRemaining.textContent = `${hf.remaining} remaining`;
+            
+            if (anonHfProgressFill) {
+                const percentage = hf.percentage_used || 0;
+                anonHfProgressFill.style.width = `${percentage}%`;
+                
+                // Update color based on usage
+                anonHfProgressFill.className = 'anon-progress-fill';
+                if (percentage >= 90) {
+                    anonHfProgressFill.classList.add('danger');
+                } else if (percentage >= 70) {
+                    anonHfProgressFill.classList.add('warning');
+                }
+                
+                console.log('[Anonymous Usage] Progress bar updated:', percentage + '%');
+            }
+        }
+        
+        // Update Gemini cooldown info
+        const anonGeminiInfo = document.getElementById('anonGeminiInfo');
+        const anonGeminiCooldown = document.getElementById('anonGeminiCooldown');
+        
+        if (stats.gemini) {
+            const gemini = stats.gemini;
+            console.log('[Anonymous Usage] Gemini Stats:', gemini);
+            
+            if (gemini.cooldown_active) {
+                // Show cooldown with countdown timer
+                if (anonGeminiInfo) anonGeminiInfo.style.display = 'none';
+                if (anonGeminiCooldown) anonGeminiCooldown.style.display = 'flex';
+                
+                // Start countdown timer
+                if (gemini.seconds_remaining > 0) {
+                    startGeminiCooldownTimer(gemini.seconds_remaining);
+                }
+            } else {
+                // Show available
+                if (anonGeminiInfo) anonGeminiInfo.style.display = 'flex';
+                if (anonGeminiCooldown) anonGeminiCooldown.style.display = 'none';
+                
+                // Stop countdown timer if running
+                stopGeminiCooldownTimer();
+                
+                console.log('[Anonymous Usage] Gemini available');
+            }
         }
     }
 
@@ -1172,6 +1471,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Logout handler
     if (logoutMenuItem) {
         logoutMenuItem.addEventListener('click', async () => {
+            stopUsageStatsPolling();
             try {
                 const response = await fetch('/auth/logout');
                 if (response.redirected) {
@@ -1189,6 +1489,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Drawer: logout
     if (drawerLogoutBtn) {
         drawerLogoutBtn.addEventListener('click', async () => {
+            stopUsageStatsPolling();
             try {
                 const response = await fetch('/auth/logout');
                 if (typeof mobileNav?.hide === 'function') mobileNav.hide();
@@ -1227,29 +1528,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize auth state
     checkAuthStatus();
 
-    // Refresh usage stats after each analysis (if logged in)
+    // Refresh usage stats after each analysis
     if (typeof showResults === 'function') {
         const authOriginalShowResults = showResults;
         showResults = function(data) {
             authOriginalShowResults(data);
             
-            // Update usage stats if present in response
-            if (data.usage && usageCount && usageLimit) {
-                usageCount.textContent = data.usage.api_calls_today;
-                usageLimit.textContent = data.usage.daily_limit;
-                
-                // Show warning if approaching limit
-                const remaining = data.usage.remaining_calls;
-                if (remaining <= 10 && remaining > 0) {
-                    if (window.showToast) {
-                        window.showToast('warning', `Only ${remaining} API calls remaining today!`);
-                    }
-                } else if (remaining === 0) {
-                    if (window.showToast) {
-                        window.showToast('danger', 'Daily API limit reached. Please try again tomorrow.');
-                    }
-                }
-            }
+            console.log('[Usage Stats] Refreshing after API call');
+            
+            // Fetch fresh usage stats after analysis
+            // The endpoint will return appropriate data based on auth status
+            fetchAndUpdateUsageStats();
+            fetchAndUpdateAnonymousUsage();
         };
     }
 

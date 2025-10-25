@@ -315,12 +315,60 @@
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <sl-menu>
-                                <sl-menu-item id="usageMenuItem">
-                                    <i class="fas fa-chart-line" slot="prefix"></i>
-                                    <div class="usage-info">
-                                        <div class="usage-label">API Usage Today</div>
-                                        <div class="usage-stats">
-                                            <span id="usageCount">0</span> / <span id="usageLimit">100</span>
+                                <sl-menu-item id="usageMenuItem" class="usage-menu-item">
+                                    <div class="detailed-usage-panel">
+                                        <div class="usage-header">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span>API Usage Today</span>
+                                            <span class="reset-timer" id="resetTimer">Resets in --:--:--</span>
+                                        </div>
+                                        
+                                        <!-- HuggingFace Usage -->
+                                        <div class="model-usage-section">
+                                            <div class="model-header">
+                                                <i class="fas fa-cpu"></i>
+                                                <span class="model-name">ContentGuard Model</span>
+                                            </div>
+                                            <div class="usage-stats-row">
+                                                <span class="usage-count">
+                                                    <span id="hfUsageCount">0</span> / <span id="hfUsageLimit">200</span>
+                                                </span>
+                                                <span class="usage-percentage" id="hfUsagePercentage">0%</span>
+                                            </div>
+                                            <div class="usage-progress-bar">
+                                                <div class="usage-progress-fill" id="hfProgressFill" style="width: 0%"></div>
+                                            </div>
+                                            <div class="usage-hint" id="hfUsageHint">
+                                                <span id="hfRemaining">200</span> calls remaining
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Gemini Usage -->
+                                        <div class="model-usage-section">
+                                            <div class="model-header">
+                                                <i class="fas fa-stars"></i>
+                                                <span class="model-name">Gemini 2.5 Flash</span>
+                                            </div>
+                                            <div class="usage-stats-row">
+                                                <span class="usage-count">
+                                                    <span id="geminiUsageCount">0</span> / <span id="geminiUsageLimit">10</span>
+                                                </span>
+                                                <span class="usage-percentage" id="geminiUsagePercentage">0%</span>
+                                            </div>
+                                            <div class="usage-progress-bar">
+                                                <div class="usage-progress-fill" id="geminiProgressFill" style="width: 0%"></div>
+                                            </div>
+                                            <div class="usage-hint" id="geminiUsageHint">
+                                                <span id="geminiRemaining">10</span> calls remaining
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Total Usage Stats -->
+                                        <div class="total-usage-section">
+                                            <div class="total-stat">
+                                                <span class="stat-label">Total Lifetime</span>
+                                                <span class="stat-value" id="totalLifetimeUsage">0</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </sl-menu-item>
@@ -563,6 +611,78 @@ puts result</code></pre>
                 <div class="section-header">
                     <h2 id="analyze-heading">Analyze Your Content</h2>
                     <p>Enter a URL or text to detect malicious language, hate speech, harassment, or threats</p>
+                </div>
+
+                <!-- Anonymous User Usage Banner (shown when not logged in) -->
+                <div id="anonymousUsageBanner" class="anonymous-usage-banner" style="display: none;">
+                    <div class="banner-content">
+                        <div class="banner-header">
+                            <div class="banner-title">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Your API Usage Today</span>
+                            </div>
+                            <button class="banner-close" id="closeBannerBtn" aria-label="Close banner">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="banner-stats">
+                            <!-- HuggingFace Usage -->
+                            <div class="anon-model-section">
+                                <div class="anon-model-header">
+                                    <i class="fas fa-cpu"></i>
+                                    <span class="anon-model-name">ContentGuard Model</span>
+                                </div>
+                                <div class="anon-usage-row">
+                                    <span class="anon-usage-text">
+                                        <span id="anonHfUsed">0</span> / <span id="anonHfLimit">100</span> calls used
+                                    </span>
+                                    <span class="anon-remaining" id="anonHfRemaining">100 remaining</span>
+                                </div>
+                                <div class="anon-progress-bar">
+                                    <div class="anon-progress-fill" id="anonHfProgressFill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Gemini Cooldown Info -->
+                            <div class="anon-model-section" id="anonGeminiSection">
+                                <div class="anon-model-header">
+                                    <i class="fas fa-stars"></i>
+                                    <span class="anon-model-name">Gemini Model</span>
+                                </div>
+                                <div class="anon-gemini-info" id="anonGeminiInfo">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Available with cooldown between requests</span>
+                                </div>
+                                <div class="anon-gemini-cooldown" id="anonGeminiCooldown" style="display: none;">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Cooldown active: <strong id="anonCooldownTime">--</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="banner-cta">
+                            <div class="cta-content">
+                                <div class="cta-text">
+                                    <i class="fas fa-rocket"></i>
+                                    <div>
+                                        <strong>Want more?</strong>
+                                        <span>Sign up for 200 ContentGuard + 10 Gemini calls per day!</span>
+                                    </div>
+                                </div>
+                                <div class="cta-buttons">
+                                    <a href="/auth/signup" class="cta-btn primary">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>Sign Up Free</span>
+                                    </a>
+                                    <a href="/auth/login" class="cta-btn secondary">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                        <span>Sign In</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Input Mode Toggle -->

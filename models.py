@@ -90,6 +90,8 @@ class User(UserMixin, db.Model):
         self.api_calls_today += 1
         self.last_api_call = now
         db.session.commit()
+        # Refresh to ensure we have the latest values
+        db.session.refresh(self)
     
     def has_exceeded_daily_limit(self):
         """Check if user has exceeded their daily API limit"""
@@ -106,6 +108,76 @@ class User(UserMixin, db.Model):
     def has_exceeded_gemini_limit(self):
         """Check if user has exceeded their daily Gemini limit"""
         return self.gemini_calls_today >= self.gemini_daily_limit
+    
+    def get_usage_percentage(self, model='huggingface'):
+        """Get usage percentage for a specific model"""
+        if model == 'gemini':
+            if self.gemini_daily_limit == 0:
+                return 0
+            return (self.gemini_calls_today / self.gemini_daily_limit) * 100
+        else:
+            if self.daily_limit == 0:
+                return 0
+            return (self.api_calls_today / self.daily_limit) * 100
+    
+    def get_reset_time(self):
+        """Get the time when daily limits will reset"""
+        from datetime import timedelta
+        now = datetime.utcnow()
+        tomorrow = datetime(now.year, now.month, now.day) + timedelta(days=1)
+        return tomorrow
+    
+    def get_seconds_until_reset(self):
+        """Get seconds until daily limit reset"""
+        reset_time = self.get_reset_time()
+        now = datetime.utcnow()
+        delta = reset_time - now
+        return max(0, int(delta.total_seconds()))
+    
+    def get_detailed_usage_stats(self):
+        """Get comprehensive usage statistics for both models"""
+        now = datetime.utcnow()
+        
+        # Check if we need to reset daily counters
+        if self.last_api_call:
+            last_call_date = self.last_api_call.date()
+            today = now.date()
+            if last_call_date < today:
+                self.api_calls_today = 0
+        
+        if self.last_gemini_call:
+            last_call_date = self.last_gemini_call.date()
+            today = now.date()
+            if last_call_date < today:
+                self.gemini_calls_today = 0
+        
+        reset_time = self.get_reset_time()
+        seconds_until_reset = self.get_seconds_until_reset()
+        
+        return {
+            'user_id': self.id,
+            'email': self.email,
+            'huggingface': {
+                'calls_today': self.api_calls_today,
+                'daily_limit': self.daily_limit,
+                'remaining': self.get_remaining_calls(),
+                'total_calls': self.api_calls_count,
+                'percentage_used': round(self.get_usage_percentage('huggingface'), 1),
+                'last_call': self.last_api_call.isoformat() if self.last_api_call else None
+            },
+            'gemini': {
+                'calls_today': self.gemini_calls_today,
+                'daily_limit': self.gemini_daily_limit,
+                'remaining': self.get_remaining_gemini_calls(),
+                'total_calls': self.gemini_calls_count,
+                'percentage_used': round(self.get_usage_percentage('gemini'), 1),
+                'last_call': self.last_gemini_call.isoformat() if self.last_gemini_call else None
+            },
+            'reset_time': reset_time.isoformat(),
+            'seconds_until_reset': seconds_until_reset,
+            'has_exceeded_hf_limit': self.has_exceeded_daily_limit(),
+            'has_exceeded_gemini_limit': self.has_exceeded_gemini_limit()
+        }
     
     def to_dict(self):
         """Convert user to dictionary for API responses"""

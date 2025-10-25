@@ -177,14 +177,8 @@ def get_user():
 @auth_bp.route('/usage')
 @login_required
 def get_usage():
-    """Get current user's API usage stats"""
-    return jsonify({
-        'api_calls_count': current_user.api_calls_count,
-        'api_calls_today': current_user.api_calls_today,
-        'daily_limit': current_user.daily_limit,
-        'remaining_calls': current_user.get_remaining_calls(),
-        'has_exceeded_limit': current_user.has_exceeded_daily_limit()
-    })
+    """Get current user's API usage stats (detailed)"""
+    return jsonify(current_user.get_detailed_usage_stats())
 
 
 # ============================================================================
