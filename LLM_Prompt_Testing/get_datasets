@@ -1,0 +1,70 @@
+import pandas as pd
+import numpy as np
+import re
+from typing import List, Dict, Tuple
+from collections import Counter
+
+
+# ============================================================================
+# STEP 1: LOAD DATASET
+# ============================================================================
+def load_genz_dataset():
+    """Load the GenZ Reddit dataset directly with pandas"""
+    try:
+        print("🚀 Loading GenZ Reddit dataset...")
+
+        url = "https://huggingface.co/datasets/Ayingxizhao/genz_reddit/resolve/main/genz_reddit_posts1.csv"
+        df = pd.read_csv(url)
+
+        print(f"✅ Dataset loaded successfully!")
+        print(f"📊 Shape: {df.shape} (rows, columns)")
+        print(f"📋 Columns: {list(df.columns)}")
+        print(f"📈 Total records: {len(df):,}")
+
+        if "type" in df.columns:
+            print(f"📝 Post types: {dict(df['type'].value_counts())}")
+
+        return df
+
+    except Exception as e:
+        print(f"❌ Error loading dataset: {e}")
+        return None
+
+
+# ============================================================================
+# STEP 2: SMART SAMPLING
+# ============================================================================
+
+
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+def main():
+    """Run the complete pipeline"""
+    print("🚀 STARTING GENZ CONTENT MODERATION PIPELINE")
+    print("=" * 60)
+
+    # Step 1: Load dataset
+    df = load_genz_dataset()
+    if df is None:
+        print("❌ Failed to load dataset. Exiting.")
+        return
+
+
+    # Step 4: Save for labeling
+    df = df[df['content'].notna()]                    # remove NaN values
+    df = df[df['content'].str.strip() != ""]
+    df['content'] = df['content'].apply(lambda x: x if (isinstance(x, str) and x.strip().startswith('"') and x.strip().endswith('"')) else f'"{x.strip()}"' if isinstance(x, str) else x
+)
+    columns_for_labeling = ["content"]
+    sample_for_labeling = df[columns_for_labeling].copy()
+    sample_for_labeling.to_csv("genz_sample_for_labeling.csv", index=False)
+
+    print(f"\n💾 Sample saved to 'genz_sample_for_labeling.csv'")
+    print(f"🏷️ Ready for GPT-4o mini labeling!")
+    print(f"\n✅ PIPELINE COMPLETE!")
+
+
+if __name__ == "__main__":
+    main()
