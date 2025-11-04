@@ -79,9 +79,27 @@ def check_anonymous_rate_limit():
 def increment_anonymous_usage():
     """Increment usage count for current IP"""
     ip = _get_client_ip()
-    if ip in _anonymous_limits:
-        _anonymous_limits[ip]['count'] += 1
-        logging.info(f"Anonymous request from {ip}: {_anonymous_limits[ip]['count']}/{ANONYMOUS_DAILY_LIMIT}")
+    now = datetime.utcnow()
+    
+    # Ensure IP entry exists
+    if ip not in _anonymous_limits:
+        reset_time = datetime(now.year, now.month, now.day) + timedelta(days=1)
+        _anonymous_limits[ip] = {
+            'count': 0,
+            'reset_time': reset_time
+        }
+        logging.warning(f"[Rate Limit] IP {ip} not in limits dict, creating entry")
+    
+    # Check if we need to reset
+    if now >= _anonymous_limits[ip]['reset_time']:
+        reset_time = datetime(now.year, now.month, now.day) + timedelta(days=1)
+        _anonymous_limits[ip]['count'] = 0
+        _anonymous_limits[ip]['reset_time'] = reset_time
+        logging.info(f"[Rate Limit] Reset counter for {ip}")
+    
+    # Increment
+    _anonymous_limits[ip]['count'] += 1
+    logging.info(f"[Rate Limit] Anonymous request from {ip}: {_anonymous_limits[ip]['count']}/{ANONYMOUS_DAILY_LIMIT}")
 
 
 def anonymous_rate_limit(f):
@@ -146,6 +164,9 @@ def get_anonymous_usage_info():
     allowed, remaining, limit, reset_time = check_anonymous_rate_limit()
 
     usage = _anonymous_limits.get(ip, {}).get('count', 0)
+    
+    logging.info(f"[Rate Limit] get_anonymous_usage_info for {ip}: usage={usage}, remaining={remaining}")
+    logging.debug(f"[Rate Limit] Full limits dict: {_anonymous_limits}")
 
     return {
         'ip': ip,

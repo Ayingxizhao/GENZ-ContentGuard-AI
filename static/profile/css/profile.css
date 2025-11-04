@@ -1,0 +1,480 @@
+/**
+ * Profile Picture Upload CSS Styles
+ * Modern, responsive styling for profile picture upload and cropping
+ */
+
+/* Main upload container */
+.profile-upload-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Drop zone styles */
+.profile-drop-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-drop-zone:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.profile-drop-zone.drag-over {
+    border-color: #3b82f6;
+    background: #dbeafe;
+    transform: scale(1.02);
+}
+
+.profile-drop-zone.has-preview {
+    border-style: solid;
+    border-color: #10b981;
+    background: #f0fdf4;
+    min-height: auto;
+    padding: 1rem;
+}
+
+/* Drop zone content */
+.drop-zone-content {
+    pointer-events: none;
+}
+
+.drop-zone-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    background: #e2e8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #64748b;
+}
+
+.drop-zone-text {
+    color: #374151;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.drop-zone-subtext {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* File input (hidden) */
+#profile-file-input {
+    display: none;
+}
+
+/* Preview styles */
+.preview-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.preview-image {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #e5e7eb;
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.file-name {
+    font-weight: 500;
+    color: #374151;
+    margin: 0 0 0.25rem 0;
+    font-size: 14px;
+}
+
+.file-size {
+    color: #6b7280;
+    margin: 0;
+    font-size: 12px;
+}
+
+.remove-preview {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.2s ease;
+}
+
+.remove-preview:hover {
+    background: #dc2626;
+}
+
+/* Crop controls */
+.crop-controls {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.crop-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* Upload progress */
+.upload-progress {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f3f4f6;
+    border-radius: 6px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.progress-text {
+    text-align: center;
+    color: #6b7280;
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Cropper container */
+.cropper-container {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.cropper-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Cropper controls */
+.cropper-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    justify-content: center;
+}
+
+.control-group {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.cropper-controls .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.cropper-controls .btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.cropper-controls .btn:active {
+    transform: scale(0.98);
+}
+
+.cropper-controls .btn .icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Preview container */
+.crop-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.circular-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#crop-info {
+    text-align: center;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+/* Button styles */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 12px;
+}
+
+/* Message styles */
+.profile-upload-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    max-width: 300px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-upload-message.success {
+    background: #10b981;
+}
+
+.profile-upload-message.error {
+    background: #ef4444;
+}
+
+.profile-upload-message.warning {
+    background: #f59e0b;
+}
+
+/* Loading states */
+.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #3b82f6;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .profile-upload-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    .profile-drop-zone {
+        padding: 2rem 1rem;
+        min-height: 150px;
+    }
+    
+    .preview-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .crop-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .control-group {
+        justify-content: center;
+    }
+    
+    .cropper-controls .btn {
+        flex: 1;
+        min-width: 80px;
+    }
+    
+    .profile-upload-message {
+        left: 20px;
+        right: 20px;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .crop-buttons {
+        flex-direction: column;
+    }
+    
+    .crop-buttons .btn {
+        width: 100%;
+    }
+    
+    .circular-preview {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .profile-upload-container {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+    
+    .profile-drop-zone {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .profile-drop-zone:hover {
+        background: #4b5563;
+        border-color: #60a5fa;
+    }
+    
+    .drop-zone-text {
+        color: #f9fafb;
+    }
+    
+    .drop-zone-subtext {
+        color: #d1d5db;
+    }
+    
+    .cropper-controls {
+        background: #374151;
+    }
+    
+    .cropper-controls .btn {
+        background: #4b5563;
+        color: #f9fafb;
+        border-color: #6b7280;
+    }
+    
+    .cropper-controls .btn:hover {
+        background: #6b7280;
+    }
+}
+
+/* Accessibility */
+.btn:focus,
+.profile-drop-zone:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .profile-drop-zone {
+        border-width: 3px;
+    }
+    
+    .btn {
+        border: 2px solid currentColor;
+    }
+}

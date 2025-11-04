@@ -143,6 +143,10 @@ def callback(provider):
         # Log the user in
         login_user(user, remember=True)
         
+        # Check if user has a profile picture, redirect to upload if not
+        if not user.profile_picture_url:
+            return redirect('/profile/upload')
+        
         # Redirect to home page
         return redirect('/')
     
@@ -245,7 +249,8 @@ def register():
         return jsonify({
             'success': True,
             'message': 'Account created successfully',
-            'user': user.to_dict()
+            'user': user.to_dict(),
+            'redirect_to_profile': not user.profile_picture_url
         }), 201
 
     except Exception as e:
@@ -297,7 +302,8 @@ def login_email():
         return jsonify({
             'success': True,
             'message': 'Login successful',
-            'user': user.to_dict()
+            'user': user.to_dict(),
+            'redirect_to_profile': not user.profile_picture_url
         }), 200
 
     except Exception as e:

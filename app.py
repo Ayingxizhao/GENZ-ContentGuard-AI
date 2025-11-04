@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, login_required
 from gradio_client import Client
 from dotenv import load_dotenv
+from datetime import timedelta
 import os
 import time
 import logging
@@ -19,6 +20,12 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-pro
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///users.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Session configuration for better cookie handling
+app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP in development
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+
 CORS(app)
 
 # Initialize database and auth
@@ -33,6 +40,10 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = None  # No redirect, API returns 401
 
+# Initialize CSRF protection for forms
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect(app)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -45,6 +56,20 @@ app.register_blueprint(auth_bp)
 # Register usage stats blueprint
 from routes.usage import usage_bp
 app.register_blueprint(usage_bp)
+
+# Register profile blueprints
+from routes.profile.upload import upload_bp
+from routes.profile.management import management_bp
+app.register_blueprint(upload_bp)
+app.register_blueprint(management_bp)
+
+# Register admin blueprints (development only)
+try:
+    from admin.admin_routes import admin_bp
+    app.register_blueprint(admin_bp)
+    print("🔧 Admin routes loaded (development mode)")
+except ImportError:
+    pass  # Admin routes not available in production
 
 # Initialize access logging middleware
 from middleware.access_logger import init_access_logging
@@ -861,6 +886,69 @@ def index():
 @app.route('/bug-report')
 def bug_report():
     return render_template('bug_report.html')
+
+@app.route('/profile/upload')
+@login_required
+def profile_upload():
+    """Profile picture upload page"""
+    return render_template('profile/upload.html')
+
+@app.route('/profile/crop')
+@login_required
+def profile_crop():
+    """Profile picture cropping page"""
+    # This would typically receive an image URL or data from the upload step
+    # For now, we'll redirect to upload as this is handled via AJAX
+    return render_template('profile/upload.html')
+
+# Admin routes for testing
+@app.route('/admin/test')
+@login_required
+def admin_test():
+    """Admin test page - only accessible by admins"""
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return jsonify({'error': 'Admin access required'}), 403
+    
+    return jsonify({
+        'message': 'Admin access confirmed',
+        'user': current_user.to_dict(),
+        'admin_features': [
+            'User management',
+            'Usage statistics',
+            'System monitoring',
+            'Profile picture testing'
+        ]
+    })
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    """List all users - admin only"""
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return jsonify({'error': 'Admin access required'}), 403
+    
+    users = User.query.all()
+    return jsonify({
+        'users': [user.to_dict() for user in users],
+        'total_count': len(users)
+    })
+
+@app.route('/admin/promote/<int:user_id>', methods=['POST'])
+@login_required
+def admin_promote_user(user_id):
+    """Promote user to admin - admin only"""
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return jsonify({'error': 'Admin access required'}), 403
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    user.make_admin()
+    return jsonify({
+        'message': f'User {user.email} promoted to admin',
+        'user': user.to_dict()
+    })
 
 # ========== Analytics Endpoints (Authentication Required) ==========
 

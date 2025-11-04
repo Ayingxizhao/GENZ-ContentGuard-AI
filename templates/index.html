@@ -373,6 +373,12 @@
                                     </div>
                                 </sl-menu-item>
                                 <sl-divider></sl-divider>
+                                <sl-menu-item id="profilePictureMenuItem">
+                                    <i class="fas fa-camera" slot="prefix"></i>
+                                    <a href="/profile/upload" style="text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%;">
+                                        Profile Picture
+                                    </a>
+                                </sl-menu-item>
                                 <sl-menu-item id="logoutMenuItem">
                                     <i class="fas fa-sign-out-alt" slot="prefix"></i>
                                     Logout
@@ -414,6 +420,10 @@
                                 <div class="drawer-usage"><span id="drawerUsageCount">0</span>/<span id="drawerUsageLimit">100</span> today</div>
                             </div>
                         </div>
+                        <a href="/profile/upload" class="drawer-profile-btn" id="drawerProfileBtn">
+                            <i class="fas fa-camera"></i>
+                            <span>Profile Picture</span>
+                        </a>
                         <button type="button" class="drawer-logout-btn" id="drawerLogoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
                     </div>
 

@@ -1119,8 +1119,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Update user info
         if (userAvatar) {
-            if (user.avatar_url) {
-                userAvatar.src = user.avatar_url;
+            // Prioritize uploaded profile picture over OAuth avatar
+            const imageUrl = user.profile_picture_url || user.avatar_url;
+            
+            if (imageUrl) {
+                // Add cache-busting timestamp to uploaded images
+                const urlWithTimestamp = imageUrl.includes('profile-pictures') 
+                    ? `${imageUrl}?t=${Date.now()}` 
+                    : imageUrl;
+                    
+                userAvatar.src = urlWithTimestamp;
                 userAvatar.alt = user.name || user.email;
             } else {
                 // Generate avatar from initials for email/password users
@@ -1436,8 +1444,16 @@ document.addEventListener('DOMContentLoaded', function() {
             drawerLoginBtn.style.display = 'none';
             drawerAccount.style.display = 'block';
             if (drawerUserAvatar) {
-                if (user.avatar_url) {
-                    drawerUserAvatar.src = user.avatar_url;
+                // Prioritize uploaded profile picture over OAuth avatar
+                const imageUrl = user.profile_picture_url || user.avatar_url;
+                
+                if (imageUrl) {
+                    // Add cache-busting timestamp to uploaded images
+                    const urlWithTimestamp = imageUrl.includes('profile-pictures') 
+                        ? `${imageUrl}?t=${Date.now()}` 
+                        : imageUrl;
+                        
+                    drawerUserAvatar.src = urlWithTimestamp;
                     drawerUserAvatar.alt = user.name || user.email;
                 } else {
                     // Generate avatar from initials for email/password users

@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     name = db.Column(db.String(255), nullable=True)
     avatar_url = db.Column(db.String(512), nullable=True)
+    profile_picture_url = db.Column(db.String(512), nullable=True)
 
     # Email/password authentication
     password_hash = db.Column(db.String(255), nullable=True)
@@ -40,6 +41,9 @@ class User(UserMixin, db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_login = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Admin role (development only)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
     # Unique constraint on provider + provider_user_id (only for OAuth users)
     __table_args__ = (
@@ -94,19 +98,27 @@ class User(UserMixin, db.Model):
         db.session.refresh(self)
     
     def has_exceeded_daily_limit(self):
-        """Check if user has exceeded their daily API limit"""
+        """Check if user has exceeded their daily API limit (never for admins)"""
+        if self.is_admin:
+            return False  # Admins never exceed limits
         return self.api_calls_today >= self.daily_limit
     
     def get_remaining_calls(self):
-        """Get remaining API calls for today"""
+        """Get remaining API calls for today (unlimited for admins)"""
+        if self.is_admin:
+            return 999999  # Unlimited for admins (JSON-serializable)
         return max(0, self.daily_limit - self.api_calls_today)
     
     def get_remaining_gemini_calls(self):
-        """Get remaining Gemini API calls for today"""
+        """Get remaining Gemini API calls for today (unlimited for admins)"""
+        if self.is_admin:
+            return 999999  # Unlimited for admins (JSON-serializable)
         return max(0, self.gemini_daily_limit - self.gemini_calls_today)
     
     def has_exceeded_gemini_limit(self):
-        """Check if user has exceeded their daily Gemini limit"""
+        """Check if user has exceeded their daily Gemini limit (never for admins)"""
+        if self.is_admin:
+            return False  # Admins never exceed limits
         return self.gemini_calls_today >= self.gemini_daily_limit
     
     def get_usage_percentage(self, model='huggingface'):
@@ -121,10 +133,10 @@ class User(UserMixin, db.Model):
             return (self.api_calls_today / self.daily_limit) * 100
     
     def get_reset_time(self):
-        """Get the time when daily limits will reset"""
+        """Get the time when daily limits reset (tomorrow midnight UTC)"""
         from datetime import timedelta
         now = datetime.utcnow()
-        tomorrow = datetime(now.year, now.month, now.day) + timedelta(days=1)
+        tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         return tomorrow
     
     def get_seconds_until_reset(self):
@@ -133,6 +145,50 @@ class User(UserMixin, db.Model):
         now = datetime.utcnow()
         delta = reset_time - now
         return max(0, int(delta.total_seconds()))
+    
+    def make_admin(self):
+        """Promote user to admin role (development only)"""
+        import os
+        if os.getenv('FLASK_ENV', '').lower() != 'development':
+            raise RuntimeError("Admin creation only allowed in development")
+        self.is_admin = True
+        db.session.commit()
+    
+    def remove_admin(self):
+        """Remove admin role from user (development only)"""
+        import os
+        if os.getenv('FLASK_ENV', '').lower() != 'development':
+            raise RuntimeError("Admin modification only allowed in development")
+        self.is_admin = False
+        db.session.commit()
+    
+    @classmethod
+    def get_admins(cls):
+        """Get all admin users (development only)"""
+        import os
+        if os.getenv('FLASK_ENV', '').lower() != 'development':
+            return []
+        return cls.query.filter_by(is_admin=True).all()
+    
+    @classmethod
+    def create_admin_user(cls, email, password=None, name=None):
+        """Create a new admin user (development only)"""
+        import os
+        if os.getenv('FLASK_ENV', '').lower() != 'development':
+            raise RuntimeError("Admin creation only allowed in development")
+        
+        user = cls(
+            email=email,
+            name=name or 'Admin',
+            is_admin=True,
+            created_at=datetime.utcnow(),
+            last_login=datetime.utcnow()
+        )
+        if password:
+            user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        return user
     
     def get_detailed_usage_stats(self):
         """Get comprehensive usage statistics for both models"""
@@ -186,7 +242,9 @@ class User(UserMixin, db.Model):
             'email': self.email,
             'name': self.name,
             'avatar_url': self.avatar_url,
+            'profile_picture_url': self.profile_picture_url,
             'provider': self.provider,
+            'is_admin': self.is_admin,
             'api_calls_count': self.api_calls_count,
             'api_calls_today': self.api_calls_today,
             'daily_limit': self.daily_limit,
