@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import time
 from datetime import datetime
 from dotenv import load_dotenv
 import pandas as pd
@@ -43,6 +44,8 @@ SAFETY_SETTINGS = [
 
 def test_single_prompt(content):
     """Test our prompt on a single piece of content"""
+    # Add delay to respect rate limits (6 seconds = ~10 requests/minute)
+    time.sleep(6)
 
     # Create model instance for plain text responses (not JSON mode)
     # Using gemini-2.5-flash directly without JSON response mode
@@ -162,7 +165,7 @@ Confidence: [1-5] (+ optional second confidence score for sarcasm)"""
         return f"ERROR: {str(e)}"
 
 
-def load_test_data(filename="genz_sample_for_labeling.csv", nrows=500): 
+def load_test_data(filename="genz_sample_for_labeling.csv", nrows=5):  #HERE CHOOSE FILE
 
     """Load test data from CSV file in data folder"""
     # Get the project root directory
@@ -174,7 +177,7 @@ def load_test_data(filename="genz_sample_for_labeling.csv", nrows=500):
         raise FileNotFoundError(f"Data file not found: {data_path}")
     
     logging.info(f"Loading data from: {data_path}")
-    df = pd.read_csv(data_path, nrows=5) 
+    df = pd.read_csv(data_path, nrows=nrows) 
     logging.info(f"Loaded {len(df)} rows")
     return df
 
@@ -215,6 +218,8 @@ def run_batch_test(test_data, content_column="content"):
                 "classification": classification,
                 "status": "success"
             })
+            # Small delay even on success
+            time.sleep(1)
         except Exception as e:
             logging.error(f"Error on row {i + 1}: {e}")
             results.append({
@@ -222,6 +227,8 @@ def run_batch_test(test_data, content_column="content"):
                 "classification": None,
                 "status": f"error: {str(e)}"
             })
+            # Longer delay on error
+            time.sleep(10)
     
     return pd.DataFrame(results)
 
@@ -234,22 +241,45 @@ if __name__ == "__main__":
         os.environ["GEMINI_API_KEY"] = api_key
     
     try:
-        # Load test data
-        test_examples = load_test_data(nrows=500) 
+        # Load first 500 rows
+        print("📥 Loading data...")
+        all_data = load_test_data(nrows=100)
+        all_results = []
         
-        # Run batch test
-        results_df = run_batch_test(test_examples)
+        # Process in batches of 5
+        batch_size = 5
+        total_batches = (len(all_data) + batch_size - 1) // batch_size
+        
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = start_idx + batch_size
+            current_batch = all_data.iloc[start_idx:end_idx]
+            
+            #print(f"\n🔄 Processing batch {batch_num + 1}/{total_batches} (rows {start_idx + 1}-{min(end_idx, len(all_data))})")
+            
+            # Process the current batch
+            batch_results = run_batch_test(current_batch)
+            all_results.append(batch_results)
+            
+            # Don't wait after the last batch
+            if (batch_num + 1) < total_batches:
+                #print(f"⏳ Waiting 60 seconds before next batch...")
+                time.sleep(60)  # 60 seconds = 1 minute
+        
+        # Combine all results
+        results_df = pd.concat(all_results, ignore_index=True)
         
         # Save results
         output_path = save_results(results_df)
         
         # Print summary
         print("\n" + "=" * 60)
-        print("✅ Test complete!")
-        print(f"Total examples: {len(results_df)}")
+        print("✅ All batches processed successfully!")
+        print(f"Total rows processed: {len(results_df)}")
         print(f"Successful: {len(results_df[results_df['status'] == 'success'])}")
         print(f"Errors: {len(results_df[results_df['status'] != 'success'])}")
         print(f"Results saved to: {output_path}")
+        print("=" * 60)
         
     except FileNotFoundError as e:
         logging.error(f"File not found: {e}")
